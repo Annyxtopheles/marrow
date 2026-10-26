@@ -210,11 +210,11 @@ export function App() {
               <img
                 src="/marrow-wordmark.svg"
                 alt="Marrow"
-                className="h-3 w-auto object-contain select-none opacity-90"
+                className="h-[13px] w-auto object-contain select-none opacity-90 -translate-y-[1px]"
                 style={{ filter: isLightMode ? 'brightness(0) opacity(0.8)' : undefined }}
               />
               <span
-                className={`text-[10px] px-1.5 py-0.5 rounded-md border ${
+                className={`text-[10px] leading-none px-1.5 py-1 rounded-md border flex items-center justify-center ${
                   isLightMode
                     ? 'bg-black/[0.03] border-black/[0.07] text-neutral-600'
                     : 'bg-white/[0.04] border-white/[0.06] text-neutral-400'
