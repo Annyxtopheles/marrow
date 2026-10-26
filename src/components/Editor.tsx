@@ -52,6 +52,27 @@ export const Editor: React.FC<EditorProps> = ({
           settings.breathingCursor ? 'breathing-cursor' : ''
         }`,
       },
+      handleClick: (view, pos, event) => {
+        const $pos = view.state.doc.resolve(pos);
+        const parent = $pos.parent;
+        if (!parent.isTextblock) return false;
+
+        const text = parent.textContent;
+        const offset = $pos.parentOffset;
+
+        const regex = /\[\[(.*?)\]\]/g;
+        let match;
+        while ((match = regex.exec(text)) !== null) {
+          const start = match.index;
+          const end = start + match[0].length;
+          if (offset >= start && offset <= end) {
+            event.preventDefault();
+            onNavigateToTitle(match[1]);
+            return true;
+          }
+        }
+        return false;
+      },
     },
     onUpdate: ({ editor }) => {
       const html = editor.getHTML();
@@ -86,6 +107,7 @@ export const Editor: React.FC<EditorProps> = ({
     );
   }, [note.id]);
 
+  // PureWriter Typewriter scrolling: center active line on selection change
   useEffect(() => {
     if (!editor || !settings.typewriterMode) return;
 
@@ -107,15 +129,6 @@ export const Editor: React.FC<EditorProps> = ({
       editor.off('selectionUpdate', handleSelectionUpdate);
     };
   }, [editor, settings.typewriterMode]);
-
-  const handleEditorClick = (e: React.MouseEvent) => {
-    const target = e.target as HTMLElement;
-    const text = target.textContent || '';
-    const match = text.match(/\[\[(.*?)\]\]/);
-    if (match && match[1]) {
-      onNavigateToTitle(match[1]);
-    }
-  };
 
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onUpdateNote({
@@ -205,10 +218,9 @@ export const Editor: React.FC<EditorProps> = ({
         </button>
       </div>
 
-      {/* Editor Scroll Container with Refined Line-Length */}
+      {/* Editor Scroll Container */}
       <div
         ref={editorContainerRef}
-        onClick={handleEditorClick}
         className={`flex-1 overflow-y-auto px-6 md:px-16 lg:px-24 py-10 transition-all ${
           settings.typewriterMode ? 'typewriter-mode' : ''
         }`}
