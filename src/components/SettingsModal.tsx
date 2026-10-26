@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import type { EditorSettings, ThemeMode, FontFamily } from '../types';
 import { X, Sliders, Download } from 'lucide-react';
 
@@ -17,8 +17,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onExportVault,
   isLightMode,
 }) => {
-  const [isHoveringBackdrop, setIsHoveringBackdrop] = useState(false);
-
   const update = <K extends keyof EditorSettings>(key: K, value: EditorSettings[K]) => {
     onUpdateSettings({ ...settings, [key]: value });
   };
@@ -41,22 +39,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   return (
     <div
       onClick={onClose}
-      onMouseEnter={() => setIsHoveringBackdrop(true)}
-      onMouseLeave={() => setIsHoveringBackdrop(false)}
-      className={`fixed inset-0 z-50 flex items-center justify-center p-4 transition-all duration-300 ${
-        isHoveringBackdrop ? 'bg-black/25 backdrop-blur-[2px]' : 'bg-black/60 backdrop-blur-sm'
-      }`}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-150"
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        onMouseEnter={(e) => {
-          e.stopPropagation();
-          setIsHoveringBackdrop(false);
-        }}
-        onMouseLeave={() => setIsHoveringBackdrop(true)}
-        className={`flex flex-col w-full max-w-lg rounded-xl border ${border} ${modalBg} shadow-2xl overflow-hidden transition-all duration-300 ${
-          isHoveringBackdrop ? 'opacity-15 pointer-events-none scale-[0.99]' : 'opacity-100 scale-100'
-        }`}
+        className={`flex flex-col w-full max-w-lg rounded-xl border ${border} ${modalBg} shadow-2xl overflow-hidden`}
       >
         {/* Header */}
         <div className={`flex items-center justify-between border-b ${border} px-6 py-4`}>
@@ -65,9 +52,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             <h2 className="text-sm font-medium tracking-wide">
               Typography &amp; Environment
             </h2>
-            <span className="text-[10px] opacity-40 ml-1.5 hidden sm:inline">
-              (hover outside to preview)
-            </span>
           </div>
           <button
             onClick={onClose}
