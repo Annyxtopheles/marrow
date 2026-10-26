@@ -28,7 +28,7 @@ export interface Note {
   characterCount: number;
   pinned: boolean;
   favorite: boolean;
-  inUniverseDate?: string; // Story / Plot date (e.g., "Year 1024, High Summer", "1945-08-15")
+  inUniverseDate?: string;
   timelineLog: TimelineEntry[];
 }
 
@@ -40,22 +40,22 @@ export interface Folder {
   order: number;
 }
 
-export type ThemeMode = 'amoled' | 'slate' | 'paper' | 'ivory';
+export type ThemeMode = 'charcoal' | 'zinc' | 'canvas' | 'fog';
 export type FontFamily = 'serif' | 'sans' | 'mono';
 
 export interface EditorSettings {
   theme: ThemeMode;
   fontFamily: FontFamily;
-  fontSize: number; // in px, default 18
-  lineHeight: number; // default 1.75
-  paragraphSpacing: number; // in px, default 16
-  typewriterMode: boolean; // keep active line in center
+  fontSize: number; // in px, default 19
+  lineHeight: number; // default 1.8
+  paragraphSpacing: number; // in px, default 18
+  typewriterMode: boolean;
   breathingCursor: boolean;
   soundEffects: boolean;
-  autoSaveDelayMs: number; // default 200ms
+  autoSaveDelayMs: number;
   showLineNumbers: boolean;
-  focusMode: boolean; // hide sidebars
-  dualModePreview: boolean; // live preview vs split markdown
+  focusMode: boolean;
+  dualModePreview: boolean;
 }
 
 export interface WritingSprint {

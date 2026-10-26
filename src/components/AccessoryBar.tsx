@@ -25,6 +25,7 @@ interface AccessoryBarProps {
   onToggleFocus: () => void;
   onInsertTimestamp: () => void;
   saveStatus: 'saved' | 'saving';
+  isLightMode: boolean;
 }
 
 export const AccessoryBar: React.FC<AccessoryBarProps> = ({
@@ -36,6 +37,7 @@ export const AccessoryBar: React.FC<AccessoryBarProps> = ({
   onToggleFocus,
   onInsertTimestamp,
   saveStatus,
+  isLightMode,
 }) => {
   if (!editor) return null;
 
@@ -60,14 +62,24 @@ export const AccessoryBar: React.FC<AccessoryBarProps> = ({
       .run();
   };
 
+  const barBg = isLightMode
+    ? 'border-[#e4e0d7] bg-[#f7f5f0]/85 text-[#6c6760]'
+    : 'border-white/[0.06] bg-[#16171a]/85 text-[#9a968f]';
+
+  const btnHover = isLightMode ? 'hover:bg-black/[0.05] hover:text-[#222]' : 'hover:bg-white/[0.06] hover:text-[#eee]';
+  const activeBtn = isLightMode ? 'bg-black/[0.08] text-[#111]' : 'bg-white/[0.08] text-[#f2efe9]';
+  const divider = isLightMode ? 'bg-[#e4e0d7]' : 'bg-white/[0.07]';
+
   return (
-    <div className="sticky bottom-0 left-0 right-0 z-30 flex items-center justify-between border-t border-neutral-800/60 bg-neutral-950/85 backdrop-blur-md px-3 py-1.5 text-xs text-neutral-400 select-none transition-all">
-      {/* Quick punctuation & pairing (PureWriter style) */}
+    <div
+      className={`sticky bottom-0 left-0 right-0 z-30 flex items-center justify-between border-t ${barBg} backdrop-blur-md px-3.5 py-1.5 text-xs select-none transition-colors duration-200`}
+    >
+      {/* Punctuation & Quick Formatting */}
       <div className="flex items-center gap-1 overflow-x-auto scrollbar-none py-0.5">
         <button
           type="button"
           onClick={() => insertPair('“', '”')}
-          className="rounded px-2 py-1 font-serif text-sm text-neutral-300 hover:bg-neutral-800 hover:text-white transition"
+          className={`rounded-md px-2 py-0.5 font-serif text-sm transition ${btnHover}`}
           title="Smart double quotes"
         >
           “”
@@ -75,7 +87,7 @@ export const AccessoryBar: React.FC<AccessoryBarProps> = ({
         <button
           type="button"
           onClick={() => insertPair('‘', '’')}
-          className="rounded px-2 py-1 font-serif text-sm text-neutral-300 hover:bg-neutral-800 hover:text-white transition"
+          className={`rounded-md px-2 py-0.5 font-serif text-sm transition ${btnHover}`}
           title="Smart single quotes"
         >
           ‘’
@@ -83,7 +95,7 @@ export const AccessoryBar: React.FC<AccessoryBarProps> = ({
         <button
           type="button"
           onClick={() => insertPair('(', ')')}
-          className="rounded px-2 py-1 font-mono text-xs text-neutral-300 hover:bg-neutral-800 hover:text-white transition"
+          className={`rounded-md px-2 py-0.5 font-mono text-[11px] transition ${btnHover}`}
           title="Parentheses"
         >
           ( )
@@ -91,7 +103,7 @@ export const AccessoryBar: React.FC<AccessoryBarProps> = ({
         <button
           type="button"
           onClick={() => insertPair('[', ']')}
-          className="rounded px-2 py-1 font-mono text-xs text-neutral-300 hover:bg-neutral-800 hover:text-white transition"
+          className={`rounded-md px-2 py-0.5 font-mono text-[11px] transition ${btnHover}`}
           title="Brackets"
         >
           [ ]
@@ -99,7 +111,7 @@ export const AccessoryBar: React.FC<AccessoryBarProps> = ({
         <button
           type="button"
           onClick={() => insertPair('《', '》')}
-          className="rounded px-2 py-1 font-serif text-xs text-neutral-300 hover:bg-neutral-800 hover:text-white transition"
+          className={`rounded-md px-2 py-0.5 font-serif text-xs transition ${btnHover}`}
           title="Book title brackets"
         >
           《》
@@ -107,21 +119,18 @@ export const AccessoryBar: React.FC<AccessoryBarProps> = ({
         <button
           type="button"
           onClick={() => insertPair('— ', ' ')}
-          className="rounded px-2 py-1 font-serif text-xs text-neutral-300 hover:bg-neutral-800 hover:text-white transition"
+          className={`rounded-md px-2 py-0.5 font-serif text-xs transition ${btnHover}`}
           title="Em dash"
         >
           —
         </button>
 
-        <div className="mx-1 h-3.5 w-px bg-neutral-800" />
+        <div className={`mx-1.5 h-3.5 w-px ${divider}`} />
 
-        {/* Formatting quick actions */}
         <button
           type="button"
           onClick={() => editor.chain().focus().toggleBold().run()}
-          className={`rounded p-1.5 hover:bg-neutral-800 transition ${
-            editor.isActive('bold') ? 'bg-neutral-800 text-white' : 'text-neutral-400'
-          }`}
+          className={`rounded-md p-1.5 transition ${editor.isActive('bold') ? activeBtn : btnHover}`}
           title="Bold (Ctrl+B)"
         >
           <Bold className="h-3.5 w-3.5" />
@@ -129,9 +138,7 @@ export const AccessoryBar: React.FC<AccessoryBarProps> = ({
         <button
           type="button"
           onClick={() => editor.chain().focus().toggleItalic().run()}
-          className={`rounded p-1.5 hover:bg-neutral-800 transition ${
-            editor.isActive('italic') ? 'bg-neutral-800 text-white' : 'text-neutral-400'
-          }`}
+          className={`rounded-md p-1.5 transition ${editor.isActive('italic') ? activeBtn : btnHover}`}
           title="Italic (Ctrl+I)"
         >
           <Italic className="h-3.5 w-3.5" />
@@ -139,8 +146,8 @@ export const AccessoryBar: React.FC<AccessoryBarProps> = ({
         <button
           type="button"
           onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-          className={`rounded p-1.5 hover:bg-neutral-800 transition ${
-            editor.isActive('heading', { level: 2 }) ? 'bg-neutral-800 text-white' : 'text-neutral-400'
+          className={`rounded-md p-1.5 transition ${
+            editor.isActive('heading', { level: 2 }) ? activeBtn : btnHover
           }`}
           title="Heading"
         >
@@ -149,8 +156,8 @@ export const AccessoryBar: React.FC<AccessoryBarProps> = ({
         <button
           type="button"
           onClick={() => editor.chain().focus().toggleBlockquote().run()}
-          className={`rounded p-1.5 hover:bg-neutral-800 transition ${
-            editor.isActive('blockquote') ? 'bg-neutral-800 text-white' : 'text-neutral-400'
+          className={`rounded-md p-1.5 transition ${
+            editor.isActive('blockquote') ? activeBtn : btnHover
           }`}
           title="Blockquote"
         >
@@ -159,8 +166,8 @@ export const AccessoryBar: React.FC<AccessoryBarProps> = ({
         <button
           type="button"
           onClick={() => editor.chain().focus().toggleBulletList().run()}
-          className={`rounded p-1.5 hover:bg-neutral-800 transition ${
-            editor.isActive('bulletList') ? 'bg-neutral-800 text-white' : 'text-neutral-400'
+          className={`rounded-md p-1.5 transition ${
+            editor.isActive('bulletList') ? activeBtn : btnHover
           }`}
           title="Bullet List"
         >
@@ -169,7 +176,7 @@ export const AccessoryBar: React.FC<AccessoryBarProps> = ({
         <button
           type="button"
           onClick={insertWikilink}
-          className="rounded p-1.5 hover:bg-neutral-800 text-neutral-300 transition"
+          className={`rounded-md p-1.5 transition ${btnHover}`}
           title="Obsidian Wikilink [[Note]]"
         >
           <Link2 className="h-3.5 w-3.5" />
@@ -177,20 +184,20 @@ export const AccessoryBar: React.FC<AccessoryBarProps> = ({
         <button
           type="button"
           onClick={onInsertTimestamp}
-          className="rounded p-1.5 hover:bg-neutral-800 text-neutral-300 transition"
+          className={`rounded-md p-1.5 transition ${btnHover}`}
           title="TimeJot Timestamp Stamp"
         >
           <Clock className="h-3.5 w-3.5" />
         </button>
       </div>
 
-      {/* Editor Controls & PureWriter Safety indicator */}
+      {/* Editor Controls & Fail-Safe Indicator */}
       <div className="flex items-center gap-1.5 pl-2 shrink-0">
         <button
           type="button"
           onClick={() => editor.chain().focus().undo().run()}
           disabled={!editor.can().undo()}
-          className="rounded p-1.5 hover:bg-neutral-800 disabled:opacity-30 transition"
+          className={`rounded-md p-1.5 disabled:opacity-30 transition ${btnHover}`}
           title="Undo (Ctrl+Z)"
         >
           <Undo2 className="h-3.5 w-3.5" />
@@ -199,62 +206,56 @@ export const AccessoryBar: React.FC<AccessoryBarProps> = ({
           type="button"
           onClick={() => editor.chain().focus().redo().run()}
           disabled={!editor.can().redo()}
-          className="rounded p-1.5 hover:bg-neutral-800 disabled:opacity-30 transition"
+          className={`rounded-md p-1.5 disabled:opacity-30 transition ${btnHover}`}
           title="Redo (Ctrl+Y)"
         >
           <Redo2 className="h-3.5 w-3.5" />
         </button>
 
-        <div className="mx-1 h-3.5 w-px bg-neutral-800" />
+        <div className={`mx-1.5 h-3.5 w-px ${divider}`} />
 
-        {/* Typewriter mode toggle */}
         <button
           type="button"
           onClick={onToggleTypewriter}
-          className={`flex items-center gap-1 rounded px-2 py-1 text-[11px] font-mono transition ${
-            typewriterMode
-              ? 'bg-neutral-200 text-black font-semibold'
-              : 'hover:bg-neutral-800 text-neutral-400'
+          className={`flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-mono transition ${
+            typewriterMode ? activeBtn : btnHover
           }`}
-          title="Typewriter Mode (keep typing line in vertical center)"
+          title="Typewriter Mode (keep active line centered)"
         >
           <Crosshair className="h-3 w-3" />
           <span className="hidden sm:inline">Typewriter</span>
         </button>
 
-        {/* History time machine scrubber */}
         <button
           type="button"
           onClick={onOpenHistory}
-          className="flex items-center gap-1 rounded px-2 py-1 text-[11px] font-mono text-neutral-300 hover:bg-neutral-800 transition"
+          className={`flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-mono transition ${btnHover}`}
           title="PureWriter History Machine"
         >
           <History className="h-3 w-3" />
           <span className="hidden sm:inline">History</span>
         </button>
 
-        {/* Focus / Distraction-free */}
         <button
           type="button"
           onClick={onToggleFocus}
-          className="rounded p-1.5 hover:bg-neutral-800 text-neutral-400 hover:text-white transition"
-          title={focusMode ? 'Exit Zen Mode' : 'Zen Focus Mode (Hide UI)'}
+          className={`rounded-md p-1.5 transition ${btnHover}`}
+          title={focusMode ? 'Exit Zen Mode' : 'Zen Focus Mode'}
         >
           {focusMode ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
         </button>
 
-        {/* Fail-safe live indicator */}
-        <div
-          className="flex items-center gap-1.5 pl-1.5"
-          title="Keystroke Fail-Safe Engine: continuous local persistence"
-        >
+        {/* Soft Save Status */}
+        <div className="flex items-center gap-1.5 pl-1.5">
           <span
-            className={`h-2 w-2 rounded-full transition-colors duration-300 ${
-              saveStatus === 'saved' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.7)]' : 'bg-amber-400 animate-pulse'
+            className={`h-1.5 w-1.5 rounded-full transition-all duration-300 ${
+              saveStatus === 'saved'
+                ? 'bg-emerald-500/80'
+                : 'bg-amber-400/80 animate-pulse'
             }`}
           />
-          <span className="text-[10px] font-mono uppercase tracking-wider text-neutral-500 hidden md:inline">
-            {saveStatus === 'saved' ? 'Saved' : 'Saving...'}
+          <span className="text-[10px] font-mono uppercase tracking-wider opacity-60 hidden md:inline">
+            {saveStatus === 'saved' ? 'Saved' : 'Saving'}
           </span>
         </div>
       </div>

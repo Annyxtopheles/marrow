@@ -7,7 +7,7 @@ import { TimeJotPanel } from './components/TimeJotPanel';
 import { BacklinksPanel } from './components/BacklinksPanel';
 import { StatsBar } from './components/StatsBar';
 import { SettingsModal } from './components/SettingsModal';
-import { PanelLeftClose, PanelLeft, Clock, Link2, Plus } from 'lucide-react';
+import { PanelLeftClose, PanelLeft, Clock, Link2, Plus, Sparkles } from 'lucide-react';
 
 export function App() {
   const [notes, setNotes] = useState<Note[]>(() => StorageService.getNotes());
@@ -30,20 +30,16 @@ export function App() {
 
   const activeNote = notes.find((n) => n.id === activeNoteId) || notes[0] || null;
 
-  // Persist settings
   const handleUpdateSettings = (newSettings: EditorSettings) => {
     setSettings(newSettings);
     StorageService.saveSettings(newSettings);
   };
 
-  // Fail-safe auto-save handler (PureWriter standard)
   const handleUpdateNote = (updatedNote: Note) => {
     setSaveStatus('saving');
 
-    // Update in-memory state immediately for zero typing lag
     setNotes((prevNotes) => {
-      const nextNotes = prevNotes.map((n) => (n.id === updatedNote.id ? updatedNote : n));
-      return nextNotes;
+      return prevNotes.map((n) => (n.id === updatedNote.id ? updatedNote : n));
     });
 
     if (saveTimeoutRef.current) {
@@ -57,7 +53,6 @@ export function App() {
         return latestNotes;
       });
 
-      // Periodic history snapshot for the PureWriter time machine slider
       const now = Date.now();
       if (now - lastSnapshotRef.current > 30000) {
         lastSnapshotRef.current = now;
@@ -131,7 +126,6 @@ export function App() {
     StorageService.saveNotes(nextNotes);
   };
 
-  // Navigate to an Obsidian [[Wikilink]] title or create it on the fly
   const handleNavigateToTitle = (title: string) => {
     const found = notes.find((n) => n.title.trim().toLowerCase() === title.trim().toLowerCase());
     if (found) {
@@ -182,41 +176,63 @@ export function App() {
     URL.revokeObjectURL(url);
   };
 
+  // Modern, low-contrast, warm theme classes
+  const isLightMode = settings.theme === 'canvas' || settings.theme === 'fog';
+
   const themeClasses =
-    settings.theme === 'amoled'
-      ? 'bg-black text-neutral-200'
-      : settings.theme === 'slate'
-      ? 'bg-[#111113] text-neutral-200'
-      : settings.theme === 'paper'
-      ? 'bg-white text-neutral-900'
-      : 'bg-[#faf6ee] text-[#2c2925]';
+    settings.theme === 'charcoal'
+      ? 'bg-[#151618] text-[#dedad4]'
+      : settings.theme === 'zinc'
+      ? 'bg-[#18191c] text-[#d6d6dc]'
+      : settings.theme === 'canvas'
+      ? 'bg-[#f7f5f0] text-[#2c2a27]'
+      : 'bg-[#ece9e3] text-[#302e2b]';
+
+  const headerBorder = isLightMode ? 'border-[#e4e0d7]' : 'border-white/[0.07]';
+  const headerBg = isLightMode ? 'bg-[#f7f5f0]/90' : 'bg-[#151618]/90';
+  const buttonHover = isLightMode ? 'hover:bg-black/[0.05]' : 'hover:bg-white/[0.06]';
+  const activeBtn = isLightMode
+    ? 'bg-black/[0.08] text-[#222] font-medium'
+    : 'bg-white/[0.08] text-[#f0ece4] font-medium';
 
   return (
-    <div className={`flex flex-col h-screen w-screen overflow-hidden select-none transition-colors duration-300 ${themeClasses}`}>
-      {/* Main App Bar (Zen / Minimalist) */}
+    <div
+      className={`flex flex-col h-screen w-screen overflow-hidden select-none transition-colors duration-200 ${themeClasses}`}
+    >
+      {/* Refined Minimalist App Bar */}
       {!settings.focusMode && (
-        <header className="h-10 border-b border-neutral-900/80 bg-inherit px-3 flex items-center justify-between text-xs text-neutral-400 select-none">
-          <div className="flex items-center gap-2">
+        <header
+          className={`h-11 border-b ${headerBorder} ${headerBg} backdrop-blur-md px-3.5 flex items-center justify-between text-xs select-none`}
+        >
+          <div className="flex items-center gap-2.5">
             <button
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className="p-1 rounded hover:bg-neutral-800 text-neutral-400 hover:text-white transition"
-              title="Toggle Obsidian Vault Explorer (Ctrl+\)"
+              className={`p-1.5 rounded-md ${buttonHover} text-neutral-400 hover:text-inherit transition`}
+              title="Toggle Sidebar (Ctrl+\)"
             >
               {isSidebarOpen ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeft className="h-4 w-4" />}
             </button>
-            <span className="font-semibold text-white tracking-wider text-xs font-mono uppercase">
-              PureJot
-            </span>
-            <span className="text-[10px] text-neutral-500 font-mono px-1.5 py-0.5 rounded bg-neutral-900 border border-neutral-800">
-              v1.0 • Fail-Safe
-            </span>
+            <div className="flex items-center gap-1.5">
+              <span className="font-serif tracking-tight text-sm font-medium text-inherit">
+                PureJot
+              </span>
+              <span
+                className={`text-[10px] font-mono px-1.5 py-0.5 rounded-md border ${
+                  isLightMode
+                    ? 'bg-black/[0.03] border-black/[0.07] text-neutral-600'
+                    : 'bg-white/[0.04] border-white/[0.06] text-neutral-400'
+                }`}
+              >
+                editorial
+              </span>
+            </div>
           </div>
 
           <div className="flex items-center gap-1.5">
             <button
               onClick={() => setIsTimeJotOpen(!isTimeJotOpen)}
-              className={`flex items-center gap-1 px-2 py-1 rounded text-[11px] font-mono transition ${
-                isTimeJotOpen ? 'bg-neutral-800 text-white font-medium' : 'hover:bg-neutral-900 text-neutral-400'
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-mono transition ${
+                isTimeJotOpen ? activeBtn : `${buttonHover} text-neutral-400`
               }`}
               title="TimeJot Timeline & Sprints"
             >
@@ -226,8 +242,8 @@ export function App() {
 
             <button
               onClick={() => setIsBacklinksOpen(!isBacklinksOpen)}
-              className={`flex items-center gap-1 px-2 py-1 rounded text-[11px] font-mono transition ${
-                isBacklinksOpen ? 'bg-neutral-800 text-white font-medium' : 'hover:bg-neutral-900 text-neutral-400'
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-mono transition ${
+                isBacklinksOpen ? activeBtn : `${buttonHover} text-neutral-400`
               }`}
               title="Obsidian Knowledge Graph & Links"
             >
@@ -255,6 +271,7 @@ export function App() {
             isTimeJotOpen={isTimeJotOpen}
             onToggleBacklinks={() => setIsBacklinksOpen(!isBacklinksOpen)}
             isBacklinksOpen={isBacklinksOpen}
+            isLightMode={isLightMode}
           />
         )}
 
@@ -273,19 +290,21 @@ export function App() {
             onToggleFocus={() =>
               handleUpdateSettings({ ...settings, focusMode: !settings.focusMode })
             }
+            isLightMode={isLightMode}
           />
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center text-center p-8 text-neutral-500">
-            <h3 className="text-lg font-semibold text-neutral-300 mb-2">No Document Selected</h3>
-            <p className="text-xs max-w-sm mb-4">
-              Select an existing document from your vault or create a brand new draft to begin writing.
+            <Sparkles className="h-6 w-6 text-neutral-400 mb-2 opacity-50" />
+            <h3 className="text-base font-serif font-medium text-inherit mb-1">No Document Open</h3>
+            <p className="text-xs max-w-sm mb-4 text-neutral-400">
+              Select an entry from your vault or draft a new piece.
             </p>
             <button
               onClick={() => handleCreateNote(null)}
-              className="flex items-center gap-2 px-4 py-2 bg-white text-black font-semibold text-xs rounded-lg hover:bg-neutral-200 transition"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 bg-neutral-200 text-neutral-900 font-medium text-xs rounded-lg hover:bg-white transition"
             >
-              <Plus className="h-4 w-4" />
-              Create Document
+              <Plus className="h-3.5 w-3.5" />
+              New Draft
             </button>
           </div>
         )}
@@ -297,6 +316,7 @@ export function App() {
             allNotes={notes}
             onSelectNote={(n) => setActiveNoteId(n.id)}
             onUpdateNote={handleUpdateNote}
+            isLightMode={isLightMode}
           />
         )}
 
@@ -306,20 +326,24 @@ export function App() {
             activeNote={activeNote}
             allNotes={notes}
             onSelectNote={(n) => setActiveNoteId(n.id)}
+            isLightMode={isLightMode}
           />
         )}
       </div>
 
       {/* PureWriter Live Statistics Bar */}
-      {!settings.focusMode && <StatsBar note={activeNote} saveStatus={saveStatus} />}
+      {!settings.focusMode && (
+        <StatsBar note={activeNote} saveStatus={saveStatus} isLightMode={isLightMode} />
+      )}
 
-      {/* Typography & App Settings Modal */}
+      {/* Settings Modal */}
       {isSettingsOpen && (
         <SettingsModal
           settings={settings}
           onUpdateSettings={handleUpdateSettings}
           onClose={() => setIsSettingsOpen(false)}
           onExportVault={handleExportVault}
+          isLightMode={isLightMode}
         />
       )}
     </div>

@@ -15,6 +15,7 @@ interface EditorProps {
   saveStatus: 'saved' | 'saving';
   onToggleTypewriter: () => void;
   onToggleFocus: () => void;
+  isLightMode: boolean;
 }
 
 export const Editor: React.FC<EditorProps> = ({
@@ -25,6 +26,7 @@ export const Editor: React.FC<EditorProps> = ({
   saveStatus,
   onToggleTypewriter,
   onToggleFocus,
+  isLightMode,
 }) => {
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [rawMarkdownMode, setRawMarkdownMode] = useState(false);
@@ -40,13 +42,13 @@ export const Editor: React.FC<EditorProps> = ({
         },
       }),
       Placeholder.configure({
-        placeholder: 'Begin your prose... Every keystroke is protected.',
+        placeholder: 'Begin your prose... Every stroke is protected.',
       }),
     ],
     content: note.content,
     editorProps: {
       attributes: {
-        class: `prose prose-invert max-w-none focus:outline-none min-h-[60vh] text-neutral-200 transition-all ${
+        class: `prose max-w-none focus:outline-none min-h-[60vh] transition-all ${
           settings.breathingCursor ? 'breathing-cursor' : ''
         }`,
       },
@@ -67,12 +69,10 @@ export const Editor: React.FC<EditorProps> = ({
     },
   });
 
-  // Keep editor content in sync when active note changes
   useEffect(() => {
     if (editor && editor.getHTML() !== note.content) {
       editor.commands.setContent(note.content, { emitUpdate: false });
     }
-    // Also sync raw markdown preview
     setMarkdownContent(
       note.content
         .replace(/<h1>(.*?)<\/h1>/gi, '# $1\n\n')
@@ -86,7 +86,6 @@ export const Editor: React.FC<EditorProps> = ({
     );
   }, [note.id]);
 
-  // PureWriter Typewriter scrolling: center active line on selection change
   useEffect(() => {
     if (!editor || !settings.typewriterMode) return;
 
@@ -109,7 +108,6 @@ export const Editor: React.FC<EditorProps> = ({
     };
   }, [editor, settings.typewriterMode]);
 
-  // Obsidian-style click interceptor for [[Wikilinks]]
   const handleEditorClick = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
     const text = target.textContent || '';
@@ -163,18 +161,26 @@ export const Editor: React.FC<EditorProps> = ({
       ? 'font-mono'
       : 'font-sans';
 
+  const subBarBorder = isLightMode ? 'border-[#e4e0d7]' : 'border-white/[0.06]';
+  const tagBg = isLightMode
+    ? 'bg-black/[0.03] border-black/[0.06] text-neutral-600'
+    : 'bg-white/[0.04] border-white/[0.06] text-neutral-400';
+  const btnHover = isLightMode ? 'hover:bg-black/[0.05]' : 'hover:bg-white/[0.06]';
+
   return (
     <div className="flex-1 flex flex-col h-full bg-inherit relative overflow-hidden">
-      {/* Top Bar for Note Details & Mode Toggle */}
-      <div className="flex items-center justify-between px-6 py-2 border-b border-neutral-900/60 bg-inherit select-none text-xs">
-        <div className="flex items-center gap-2 text-neutral-500 font-mono text-[11px]">
-          <span>Obsidian Live Preview</span>
+      {/* Top Details & Markdown Toggle Bar */}
+      <div
+        className={`flex items-center justify-between px-6 py-2 border-b ${subBarBorder} bg-inherit select-none text-xs`}
+      >
+        <div className="flex items-center gap-2 text-neutral-400 font-mono text-[11px]">
+          <span className="opacity-75">Live Preview</span>
           {note.tags.length > 0 && (
             <div className="flex items-center gap-1.5 ml-2">
               {note.tags.map((t) => (
                 <span
                   key={t}
-                  className="px-1.5 py-0.5 rounded bg-neutral-900 border border-neutral-800 text-neutral-400"
+                  className={`px-1.5 py-0.5 rounded-md border text-[10px] ${tagBg}`}
                 >
                   #{t}
                 </span>
@@ -183,27 +189,27 @@ export const Editor: React.FC<EditorProps> = ({
           )}
         </div>
 
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setRawMarkdownMode(!rawMarkdownMode)}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-[11px] font-mono transition ${
-              rawMarkdownMode
-                ? 'bg-neutral-800 text-white font-semibold'
-                : 'hover:bg-neutral-900 text-neutral-400 hover:text-neutral-200'
-            }`}
-            title="Toggle Raw Markdown Split View"
-          >
-            <Code className="h-3 w-3" />
-            <span>Markdown View</span>
-          </button>
-        </div>
+        <button
+          onClick={() => setRawMarkdownMode(!rawMarkdownMode)}
+          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-mono transition text-neutral-400 ${btnHover} ${
+            rawMarkdownMode
+              ? isLightMode
+                ? 'bg-black/[0.08] text-[#111]'
+                : 'bg-white/[0.08] text-[#f2efe9]'
+              : ''
+          }`}
+          title="Toggle Raw Markdown Split View"
+        >
+          <Code className="h-3 w-3" />
+          <span>Markdown Source</span>
+        </button>
       </div>
 
-      {/* Editor Scroll Container */}
+      {/* Editor Scroll Container with Refined Line-Length */}
       <div
         ref={editorContainerRef}
         onClick={handleEditorClick}
-        className={`flex-1 overflow-y-auto px-6 md:px-16 lg:px-24 py-8 transition-all ${
+        className={`flex-1 overflow-y-auto px-6 md:px-16 lg:px-24 py-10 transition-all ${
           settings.typewriterMode ? 'typewriter-mode' : ''
         }`}
         style={{
@@ -211,23 +217,26 @@ export const Editor: React.FC<EditorProps> = ({
           lineHeight: settings.lineHeight,
         }}
       >
-        <div className="max-w-3xl mx-auto space-y-6">
+        <div className="max-w-[72ch] mx-auto space-y-7">
+          {/* Note Title */}
           <input
             ref={titleInputRef}
             type="text"
-            placeholder="Untitled Note..."
+            placeholder="Untitled Document..."
             value={note.title}
             onChange={handleTitleChange}
-            className={`w-full bg-transparent font-bold tracking-tight text-white placeholder-neutral-700 focus:outline-none transition-all ${
+            className={`w-full bg-transparent font-medium tracking-tight placeholder-neutral-500/50 focus:outline-none transition-all ${
               settings.fontFamily === 'serif' ? 'font-serif text-3xl md:text-4xl' : 'font-sans text-2xl md:text-3xl'
             }`}
           />
 
           {rawMarkdownMode ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-neutral-900 font-mono text-sm">
+            <div
+              className={`grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t ${subBarBorder} font-mono text-sm`}
+            >
               <div className="space-y-2">
-                <div className="text-[10px] uppercase font-mono text-neutral-500">
-                  Raw Markdown Source
+                <div className="text-[10px] uppercase font-mono tracking-wider opacity-60">
+                  Raw Markdown
                 </div>
                 <textarea
                   value={markdownContent}
@@ -239,14 +248,24 @@ export const Editor: React.FC<EditorProps> = ({
                       .join('');
                     if (editor) editor.commands.setContent(html);
                   }}
-                  className="w-full h-[60vh] bg-neutral-950 border border-neutral-800 rounded-lg p-4 text-xs font-mono text-neutral-300 resize-none focus:outline-none focus:border-neutral-700"
+                  className={`w-full h-[60vh] rounded-lg p-4 text-xs font-mono resize-none focus:outline-none border ${
+                    isLightMode
+                      ? 'bg-black/[0.02] border-black/[0.08] text-[#2c2a27]'
+                      : 'bg-white/[0.02] border-white/[0.08] text-[#dedad4]'
+                  }`}
                 />
               </div>
               <div className="space-y-2">
-                <div className="text-[10px] uppercase font-mono text-neutral-500">
-                  Live Formatted Output
+                <div className="text-[10px] uppercase font-mono tracking-wider opacity-60">
+                  Formatted
                 </div>
-                <div className={`${fontClass} p-4 bg-neutral-950/40 rounded-lg border border-neutral-900 h-[60vh] overflow-y-auto`}>
+                <div
+                  className={`${fontClass} p-4 rounded-lg border h-[60vh] overflow-y-auto ${
+                    isLightMode
+                      ? 'bg-black/[0.01] border-black/[0.06]'
+                      : 'bg-white/[0.02] border-white/[0.06]'
+                  }`}
+                >
                   <EditorContent editor={editor} />
                 </div>
               </div>
@@ -259,7 +278,7 @@ export const Editor: React.FC<EditorProps> = ({
         </div>
       </div>
 
-      {/* PureWriter Signature Accessory Bar */}
+      {/* Accessory Bar */}
       <AccessoryBar
         editor={editor}
         onOpenHistory={() => setShowHistoryModal(true)}
@@ -269,6 +288,7 @@ export const Editor: React.FC<EditorProps> = ({
         onToggleFocus={onToggleFocus}
         onInsertTimestamp={handleInsertTimestamp}
         saveStatus={saveStatus}
+        isLightMode={isLightMode}
       />
 
       {/* History Time Machine Modal */}

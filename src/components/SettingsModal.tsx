@@ -7,6 +7,7 @@ interface SettingsModalProps {
   onUpdateSettings: (newSettings: EditorSettings) => void;
   onClose: () => void;
   onExportVault: () => void;
+  isLightMode: boolean;
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -14,25 +15,35 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onUpdateSettings,
   onClose,
   onExportVault,
+  isLightMode,
 }) => {
   const update = <K extends keyof EditorSettings>(key: K, value: EditorSettings[K]) => {
     onUpdateSettings({ ...settings, [key]: value });
   };
 
+  const border = isLightMode ? 'border-[#e4e0d7]' : 'border-white/[0.08]';
+  const modalBg = isLightMode ? 'bg-[#f7f5f0] text-[#2c2a27]' : 'bg-[#18191c] text-[#dedad4]';
+  const cardBg = isLightMode
+    ? 'bg-black/[0.02] border-black/[0.06]'
+    : 'bg-white/[0.02] border-white/[0.06]';
+  const itemHover = isLightMode ? 'hover:bg-black/[0.04]' : 'hover:bg-white/[0.04]';
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-150">
-      <div className="flex flex-col w-full max-w-lg rounded-xl border border-neutral-800 bg-neutral-950 text-neutral-200 shadow-2xl overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-150">
+      <div
+        className={`flex flex-col w-full max-w-lg rounded-xl border ${border} ${modalBg} shadow-2xl overflow-hidden`}
+      >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-neutral-800/80 px-6 py-4">
+        <div className={`flex items-center justify-between border-b ${border} px-6 py-4`}>
           <div className="flex items-center gap-2">
-            <Sliders className="h-4 w-4 text-white" />
-            <h2 className="text-sm font-semibold text-white tracking-wide">
-              Typography &amp; Writing Settings
+            <Sliders className="h-4 w-4 opacity-70" />
+            <h2 className="text-sm font-medium tracking-wide">
+              Typography &amp; Environment
             </h2>
           </div>
           <button
             onClick={onClose}
-            className="rounded p-1.5 text-neutral-400 hover:bg-neutral-900 hover:text-white transition"
+            className={`rounded-md p-1.5 transition ${itemHover} opacity-70 hover:opacity-100`}
           >
             <X className="h-4 w-4" />
           </button>
@@ -40,152 +51,190 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
         {/* Settings Body */}
         <div className="p-6 space-y-6 overflow-y-auto max-h-[75vh] text-xs">
-          {/* Minimalist Monochromatic Themes */}
+          {/* Low-Contrast Color Schemes */}
           <div className="space-y-2.5">
-            <label className="text-[11px] font-mono uppercase tracking-wider text-neutral-400 block">
-              Monochrome Theme
+            <label className="text-[11px] font-mono uppercase tracking-wider opacity-60 block">
+              Low-Contrast Color Palette
             </label>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {[
-                { id: 'amoled', name: 'AMOLED Black', bg: 'bg-black text-white border-neutral-800' },
-                { id: 'slate', name: 'Obsidian Slate', bg: 'bg-[#121214] text-neutral-200 border-neutral-800' },
-                { id: 'paper', name: 'Clean Paper', bg: 'bg-neutral-100 text-black border-neutral-300' },
-                { id: 'ivory', name: 'Warm Ivory', bg: 'bg-[#faf6ee] text-[#2d2a26] border-[#e2dcd0]' },
+                {
+                  id: 'charcoal',
+                  name: 'Charcoal',
+                  sub: 'Warm Dark',
+                  style: 'bg-[#151618] text-[#dedad4] border-white/10',
+                },
+                {
+                  id: 'zinc',
+                  name: 'Muted Zinc',
+                  sub: 'Cool Dark',
+                  style: 'bg-[#18191c] text-[#d6d6dc] border-white/10',
+                },
+                {
+                  id: 'canvas',
+                  name: 'Canvas Linen',
+                  sub: 'Warm Light',
+                  style: 'bg-[#f7f5f0] text-[#2c2a27] border-black/10',
+                },
+                {
+                  id: 'fog',
+                  name: 'Warm Fog',
+                  sub: 'Soft Light',
+                  style: 'bg-[#ece9e3] text-[#302e2b] border-black/10',
+                },
               ].map((th) => (
                 <button
                   key={th.id}
                   type="button"
                   onClick={() => update('theme', th.id as ThemeMode)}
-                  className={`p-3 rounded-lg border text-center transition flex flex-col items-center justify-center gap-1.5 ${th.bg} ${
-                    settings.theme === th.id ? 'ring-2 ring-white font-semibold' : 'opacity-70 hover:opacity-100'
+                  className={`p-3 rounded-lg border text-center transition flex flex-col items-center justify-center gap-1 ${th.style} ${
+                    settings.theme === th.id
+                      ? 'ring-2 ring-stone-400 font-medium'
+                      : 'opacity-70 hover:opacity-100'
                   }`}
                 >
-                  <span className="text-[11px]">{th.name}</span>
+                  <span className="text-xs">{th.name}</span>
+                  <span className="text-[10px] opacity-60 font-mono">{th.sub}</span>
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Font Family Selection */}
+          {/* Typeface Selection */}
           <div className="space-y-2.5">
-            <label className="text-[11px] font-mono uppercase tracking-wider text-neutral-400 block">
-              Typeface
+            <label className="text-[11px] font-mono uppercase tracking-wider opacity-60 block">
+              Editorial Typeface
             </label>
             <div className="grid grid-cols-3 gap-2">
               {[
-                { id: 'serif', name: 'Literary Serif', sample: 'Georgia, serif' },
-                { id: 'sans', name: 'Modern Sans', sample: 'system-ui, sans-serif' },
-                { id: 'mono', name: 'Distraction Mono', sample: 'monospace' },
+                {
+                  id: 'serif',
+                  name: 'Newsreader Serif',
+                  sub: 'Modern Editorial',
+                  font: 'var(--font-serif)',
+                },
+                {
+                  id: 'sans',
+                  name: 'Jakarta Sans',
+                  sub: 'Contemporary',
+                  font: 'var(--font-sans)',
+                },
+                {
+                  id: 'mono',
+                  name: 'JetBrains Mono',
+                  sub: 'Focus Minimal',
+                  font: 'var(--font-mono)',
+                },
               ].map((f) => (
                 <button
                   key={f.id}
                   type="button"
                   onClick={() => update('fontFamily', f.id as FontFamily)}
-                  className={`p-2.5 rounded-lg border text-center transition ${
+                  className={`p-2.5 rounded-lg border text-center transition ${cardBg} ${
                     settings.fontFamily === f.id
-                      ? 'border-white bg-neutral-900 text-white font-semibold'
-                      : 'border-neutral-800 bg-neutral-950 text-neutral-400 hover:border-neutral-700'
+                      ? 'ring-2 ring-stone-400 font-medium'
+                      : 'opacity-70 hover:opacity-100'
                   }`}
-                  style={{ fontFamily: f.sample }}
+                  style={{ fontFamily: f.font }}
                 >
                   <div className="text-xs">{f.name}</div>
-                  <div className="text-[10px] opacity-60 mt-0.5">Aa Bb Gg</div>
+                  <div className="text-[10px] opacity-60 mt-0.5">{f.sub}</div>
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Font Size & Line Height */}
+          {/* Typography Sliders */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <div className="flex justify-between text-neutral-400">
+              <div className="flex justify-between opacity-70">
                 <span>Font Size</span>
-                <span className="font-mono text-white">{settings.fontSize}px</span>
+                <span className="font-mono">{settings.fontSize}px</span>
               </div>
               <input
                 type="range"
-                min={15}
-                max={28}
+                min={16}
+                max={26}
                 value={settings.fontSize}
                 onChange={(e) => update('fontSize', Number(e.target.value))}
-                className="w-full accent-white cursor-pointer h-1.5 bg-neutral-800 rounded-lg appearance-none"
+                className="w-full accent-stone-400 cursor-pointer h-1.5 rounded-lg appearance-none bg-stone-500/20"
               />
             </div>
 
             <div className="space-y-2">
-              <div className="flex justify-between text-neutral-400">
-                <span>Line Spacing</span>
-                <span className="font-mono text-white">{settings.lineHeight.toFixed(2)}x</span>
+              <div className="flex justify-between opacity-70">
+                <span>Line Height</span>
+                <span className="font-mono">{settings.lineHeight.toFixed(2)}x</span>
               </div>
               <input
                 type="range"
-                min={1.4}
-                max={2.4}
+                min={1.5}
+                max={2.3}
                 step={0.05}
                 value={settings.lineHeight}
                 onChange={(e) => update('lineHeight', Number(e.target.value))}
-                className="w-full accent-white cursor-pointer h-1.5 bg-neutral-800 rounded-lg appearance-none"
+                className="w-full accent-stone-400 cursor-pointer h-1.5 rounded-lg appearance-none bg-stone-500/20"
               />
             </div>
           </div>
 
-          {/* PureWriter Ergonomics */}
-          <div className="space-y-3 pt-2 border-t border-neutral-900">
-            <label className="text-[11px] font-mono uppercase tracking-wider text-neutral-400 block">
-              PureWriter Ergonomics
+          {/* Ergonomic Toggles */}
+          <div className={`space-y-3 pt-2 border-t ${border}`}>
+            <label className="text-[11px] font-mono uppercase tracking-wider opacity-60 block">
+              Writing Ergonomics
             </label>
 
             <div className="space-y-2">
-              <label className="flex items-center justify-between p-2.5 rounded-lg border border-neutral-900 bg-neutral-900/40 cursor-pointer hover:bg-neutral-900/70 transition">
+              <label className={`flex items-center justify-between p-2.5 rounded-lg border ${cardBg} cursor-pointer transition ${itemHover}`}>
                 <div>
-                  <div className="font-medium text-white">Smooth Breathing Cursor</div>
-                  <div className="text-[11px] text-neutral-400">
-                    Gentle pulsing cursor animation for meditative writing flow.
+                  <div className="font-medium">Soft Breathing Cursor</div>
+                  <div className="text-[11px] opacity-60">
+                    Gentle pulsing cursor animation for continuous flow state.
                   </div>
                 </div>
                 <input
                   type="checkbox"
                   checked={settings.breathingCursor}
                   onChange={(e) => update('breathingCursor', e.target.checked)}
-                  className="accent-white h-4 w-4 cursor-pointer"
+                  className="accent-stone-400 h-4 w-4 cursor-pointer"
                 />
               </label>
 
-              <label className="flex items-center justify-between p-2.5 rounded-lg border border-neutral-900 bg-neutral-900/40 cursor-pointer hover:bg-neutral-900/70 transition">
+              <label className={`flex items-center justify-between p-2.5 rounded-lg border ${cardBg} cursor-pointer transition ${itemHover}`}>
                 <div>
-                  <div className="font-medium text-white">Typewriter Center Mode</div>
-                  <div className="text-[11px] text-neutral-400">
-                    Locks the active line in the vertical center of the screen.
+                  <div className="font-medium">Typewriter Center Mode</div>
+                  <div className="text-[11px] opacity-60">
+                    Locks current active paragraph in vertical center.
                   </div>
                 </div>
                 <input
                   type="checkbox"
                   checked={settings.typewriterMode}
                   onChange={(e) => update('typewriterMode', e.target.checked)}
-                  className="accent-white h-4 w-4 cursor-pointer"
+                  className="accent-stone-400 h-4 w-4 cursor-pointer"
                 />
               </label>
             </div>
           </div>
 
-          {/* Vault Backup Export */}
-          <div className="pt-2 border-t border-neutral-900">
+          {/* Export */}
+          <div className={`pt-2 border-t ${border}`}>
             <button
               type="button"
               onClick={onExportVault}
-              className="w-full flex items-center justify-center gap-2 py-2 rounded-lg border border-neutral-800 hover:bg-neutral-900 text-neutral-300 hover:text-white transition"
+              className={`w-full flex items-center justify-center gap-2 py-2 rounded-lg border transition ${cardBg} ${itemHover}`}
             >
-              <Download className="h-4 w-4" />
+              <Download className="h-4 w-4 opacity-70" />
               <span>Export Complete Vault (JSON / Markdown)</span>
             </button>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="border-t border-neutral-800/80 px-6 py-3.5 bg-neutral-950 flex justify-end">
+        <div className={`border-t ${border} px-6 py-3.5 flex justify-end`}>
           <button
             onClick={onClose}
-            className="px-4 py-1.5 rounded-lg bg-white text-black font-semibold text-xs hover:bg-neutral-200 transition"
+            className="px-4 py-1.5 rounded-md bg-stone-700 hover:bg-stone-600 text-stone-100 font-medium text-xs transition"
           >
             Done
           </button>

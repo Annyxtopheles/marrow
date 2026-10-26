@@ -6,10 +6,10 @@ const STORAGE_KEY_HISTORY = 'purejot_history_v1';
 const STORAGE_KEY_SETTINGS = 'purejot_settings_v1';
 
 export const DEFAULT_SETTINGS: EditorSettings = {
-  theme: 'amoled',
+  theme: 'charcoal',
   fontFamily: 'serif',
   fontSize: 19,
-  lineHeight: 1.8,
+  lineHeight: 1.85,
   paragraphSpacing: 18,
   typewriterMode: false,
   breathingCursor: true,
