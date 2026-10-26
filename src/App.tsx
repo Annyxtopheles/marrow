@@ -210,7 +210,7 @@ export function App() {
               <img
                 src="/marrow-wordmark.svg"
                 alt="Marrow"
-                className="h-4 w-auto object-contain"
+                className="h-3 w-auto object-contain select-none opacity-90"
                 style={{ filter: isLightMode ? 'brightness(0) opacity(0.8)' : undefined }}
               />
               <span
