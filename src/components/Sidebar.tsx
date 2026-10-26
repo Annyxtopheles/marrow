@@ -316,8 +316,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* New Folder Modal */}
       {showFolderModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+        <div
+          onClick={() => setShowFolderModal(false)}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+        >
           <div
+            onClick={(e) => e.stopPropagation()}
             className={`w-full max-w-sm rounded-xl border p-5 shadow-xl ${
               isLightMode ? 'bg-[#f7f5f0] border-[#e4e0d7]' : 'bg-[#18191c] border-white/[0.08]'
             }`}

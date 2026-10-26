@@ -46,8 +46,14 @@ export const HistorySliderModal: React.FC<HistorySliderModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-200">
-      <div className="flex flex-col w-full max-w-3xl h-[85vh] rounded-xl border border-neutral-800 bg-neutral-950 text-neutral-200 shadow-2xl overflow-hidden">
+    <div
+      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-200"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="flex flex-col w-full max-w-3xl h-[85vh] rounded-xl border border-neutral-800 bg-neutral-950 text-neutral-200 shadow-2xl overflow-hidden"
+      >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-neutral-800/80 px-6 py-4">
           <div>

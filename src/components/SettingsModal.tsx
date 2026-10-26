@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import type { EditorSettings, ThemeMode, FontFamily } from '../types';
 import { X, Sliders, Download } from 'lucide-react';
 
@@ -17,6 +17,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onExportVault,
   isLightMode,
 }) => {
+  const [isHoveringBackdrop, setIsHoveringBackdrop] = useState(false);
+
   const update = <K extends keyof EditorSettings>(key: K, value: EditorSettings[K]) => {
     onUpdateSettings({ ...settings, [key]: value });
   };
@@ -28,10 +30,33 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     : 'bg-white/[0.02] border-white/[0.06]';
   const itemHover = isLightMode ? 'hover:bg-black/[0.04]' : 'hover:bg-white/[0.04]';
 
+  // Subtle, thin outline for selected options (1px delicate ring instead of thick ring-2)
+  const selectedOutline = isLightMode
+    ? 'ring-1 ring-stone-600/35 border-stone-600/35 font-medium shadow-xs'
+    : 'ring-1 ring-stone-300/35 border-stone-300/35 font-medium shadow-xs';
+  const unselectedOutline = isLightMode
+    ? 'border-black/[0.08] opacity-65 hover:opacity-100'
+    : 'border-white/[0.08] opacity-65 hover:opacity-100';
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-150">
+    <div
+      onClick={onClose}
+      onMouseEnter={() => setIsHoveringBackdrop(true)}
+      onMouseLeave={() => setIsHoveringBackdrop(false)}
+      className={`fixed inset-0 z-50 flex items-center justify-center p-4 transition-all duration-300 ${
+        isHoveringBackdrop ? 'bg-black/25 backdrop-blur-[2px]' : 'bg-black/60 backdrop-blur-sm'
+      }`}
+    >
       <div
-        className={`flex flex-col w-full max-w-lg rounded-xl border ${border} ${modalBg} shadow-2xl overflow-hidden`}
+        onClick={(e) => e.stopPropagation()}
+        onMouseEnter={(e) => {
+          e.stopPropagation();
+          setIsHoveringBackdrop(false);
+        }}
+        onMouseLeave={() => setIsHoveringBackdrop(true)}
+        className={`flex flex-col w-full max-w-lg rounded-xl border ${border} ${modalBg} shadow-2xl overflow-hidden transition-all duration-300 ${
+          isHoveringBackdrop ? 'opacity-15 pointer-events-none scale-[0.99]' : 'opacity-100 scale-100'
+        }`}
       >
         {/* Header */}
         <div className={`flex items-center justify-between border-b ${border} px-6 py-4`}>
@@ -40,6 +65,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             <h2 className="text-sm font-medium tracking-wide">
               Typography &amp; Environment
             </h2>
+            <span className="text-[10px] opacity-40 ml-1.5 hidden sm:inline">
+              (hover outside to preview)
+            </span>
           </div>
           <button
             onClick={onClose}
@@ -62,13 +90,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   id: 'charcoal',
                   name: 'Charcoal',
                   sub: 'Warm Dark',
-                  style: 'bg-[#151618] text-[#dedad4] border-white/10',
+                  style: 'bg-[#151618] text-[#dedad4]',
                 },
                 {
                   id: 'canvas',
                   name: 'Canvas Linen',
                   sub: 'Warm Light',
-                  style: 'bg-[#f7f5f0] text-[#2c2a27] border-black/10',
+                  style: 'bg-[#f7f5f0] text-[#2c2a27]',
                 },
               ].map((th) => (
                 <button
@@ -76,9 +104,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   type="button"
                   onClick={() => update('theme', th.id as ThemeMode)}
                   className={`p-3 rounded-lg border text-center transition flex flex-col items-center justify-center gap-1 ${th.style} ${
-                    settings.theme === th.id
-                      ? 'ring-2 ring-stone-400 font-medium'
-                      : 'opacity-70 hover:opacity-100'
+                    settings.theme === th.id ? selectedOutline : unselectedOutline
                   }`}
                 >
                   <span className="text-xs">{th.name}</span>
@@ -113,9 +139,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   type="button"
                   onClick={() => update('fontFamily', f.id as FontFamily)}
                   className={`p-2.5 rounded-lg border text-center transition ${cardBg} ${
-                    settings.fontFamily === f.id
-                      ? 'ring-2 ring-stone-400 font-medium'
-                      : 'opacity-70 hover:opacity-100'
+                    settings.fontFamily === f.id ? selectedOutline : unselectedOutline
                   }`}
                   style={{ fontFamily: f.font }}
                 >
