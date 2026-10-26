@@ -56,7 +56,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             <label className="text-[11px] font-mono uppercase tracking-wider opacity-60 block">
               Low-Contrast Color Palette
             </label>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 gap-3">
               {[
                 {
                   id: 'charcoal',
@@ -65,22 +65,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   style: 'bg-[#151618] text-[#dedad4] border-white/10',
                 },
                 {
-                  id: 'zinc',
-                  name: 'Muted Zinc',
-                  sub: 'Cool Dark',
-                  style: 'bg-[#18191c] text-[#d6d6dc] border-white/10',
-                },
-                {
                   id: 'canvas',
                   name: 'Canvas Linen',
                   sub: 'Warm Light',
                   style: 'bg-[#f7f5f0] text-[#2c2a27] border-black/10',
-                },
-                {
-                  id: 'fog',
-                  name: 'Warm Fog',
-                  sub: 'Soft Light',
-                  style: 'bg-[#ece9e3] text-[#302e2b] border-black/10',
                 },
               ].map((th) => (
                 <button

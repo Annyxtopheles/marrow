@@ -176,17 +176,11 @@ export function App() {
     URL.revokeObjectURL(url);
   };
 
-  // Modern, low-contrast, warm theme classes
-  const isLightMode = settings.theme === 'canvas' || settings.theme === 'fog';
+  const isLightMode = settings.theme === 'canvas';
 
-  const themeClasses =
-    settings.theme === 'charcoal'
-      ? 'bg-[#151618] text-[#dedad4]'
-      : settings.theme === 'zinc'
-      ? 'bg-[#18191c] text-[#d6d6dc]'
-      : settings.theme === 'canvas'
-      ? 'bg-[#f7f5f0] text-[#2c2a27]'
-      : 'bg-[#ece9e3] text-[#302e2b]';
+  const themeClasses = isLightMode
+    ? 'bg-[#f7f5f0] text-[#2c2a27]'
+    : 'bg-[#151618] text-[#dedad4]';
 
   const headerBorder = isLightMode ? 'border-[#e4e0d7]' : 'border-white/[0.07]';
   const headerBg = isLightMode ? 'bg-[#f7f5f0]/90' : 'bg-[#151618]/90';

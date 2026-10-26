@@ -64,7 +64,7 @@ const SEED_NOTES: Note[] = [
         wordCountSnapshot: 382,
       },
     ],
-    content: `<h1>Chapter 1: The Echoes of Solitude</h1><p>The dawn broke over the obsidian ridge not with fire, but with a whisper of silver mist. In the quiet heights of the high tower, every keystroke felt indelible.</p><p>She watched the lantern smoke coil against the rafters, recalling what [[Elena Vane]] had whispered before departing for the borderlands: <em>"A story is not written once; it is etched into the grain of time, line by line."</em></p><p>Beyond the courtyard gates, the scouts of [[The Iron Concord]] were already preparing their march. She checked the ancient seal on the manuscript parchment. The ink had dried hours ago, but the weight of the decree remained fresh.</p><blockquote><p>"He who masters the stillness of the cursor masters the mind."</p></blockquote><p>With a slow breath, she placed both hands back upon the desk, letting the stillness of the morning guide the next chapter.</p>`,
+    content: `<p>The dawn broke over the obsidian ridge not with fire, but with a whisper of silver mist. In the quiet heights of the high tower, every keystroke felt indelible.</p><p>She watched the lantern smoke coil against the rafters, recalling what [[Elena Vane]] had whispered before departing for the borderlands: <em>"A story is not written once; it is etched into the grain of time, line by line."</em></p><p>Beyond the courtyard gates, the scouts of [[The Iron Concord]] were already preparing their march. She checked the ancient seal on the manuscript parchment. The ink had dried hours ago, but the weight of the decree remained fresh.</p><blockquote><p>"He who masters the stillness of the cursor masters the mind."</p></blockquote><p>With a slow breath, she placed both hands back upon the desk, letting the stillness of the morning guide the next chapter.</p>`,
   },
   {
     id: 'note-elena',
@@ -87,7 +87,7 @@ const SEED_NOTES: Note[] = [
         type: 'milestone',
       },
     ],
-    content: `<h1>Elena Vane</h1><p><strong>Role:</strong> Keeper of the Timelines &amp; Chief Archivist</p><p><strong>Traits:</strong> Meticulous, vigilant, haunted by lost drafts.</p><p><strong>Connections:</strong> Appears prominently in [[Chapter 1: The Echoes of Solitude]], adversarial history with [[The Iron Concord]].</p><p>Elena carries an antique brass time-tracker that counts down the cycles until the convergence. Her dialogue is sparse, measured, and always purposeful.</p>`,
+    content: `<p><strong>Role:</strong> Keeper of the Timelines &amp; Chief Archivist</p><p><strong>Traits:</strong> Meticulous, vigilant, haunted by lost drafts.</p><p><strong>Connections:</strong> Appears prominently in [[Chapter 1: The Echoes of Solitude]], adversarial history with [[The Iron Concord]].</p><p>Elena carries an antique brass time-tracker that counts down the cycles until the convergence. Her dialogue is sparse, measured, and always purposeful.</p>`,
   },
   {
     id: 'note-concord',
@@ -103,7 +103,7 @@ const SEED_NOTES: Note[] = [
     favorite: false,
     inUniverseDate: 'Founded Era of Iron, Cycle 204',
     timelineLog: [],
-    content: `<h1>The Iron Concord</h1><p>A militaristic monastic order dedicated to cataloging and seizing historical artifacts before the Great Collapse.</p><p>First mentioned as an looming threat in [[Chapter 1: The Echoes of Solitude]]. They believe that words written without restraint degrade the fabric of memory.</p>`,
+    content: `<p>A militaristic monastic order dedicated to cataloging and seizing historical artifacts before the Great Collapse.</p><p>First mentioned as an looming threat in [[Chapter 1: The Echoes of Solitude]]. They believe that words written without restraint degrade the fabric of memory.</p>`,
   },
   {
     id: 'note-journal',
@@ -128,11 +128,11 @@ const SEED_NOTES: Note[] = [
       {
         id: 'tl-j-2',
         timestamp: Date.now() - 1800000,
-        note: 'Switched to AMOLED minimalist theme. Writing flow state achieved.',
+        note: 'Switched to Canvas Linen theme. Writing flow state achieved.',
         type: 'event',
       },
     ],
-    content: `<h1>TimeLog &amp; Writing Rituals</h1><p>Notes on writing cadence, interval tracking, and sprint milestones.</p><p><strong>PureWriter Fail-safe:</strong> Not a single stroke lost. The history scrubber allows continuous time-travel across draft sessions.</p><p><strong>Obsidian Graph:</strong> Interlinks connecting [[Elena Vane]] and [[The Iron Concord]] form the backbone of the plot.</p>`,
+    content: `<p>Notes on writing cadence, interval tracking, and sprint milestones.</p><p><strong>PureWriter Fail-safe:</strong> Not a single stroke lost. The history scrubber allows continuous time-travel across draft sessions.</p><p><strong>Obsidian Graph:</strong> Interlinks connecting [[Elena Vane]] and [[The Iron Concord]] form the backbone of the plot.</p>`,
   },
 ];
 
@@ -144,7 +144,11 @@ export const StorageService = {
         localStorage.setItem(STORAGE_KEY_NOTES, JSON.stringify(SEED_NOTES));
         return SEED_NOTES;
       }
-      return JSON.parse(data);
+      const parsed: Note[] = JSON.parse(data);
+      return parsed.map((n) => ({
+        ...n,
+        content: n.content.replace(/^<h1>.*?<\/h1>/i, ''),
+      }));
     } catch {
       return SEED_NOTES;
     }
@@ -183,7 +187,9 @@ export const StorageService = {
     try {
       const data = localStorage.getItem(STORAGE_KEY_SETTINGS);
       if (!data) return DEFAULT_SETTINGS;
-      return { ...DEFAULT_SETTINGS, ...JSON.parse(data) };
+      const parsed = JSON.parse(data);
+      const validTheme = parsed.theme === 'canvas' ? 'canvas' : 'charcoal';
+      return { ...DEFAULT_SETTINGS, ...parsed, theme: validTheme };
     } catch {
       return DEFAULT_SETTINGS;
     }

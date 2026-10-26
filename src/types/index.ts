@@ -40,7 +40,7 @@ export interface Folder {
   order: number;
 }
 
-export type ThemeMode = 'charcoal' | 'zinc' | 'canvas' | 'fog';
+export type ThemeMode = 'charcoal' | 'canvas';
 export type FontFamily = 'serif' | 'sans' | 'mono';
 
 export interface EditorSettings {
