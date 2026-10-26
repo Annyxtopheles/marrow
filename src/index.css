@@ -1,0 +1,60 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    color-scheme: light dark;
+  }
+}
+
+/* Custom scrollbar for minimalist look */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(150, 150, 150, 0.2);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(150, 150, 150, 0.4);
+}
+
+/* PureWriter Breathing Cursor */
+@keyframes pure-breathe {
+  0%, 100% {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+  50% {
+    opacity: 0.15;
+    transform: scaleY(0.92);
+  }
+}
+
+.breathing-cursor .ProseMirror-focused .ProseMirror-selectednode,
+.breathing-cursor .ProseMirror {
+  caret-color: currentColor;
+}
+
+/* TipTap Editor Styling */
+.ProseMirror {
+  outline: none;
+  min-height: 100%;
+}
+
+.ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: #737373;
+  pointer-events: none;
+  height: 0;
+}
+
+/* Typewriter mode vertical padding */
+.typewriter-mode {
+  padding-top: 40vh !important;
+  padding-bottom: 50vh !important;
+}
