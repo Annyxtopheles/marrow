@@ -230,7 +230,7 @@ export const AccessoryBar: React.FC<AccessoryBarProps> = ({
           type="button"
           onClick={onOpenHistory}
           className={`flex items-center gap-1 rounded-md px-2 py-1 text-[11px] transition ${btnHover}`}
-          title="PureWriter History Machine"
+          title="Marrow History Machine"
         >
           <History className="h-3 w-3" />
           <span className="hidden sm:inline">History</span>

@@ -7,7 +7,7 @@ import { TimeJotPanel } from './components/TimeJotPanel';
 import { BacklinksPanel } from './components/BacklinksPanel';
 import { StatsBar } from './components/StatsBar';
 import { SettingsModal } from './components/SettingsModal';
-import { PanelLeftClose, PanelLeft, Clock, Link2, Plus, Sparkles } from 'lucide-react';
+import { PanelLeftClose, PanelLeft, Clock, Link2, Plus } from 'lucide-react';
 
 export function App() {
   const [notes, setNotes] = useState<Note[]>(() => StorageService.getNotes());
@@ -206,10 +206,19 @@ export function App() {
             >
               {isSidebarOpen ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeft className="h-4 w-4" />}
             </button>
-            <div className="flex items-center gap-1.5">
-              <span className="font-serif tracking-tight text-sm font-medium text-inherit">
-                PureJot
-              </span>
+            <div className="flex items-center gap-2">
+              <img
+                src="/marrow-icon.svg"
+                alt="Marrow"
+                className="h-4 w-4 shrink-0"
+                style={{ filter: isLightMode ? 'brightness(0) opacity(0.8)' : undefined }}
+              />
+              <img
+                src="/marrow-wordmark.svg"
+                alt="Marrow"
+                className="h-3.5 w-auto"
+                style={{ filter: isLightMode ? 'brightness(0) opacity(0.8)' : undefined }}
+              />
               <span
                 className={`text-[10px] px-1.5 py-0.5 rounded-md border ${
                   isLightMode
@@ -288,7 +297,12 @@ export function App() {
           />
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center text-center p-8 text-neutral-500">
-            <Sparkles className="h-6 w-6 text-neutral-400 mb-2 opacity-50" />
+            <img
+              src="/marrow-icon.svg"
+              alt="Marrow"
+              className="h-8 w-8 mb-3 opacity-60"
+              style={{ filter: isLightMode ? 'brightness(0) opacity(0.6)' : undefined }}
+            />
             <h3 className="text-base font-serif font-medium text-inherit mb-1">No Document Open</h3>
             <p className="text-xs max-w-sm mb-4 text-neutral-400">
               Select an entry from your vault or draft a new piece.

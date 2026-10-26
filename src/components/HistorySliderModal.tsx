@@ -58,7 +58,8 @@ export const HistorySliderModal: React.FC<HistorySliderModalProps> = ({
         <div className="flex items-center justify-between border-b border-neutral-800/80 px-6 py-4">
           <div>
             <h2 className="text-base font-semibold tracking-tight text-white flex items-center gap-2">
-              <span>PureWriter History Machine</span>
+              <img src="/marrow-icon.svg" alt="Marrow" className="h-4.5 w-4.5 shrink-0" />
+              <span>Marrow History Machine</span>
               <span className="text-xs px-2 py-0.5 rounded-full bg-neutral-900 border border-neutral-800 text-neutral-400">
                 {records.length} snapshots
               </span>

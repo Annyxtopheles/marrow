@@ -132,7 +132,7 @@ const SEED_NOTES: Note[] = [
         type: 'event',
       },
     ],
-    content: `<p>Notes on writing cadence, interval tracking, and sprint milestones.</p><p><strong>PureWriter Fail-safe:</strong> Not a single stroke lost. The history scrubber allows continuous time-travel across draft sessions.</p><p><strong>Obsidian Graph:</strong> Interlinks connecting [[Elena Vane]] and [[The Iron Concord]] form the backbone of the plot.</p>`,
+    content: `<p>Notes on writing cadence, interval tracking, and sprint milestones.</p><p><strong>Marrow Fail-safe:</strong> Not a single stroke lost. The history scrubber allows continuous time-travel across draft sessions.</p><p><strong>Obsidian Graph:</strong> Interlinks connecting [[Elena Vane]] and [[The Iron Concord]] form the backbone of the plot.</p>`,
   },
 ];
 
