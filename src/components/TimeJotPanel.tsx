@@ -163,7 +163,7 @@ export const TimeJotPanel: React.FC<TimeJotPanelProps> = ({
             <div className={`p-3 rounded-lg border ${cardBg} space-y-2.5`}>
               <div className="flex items-center justify-between">
                 <span className="font-medium text-inherit flex items-center gap-1.5">
-                  <Zap className="h-3.5 w-3.5 text-amber-500/80" />
+                  <Zap className={`h-3.5 w-3.5 ${isLightMode ? 'text-stone-800' : 'text-white'}`} />
                   Writing Sprint
                 </span>
                 <span className="opacity-70 tabular-nums">{formatTimer(sprintSeconds)}</span>
