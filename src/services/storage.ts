@@ -1,4 +1,5 @@
 import type { Note, Folder, HistoryRecord, EditorSettings } from '../types';
+import { IndexedDBService } from './db';
 
 const STORAGE_KEY_NOTES = 'marrow_notes_v1';
 const STORAGE_KEY_FOLDERS = 'marrow_folders_v1';
@@ -157,8 +158,11 @@ export const StorageService = {
   saveNotes(notes: Note[]): void {
     try {
       localStorage.setItem(STORAGE_KEY_NOTES, JSON.stringify(notes));
+      IndexedDBService.saveAllNotes(notes);
     } catch (e) {
       console.error('Failed to save notes to localStorage', e);
+      // Fallback directly to IndexedDB if localStorage quota exceeded
+      IndexedDBService.saveAllNotes(notes);
     }
   },
 
@@ -167,6 +171,7 @@ export const StorageService = {
       const data = localStorage.getItem(STORAGE_KEY_FOLDERS) || localStorage.getItem('purejot_folders_v1');
       if (!data) {
         localStorage.setItem(STORAGE_KEY_FOLDERS, JSON.stringify(SEED_FOLDERS));
+        IndexedDBService.saveAllFolders(SEED_FOLDERS);
         return SEED_FOLDERS;
       }
       return JSON.parse(data);
@@ -178,8 +183,10 @@ export const StorageService = {
   saveFolders(folders: Folder[]): void {
     try {
       localStorage.setItem(STORAGE_KEY_FOLDERS, JSON.stringify(folders));
+      IndexedDBService.saveAllFolders(folders);
     } catch (e) {
       console.error('Failed to save folders', e);
+      IndexedDBService.saveAllFolders(folders);
     }
   },
 

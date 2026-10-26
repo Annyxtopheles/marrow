@@ -7,7 +7,8 @@ import { TimeJotPanel } from './components/TimeJotPanel';
 import { BacklinksPanel } from './components/BacklinksPanel';
 import { StatsBar } from './components/StatsBar';
 import { SettingsModal } from './components/SettingsModal';
-import { PanelLeftClose, PanelLeft, Clock, Link2, Plus } from 'lucide-react';
+import { SyncModal } from './components/SyncModal';
+import { PanelLeftClose, PanelLeft, Clock, Link2, Plus, Cloud } from 'lucide-react';
 
 export function App() {
   const [notes, setNotes] = useState<Note[]>(() => StorageService.getNotes());
@@ -24,11 +25,22 @@ export function App() {
   const [isTimeJotOpen, setIsTimeJotOpen] = useState(true);
   const [isBacklinksOpen, setIsBacklinksOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isSyncOpen, setIsSyncOpen] = useState(false);
 
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastSnapshotRef = useRef<number>(Date.now());
 
   const activeNote = notes.find((n) => n.id === activeNoteId) || notes[0] || null;
+
+  const handleRestoreVault = (newNotes: Note[], newFolders: Folder[]) => {
+    setNotes(newNotes);
+    setFolders(newFolders);
+    StorageService.saveNotes(newNotes);
+    StorageService.saveFolders(newFolders);
+    if (newNotes.length > 0) {
+      setActiveNoteId(newNotes[0].id);
+    }
+  };
 
   const handleUpdateSettings = (newSettings: EditorSettings) => {
     setSettings(newSettings);
@@ -247,6 +259,17 @@ export function App() {
               <Link2 className="h-3 w-3" />
               <span>Links</span>
             </button>
+
+            <button
+              onClick={() => setIsSyncOpen(true)}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] transition ${
+                isSyncOpen ? activeBtn : `${buttonHover} text-neutral-400`
+              }`}
+              title="Cross-Device Cloud Sync (Google Drive)"
+            >
+              <Cloud className="h-3 w-3" />
+              <span>Sync</span>
+            </button>
           </div>
         </header>
       )}
@@ -345,6 +368,18 @@ export function App() {
           onUpdateSettings={handleUpdateSettings}
           onClose={() => setIsSettingsOpen(false)}
           onExportVault={handleExportVault}
+          isLightMode={isLightMode}
+        />
+      )}
+
+      {/* Cross-Device Cloud Sync Modal */}
+      {isSyncOpen && (
+        <SyncModal
+          notes={notes}
+          folders={folders}
+          settings={settings}
+          onRestoreVault={handleRestoreVault}
+          onClose={() => setIsSyncOpen(false)}
           isLightMode={isLightMode}
         />
       )}
