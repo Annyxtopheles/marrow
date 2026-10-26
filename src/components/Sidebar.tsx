@@ -141,7 +141,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <div className="flex items-center gap-1 overflow-x-auto scrollbar-none mt-2 pt-0.5">
             <button
               onClick={() => setSelectedTag(null)}
-              className={`px-2 py-0.5 rounded-md text-[10px] font-mono transition shrink-0 ${
+              className={`px-2 py-0.5 rounded-md text-[10px] transition shrink-0 ${
                 selectedTag === null ? activeItem : `${itemHover} opacity-70`
               }`}
             >
@@ -151,7 +151,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <button
                 key={tag}
                 onClick={() => setSelectedTag(selectedTag === tag ? null : tag)}
-                className={`px-2 py-0.5 rounded-md text-[10px] font-mono transition shrink-0 flex items-center gap-1 border ${
+                className={`px-2 py-0.5 rounded-md text-[10px] transition shrink-0 flex items-center gap-1 border ${
                   selectedTag === tag
                     ? activeItem
                     : isLightMode
@@ -188,7 +188,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   <FolderIcon className="h-3.5 w-3.5 opacity-60" />
                   <span className="truncate">{folder.name}</span>
                 </div>
-                <span className="text-[10px] font-mono opacity-50">{folderNotes.length}</span>
+                <span className="text-[10px] opacity-50">{folderNotes.length}</span>
               </div>
 
               {!isCollapsed && (
@@ -237,7 +237,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Loose Root Notes */}
         <div className="pt-2">
-          <div className="text-[10px] font-mono uppercase tracking-wider opacity-40 px-2 pb-1">
+          <div className="text-[10px] uppercase tracking-wider opacity-40 px-2 pb-1">
             General
           </div>
           {filteredNotes
@@ -290,7 +290,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             title="Toggle TimeJot"
           >
             <Clock className="h-3.5 w-3.5 opacity-70" />
-            <span className="text-[11px] font-mono">TimeJot</span>
+            <span className="text-[11px]">TimeJot</span>
           </button>
 
           <button
@@ -301,7 +301,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             title="Toggle Graph"
           >
             <Link2 className="h-3.5 w-3.5 opacity-70" />
-            <span className="text-[11px] font-mono">Graph</span>
+            <span className="text-[11px]">Graph</span>
           </button>
         </div>
 

@@ -53,7 +53,7 @@ export const HistorySliderModal: React.FC<HistorySliderModalProps> = ({
           <div>
             <h2 className="text-base font-semibold tracking-tight text-white flex items-center gap-2">
               <span>PureWriter History Machine</span>
-              <span className="text-xs px-2 py-0.5 rounded-full bg-neutral-900 border border-neutral-800 text-neutral-400 font-mono">
+              <span className="text-xs px-2 py-0.5 rounded-full bg-neutral-900 border border-neutral-800 text-neutral-400">
                 {records.length} snapshots
               </span>
             </h2>
@@ -71,7 +71,7 @@ export const HistorySliderModal: React.FC<HistorySliderModalProps> = ({
 
         {/* Time Scrubber Slider */}
         <div className="bg-neutral-900/60 border-b border-neutral-800/80 px-6 py-4">
-          <div className="flex items-center justify-between text-xs font-mono text-neutral-400 mb-2">
+          <div className="flex items-center justify-between text-xs text-neutral-400 mb-2">
             <span className="flex items-center gap-1.5 text-neutral-300">
               <Calendar className="h-3.5 w-3.5 text-neutral-400" />
               {new Date(currentRecord.timestamp).toLocaleString()}
@@ -91,7 +91,7 @@ export const HistorySliderModal: React.FC<HistorySliderModalProps> = ({
             className="w-full accent-white cursor-pointer h-1.5 bg-neutral-800 rounded-lg appearance-none"
           />
 
-          <div className="flex justify-between text-[11px] font-mono text-neutral-500 mt-1.5">
+          <div className="flex justify-between text-[11px] text-neutral-500 mt-1.5">
             <span>Most Recent (0)</span>
             <span>Snapshot #{selectedIndex + 1} of {records.length}</span>
             <span>Oldest ({records.length - 1})</span>

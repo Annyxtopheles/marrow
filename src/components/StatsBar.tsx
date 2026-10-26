@@ -21,7 +21,7 @@ export const StatsBar: React.FC<StatsBarProps> = ({ note, saveStatus, isLightMod
 
   return (
     <footer
-      className={`h-7 border-t ${border} ${bg} px-4 flex items-center justify-between text-[11px] font-mono ${textMuted} select-none`}
+      className={`h-7 border-t ${border} ${bg} px-4 flex items-center justify-between text-[11px] ${textMuted} select-none`}
     >
       <div className="flex items-center gap-4">
         <span className="flex items-center gap-1.5">

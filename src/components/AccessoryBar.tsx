@@ -95,7 +95,7 @@ export const AccessoryBar: React.FC<AccessoryBarProps> = ({
         <button
           type="button"
           onClick={() => insertPair('(', ')')}
-          className={`rounded-md px-2 py-0.5 font-mono text-[11px] transition ${btnHover}`}
+          className={`rounded-md px-2 py-0.5 text-[11px] transition ${btnHover}`}
           title="Parentheses"
         >
           ( )
@@ -103,7 +103,7 @@ export const AccessoryBar: React.FC<AccessoryBarProps> = ({
         <button
           type="button"
           onClick={() => insertPair('[', ']')}
-          className={`rounded-md px-2 py-0.5 font-mono text-[11px] transition ${btnHover}`}
+          className={`rounded-md px-2 py-0.5 text-[11px] transition ${btnHover}`}
           title="Brackets"
         >
           [ ]
@@ -217,7 +217,7 @@ export const AccessoryBar: React.FC<AccessoryBarProps> = ({
         <button
           type="button"
           onClick={onToggleTypewriter}
-          className={`flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-mono transition ${
+          className={`flex items-center gap-1 rounded-md px-2 py-1 text-[11px] transition ${
             typewriterMode ? activeBtn : btnHover
           }`}
           title="Typewriter Mode (keep active line centered)"
@@ -229,7 +229,7 @@ export const AccessoryBar: React.FC<AccessoryBarProps> = ({
         <button
           type="button"
           onClick={onOpenHistory}
-          className={`flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-mono transition ${btnHover}`}
+          className={`flex items-center gap-1 rounded-md px-2 py-1 text-[11px] transition ${btnHover}`}
           title="PureWriter History Machine"
         >
           <History className="h-3 w-3" />
@@ -254,7 +254,7 @@ export const AccessoryBar: React.FC<AccessoryBarProps> = ({
                 : 'bg-amber-400/80 animate-pulse'
             }`}
           />
-          <span className="text-[10px] font-mono uppercase tracking-wider opacity-60 hidden md:inline">
+          <span className="text-[10px] uppercase tracking-wider opacity-60 hidden md:inline">
             {saveStatus === 'saved' ? 'Saved' : 'Saving'}
           </span>
         </div>

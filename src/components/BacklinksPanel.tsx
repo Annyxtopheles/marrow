@@ -62,7 +62,7 @@ export const BacklinksPanel: React.FC<BacklinksPanelProps> = ({
         </div>
       </div>
 
-      <div className={`grid grid-cols-2 border-b ${border} text-[11px] font-mono`}>
+      <div className={`grid grid-cols-2 border-b ${border} text-[11px]`}>
         <button
           onClick={() => setActiveTab('links')}
           className={`py-2 text-center transition border-b-2 ${
@@ -84,7 +84,7 @@ export const BacklinksPanel: React.FC<BacklinksPanelProps> = ({
       <div className="flex-1 overflow-y-auto p-3">
         {activeTab === 'links' ? (
           <div className="space-y-3">
-            <div className="text-[10px] font-mono uppercase tracking-wider opacity-50">
+            <div className="text-[10px] uppercase tracking-wider opacity-50">
               Linked to "{activeNote.title}"
             </div>
 
@@ -92,7 +92,7 @@ export const BacklinksPanel: React.FC<BacklinksPanelProps> = ({
               <div className="opacity-50 text-center py-8 leading-relaxed">
                 No documents link to this entry yet.
                 <br />
-                Type <code className="opacity-80 font-mono">[[{activeNote.title}]]</code> in any note to connect them.
+                Type <code className="opacity-80 font-medium">[[{activeNote.title}]]</code> in any note to connect them.
               </div>
             ) : (
               <div className="space-y-2">
@@ -118,7 +118,7 @@ export const BacklinksPanel: React.FC<BacklinksPanelProps> = ({
                       {note.content.replace(/<[^>]+>/g, ' ')}
                     </div>
 
-                    <div className="flex items-center gap-2 text-[10px] font-mono opacity-50">
+                    <div className="flex items-center gap-2 text-[10px] opacity-50">
                       <span>{note.wordCount} words</span>
                       <span>•</span>
                       <span>{StorageService.formatInterval(note.updatedAt)}</span>
@@ -130,7 +130,7 @@ export const BacklinksPanel: React.FC<BacklinksPanelProps> = ({
           </div>
         ) : (
           <div className="space-y-3">
-            <div className="text-[10px] font-mono uppercase tracking-wider opacity-50 flex items-center justify-between">
+            <div className="text-[10px] uppercase tracking-wider opacity-50 flex items-center justify-between">
               <span>Vault Nodes</span>
               <span>{allNotes.length} notes</span>
             </div>
@@ -175,7 +175,7 @@ export const BacklinksPanel: React.FC<BacklinksPanelProps> = ({
                       fontSize="9"
                       fill={isLightMode ? '#555' : '#a8a5a0'}
                       textAnchor="middle"
-                      className="font-mono select-none"
+                      className="select-none"
                     >
                       {node.title.slice(0, 10)}
                     </text>

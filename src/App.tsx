@@ -211,7 +211,7 @@ export function App() {
                 PureJot
               </span>
               <span
-                className={`text-[10px] font-mono px-1.5 py-0.5 rounded-md border ${
+                className={`text-[10px] px-1.5 py-0.5 rounded-md border ${
                   isLightMode
                     ? 'bg-black/[0.03] border-black/[0.07] text-neutral-600'
                     : 'bg-white/[0.04] border-white/[0.06] text-neutral-400'
@@ -225,7 +225,7 @@ export function App() {
           <div className="flex items-center gap-1.5">
             <button
               onClick={() => setIsTimeJotOpen(!isTimeJotOpen)}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-mono transition ${
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] transition ${
                 isTimeJotOpen ? activeBtn : `${buttonHover} text-neutral-400`
               }`}
               title="TimeJot Timeline & Sprints"
@@ -236,7 +236,7 @@ export function App() {
 
             <button
               onClick={() => setIsBacklinksOpen(!isBacklinksOpen)}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-mono transition ${
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] transition ${
                 isBacklinksOpen ? activeBtn : `${buttonHover} text-neutral-400`
               }`}
               title="Obsidian Knowledge Graph & Links"

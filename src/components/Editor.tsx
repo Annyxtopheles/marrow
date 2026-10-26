@@ -170,8 +170,6 @@ export const Editor: React.FC<EditorProps> = ({
   const fontClass =
     settings.fontFamily === 'serif'
       ? 'font-serif'
-      : settings.fontFamily === 'mono'
-      ? 'font-mono'
       : 'font-sans';
 
   const subBarBorder = isLightMode ? 'border-[#e4e0d7]' : 'border-white/[0.06]';
@@ -186,7 +184,7 @@ export const Editor: React.FC<EditorProps> = ({
       <div
         className={`flex items-center justify-between px-6 py-2 border-b ${subBarBorder} bg-inherit select-none text-xs`}
       >
-        <div className="flex items-center gap-2 text-neutral-400 font-mono text-[11px]">
+        <div className="flex items-center gap-2 text-neutral-400 text-[11px]">
           <span className="opacity-75">Live Preview</span>
           {note.tags.length > 0 && (
             <div className="flex items-center gap-1.5 ml-2">
@@ -204,7 +202,7 @@ export const Editor: React.FC<EditorProps> = ({
 
         <button
           onClick={() => setRawMarkdownMode(!rawMarkdownMode)}
-          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-mono transition text-neutral-400 ${btnHover} ${
+          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] transition text-neutral-400 ${btnHover} ${
             rawMarkdownMode
               ? isLightMode
                 ? 'bg-black/[0.08] text-[#111]'
@@ -244,10 +242,10 @@ export const Editor: React.FC<EditorProps> = ({
 
           {rawMarkdownMode ? (
             <div
-              className={`grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t ${subBarBorder} font-mono text-sm`}
+              className={`grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t ${subBarBorder} text-sm`}
             >
               <div className="space-y-2">
-                <div className="text-[10px] uppercase font-mono tracking-wider opacity-60">
+                <div className="text-[10px] uppercase tracking-wider opacity-60">
                   Raw Markdown
                 </div>
                 <textarea
@@ -260,7 +258,7 @@ export const Editor: React.FC<EditorProps> = ({
                       .join('');
                     if (editor) editor.commands.setContent(html);
                   }}
-                  className={`w-full h-[60vh] rounded-lg p-4 text-xs font-mono resize-none focus:outline-none border ${
+                  className={`w-full h-[60vh] rounded-lg p-4 text-xs font-sans resize-none focus:outline-none border ${
                     isLightMode
                       ? 'bg-black/[0.02] border-black/[0.08] text-[#2c2a27]'
                       : 'bg-white/[0.02] border-white/[0.08] text-[#dedad4]'
@@ -268,7 +266,7 @@ export const Editor: React.FC<EditorProps> = ({
                 />
               </div>
               <div className="space-y-2">
-                <div className="text-[10px] uppercase font-mono tracking-wider opacity-60">
+                <div className="text-[10px] uppercase tracking-wider opacity-60">
                   Formatted
                 </div>
                 <div

@@ -53,7 +53,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         <div className="p-6 space-y-6 overflow-y-auto max-h-[75vh] text-xs">
           {/* Low-Contrast Color Schemes */}
           <div className="space-y-2.5">
-            <label className="text-[11px] font-mono uppercase tracking-wider opacity-60 block">
+            <label className="text-[11px] uppercase tracking-wider opacity-60 block">
               Low-Contrast Color Palette
             </label>
             <div className="grid grid-cols-2 gap-3">
@@ -82,7 +82,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   }`}
                 >
                   <span className="text-xs">{th.name}</span>
-                  <span className="text-[10px] opacity-60 font-mono">{th.sub}</span>
+                  <span className="text-[10px] opacity-60">{th.sub}</span>
                 </button>
               ))}
             </div>
@@ -90,10 +90,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
           {/* Typeface Selection */}
           <div className="space-y-2.5">
-            <label className="text-[11px] font-mono uppercase tracking-wider opacity-60 block">
+            <label className="text-[11px] uppercase tracking-wider opacity-60 block">
               Editorial Typeface
             </label>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-3">
               {[
                 {
                   id: 'serif',
@@ -106,12 +106,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   name: 'Jakarta Sans',
                   sub: 'Contemporary',
                   font: 'var(--font-sans)',
-                },
-                {
-                  id: 'mono',
-                  name: 'JetBrains Mono',
-                  sub: 'Focus Minimal',
-                  font: 'var(--font-mono)',
                 },
               ].map((f) => (
                 <button
@@ -137,7 +131,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             <div className="space-y-2">
               <div className="flex justify-between opacity-70">
                 <span>Font Size</span>
-                <span className="font-mono">{settings.fontSize}px</span>
+                <span>{settings.fontSize}px</span>
               </div>
               <input
                 type="range"
@@ -152,7 +146,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             <div className="space-y-2">
               <div className="flex justify-between opacity-70">
                 <span>Line Height</span>
-                <span className="font-mono">{settings.lineHeight.toFixed(2)}x</span>
+                <span>{settings.lineHeight.toFixed(2)}x</span>
               </div>
               <input
                 type="range"
@@ -168,7 +162,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
           {/* Ergonomic Toggles */}
           <div className={`space-y-3 pt-2 border-t ${border}`}>
-            <label className="text-[11px] font-mono uppercase tracking-wider opacity-60 block">
+            <label className="text-[11px] uppercase tracking-wider opacity-60 block">
               Writing Ergonomics
             </label>
 

@@ -130,7 +130,7 @@ export const TimeJotPanel: React.FC<TimeJotPanelProps> = ({
         </div>
       </div>
 
-      <div className={`grid grid-cols-3 border-b ${border} text-[11px] font-mono`}>
+      <div className={`grid grid-cols-3 border-b ${border} text-[11px]`}>
         <button
           onClick={() => setActiveTab('intervals')}
           className={`py-2 text-center transition border-b-2 ${
@@ -166,12 +166,12 @@ export const TimeJotPanel: React.FC<TimeJotPanelProps> = ({
                   <Zap className="h-3.5 w-3.5 text-amber-500/80" />
                   Writing Sprint
                 </span>
-                <span className="font-mono opacity-70">{formatTimer(sprintSeconds)}</span>
+                <span className="opacity-70 tabular-nums">{formatTimer(sprintSeconds)}</span>
               </div>
 
               {sprintActive ? (
                 <div className="space-y-2">
-                  <div className="flex justify-between text-[11px] font-mono opacity-70">
+                  <div className="flex justify-between text-[11px] opacity-70">
                     <span>
                       {wordsWrittenInSprint} / {sprintTargetWords} words
                     </span>
@@ -203,7 +203,7 @@ export const TimeJotPanel: React.FC<TimeJotPanelProps> = ({
                       type="number"
                       value={sprintTargetWords}
                       onChange={(e) => setSprintTargetWords(Number(e.target.value))}
-                      className={`w-16 rounded px-2 py-0.5 text-[11px] font-mono text-center border focus:outline-none ${
+                      className={`w-16 rounded px-2 py-0.5 text-[11px] text-center border focus:outline-none ${
                         isLightMode
                           ? 'bg-black/[0.03] border-black/[0.08] text-[#2c2a27]'
                           : 'bg-white/[0.03] border-white/[0.08] text-[#dedad4]'
@@ -223,7 +223,7 @@ export const TimeJotPanel: React.FC<TimeJotPanelProps> = ({
             </div>
 
             <div className="space-y-1.5">
-              <div className="text-[10px] font-mono uppercase tracking-wider opacity-50 px-1 flex items-center justify-between">
+              <div className="text-[10px] uppercase tracking-wider opacity-50 px-1 flex items-center justify-between">
                 <span>Last Revised</span>
                 <span>Interval</span>
               </div>
@@ -245,12 +245,12 @@ export const TimeJotPanel: React.FC<TimeJotPanelProps> = ({
                     >
                       <div className="truncate pr-2">
                         <div className="truncate font-medium">{note.title || 'Untitled'}</div>
-                        <div className="text-[10px] opacity-60 font-mono">
+                        <div className="text-[10px] opacity-60">
                           {note.wordCount} words
                         </div>
                       </div>
                       <span
-                        className={`shrink-0 text-[10px] font-mono px-1.5 py-0.5 rounded border ${
+                        className={`shrink-0 text-[10px] px-1.5 py-0.5 rounded border ${
                           isLightMode
                             ? 'bg-black/[0.03] border-black/[0.06]'
                             : 'bg-white/[0.03] border-white/[0.06]'
@@ -315,11 +315,11 @@ export const TimeJotPanel: React.FC<TimeJotPanelProps> = ({
                         }`}
                       />
 
-                      <div className="text-[10px] font-mono opacity-80">
+                      <div className="text-[10px] opacity-80">
                         {note.inUniverseDate}
                       </div>
                       <div className="truncate mt-0.5">{note.title}</div>
-                      <div className="text-[10px] opacity-50 font-mono">
+                      <div className="text-[10px] opacity-50">
                         {note.wordCount} words
                       </div>
                     </div>
@@ -380,7 +380,7 @@ export const TimeJotPanel: React.FC<TimeJotPanelProps> = ({
                     key={log.id}
                     className={`p-2.5 rounded-md border ${cardBg} space-y-1`}
                   >
-                    <div className="flex items-center justify-between text-[10px] font-mono opacity-60">
+                    <div className="flex items-center justify-between text-[10px] opacity-60">
                       <span className="uppercase font-medium">{log.type}</span>
                       <span>
                         {new Date(log.timestamp).toLocaleTimeString([], {
