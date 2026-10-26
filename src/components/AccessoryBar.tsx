@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Bold,
   Italic,
@@ -13,8 +13,11 @@ import {
   Maximize2,
   Minimize2,
   History,
+  Mic,
+  Volume2,
 } from 'lucide-react';
 import { Editor } from '@tiptap/react';
+import { DictationService, ReadAloudService, isSpeechRecognitionSupported, isSpeechSynthesisSupported } from '../services/speech';
 
 interface AccessoryBarProps {
   editor: Editor | null;
@@ -69,6 +72,71 @@ export const AccessoryBar: React.FC<AccessoryBarProps> = ({
   const btnHover = isLightMode ? 'hover:bg-black/[0.05] hover:text-[#222]' : 'hover:bg-white/[0.06] hover:text-[#eee]';
   const activeBtn = isLightMode ? 'bg-black/[0.08] text-[#111]' : 'bg-white/[0.08] text-[#f2efe9]';
   const divider = isLightMode ? 'bg-[#e4e0d7]' : 'bg-white/[0.07]';
+
+  // Native Speech-to-Text & Text-to-Speech
+  const [isListening, setIsListening] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const dictationRef = useRef<DictationService | null>(null);
+
+  useEffect(() => {
+    return () => {
+      dictationRef.current?.stop();
+      ReadAloudService.stop();
+    };
+  }, []);
+
+  const toggleDictation = () => {
+    if (isListening) {
+      dictationRef.current?.stop();
+      setIsListening(false);
+    } else {
+      if (!isSpeechRecognitionSupported()) {
+        alert('Speech recognition is not supported in this browser. Try Chrome, Edge, or Safari.');
+        return;
+      }
+      dictationRef.current = new DictationService({
+        onResult: (transcript, isFinal) => {
+          if (isFinal && editor) {
+            editor.chain().focus().insertContent(`${transcript} `).run();
+          }
+        },
+        onError: () => {
+          setIsListening(false);
+        },
+        onEnd: () => {
+          setIsListening(false);
+        },
+      });
+      dictationRef.current.start();
+      setIsListening(true);
+    }
+  };
+
+  const toggleReadAloud = () => {
+    if (isSpeaking) {
+      ReadAloudService.stop();
+      setIsSpeaking(false);
+    } else {
+      if (!isSpeechSynthesisSupported()) {
+        alert('Text-to-speech is not supported in this browser.');
+        return;
+      }
+      const selected = editor.state.doc.textBetween(
+        editor.state.selection.from,
+        editor.state.selection.to,
+        ' '
+      );
+      const textToSpeak = selected.trim() ? selected : editor.getText();
+      if (!textToSpeak.trim()) return;
+
+      setIsSpeaking(true);
+      ReadAloudService.speak(
+        textToSpeak,
+        undefined,
+        () => setIsSpeaking(false)
+      );
+    }
+  };
 
   return (
     <div
@@ -213,6 +281,30 @@ export const AccessoryBar: React.FC<AccessoryBarProps> = ({
         </button>
 
         <div className={`mx-1.5 h-3.5 w-px ${divider}`} />
+
+        <button
+          type="button"
+          onClick={toggleDictation}
+          className={`flex items-center gap-1 rounded-md px-2 py-1 text-[11px] transition ${
+            isListening ? 'bg-rose-500/15 text-rose-400 border border-rose-500/30' : btnHover
+          }`}
+          title={isListening ? 'Stop Dictation' : 'Dictate (Voice-to-Text)'}
+        >
+          <Mic className={`h-3 w-3 ${isListening ? 'animate-pulse text-rose-400' : ''}`} />
+          <span className="hidden md:inline">{isListening ? 'Listening...' : 'Dictate'}</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={toggleReadAloud}
+          className={`flex items-center gap-1 rounded-md px-2 py-1 text-[11px] transition ${
+            isSpeaking ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30' : btnHover
+          }`}
+          title={isSpeaking ? 'Stop Reading' : 'Proofread Aloud (Text-to-Speech)'}
+        >
+          <Volume2 className={`h-3 w-3 ${isSpeaking ? 'animate-pulse text-amber-300' : ''}`} />
+          <span className="hidden md:inline">{isSpeaking ? 'Reading...' : 'Listen'}</span>
+        </button>
 
         <button
           type="button"
