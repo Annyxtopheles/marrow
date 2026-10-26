@@ -208,15 +208,9 @@ export function App() {
             </button>
             <div className="flex items-center gap-2">
               <img
-                src="/marrow-icon.svg"
-                alt="Marrow"
-                className="h-4 w-4 shrink-0"
-                style={{ filter: isLightMode ? 'brightness(0) opacity(0.8)' : undefined }}
-              />
-              <img
                 src="/marrow-wordmark.svg"
                 alt="Marrow"
-                className="h-3.5 w-auto"
+                className="h-4 w-auto object-contain"
                 style={{ filter: isLightMode ? 'brightness(0) opacity(0.8)' : undefined }}
               />
               <span

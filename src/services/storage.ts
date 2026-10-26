@@ -1,9 +1,9 @@
 import type { Note, Folder, HistoryRecord, EditorSettings } from '../types';
 
-const STORAGE_KEY_NOTES = 'purejot_notes_v1';
-const STORAGE_KEY_FOLDERS = 'purejot_folders_v1';
-const STORAGE_KEY_HISTORY = 'purejot_history_v1';
-const STORAGE_KEY_SETTINGS = 'purejot_settings_v1';
+const STORAGE_KEY_NOTES = 'marrow_notes_v1';
+const STORAGE_KEY_FOLDERS = 'marrow_folders_v1';
+const STORAGE_KEY_HISTORY = 'marrow_history_v1';
+const STORAGE_KEY_SETTINGS = 'marrow_settings_v1';
 
 export const DEFAULT_SETTINGS: EditorSettings = {
   theme: 'charcoal',
@@ -139,7 +139,7 @@ const SEED_NOTES: Note[] = [
 export const StorageService = {
   getNotes(): Note[] {
     try {
-      const data = localStorage.getItem(STORAGE_KEY_NOTES);
+      const data = localStorage.getItem(STORAGE_KEY_NOTES) || localStorage.getItem('purejot_notes_v1');
       if (!data) {
         localStorage.setItem(STORAGE_KEY_NOTES, JSON.stringify(SEED_NOTES));
         return SEED_NOTES;
@@ -164,7 +164,7 @@ export const StorageService = {
 
   getFolders(): Folder[] {
     try {
-      const data = localStorage.getItem(STORAGE_KEY_FOLDERS);
+      const data = localStorage.getItem(STORAGE_KEY_FOLDERS) || localStorage.getItem('purejot_folders_v1');
       if (!data) {
         localStorage.setItem(STORAGE_KEY_FOLDERS, JSON.stringify(SEED_FOLDERS));
         return SEED_FOLDERS;
@@ -185,7 +185,7 @@ export const StorageService = {
 
   getSettings(): EditorSettings {
     try {
-      const data = localStorage.getItem(STORAGE_KEY_SETTINGS);
+      const data = localStorage.getItem(STORAGE_KEY_SETTINGS) || localStorage.getItem('purejot_settings_v1');
       if (!data) return DEFAULT_SETTINGS;
       const parsed = JSON.parse(data);
       const validTheme = parsed.theme === 'canvas' ? 'canvas' : 'charcoal';
@@ -205,7 +205,9 @@ export const StorageService = {
 
   getHistory(noteId: string): HistoryRecord[] {
     try {
-      const data = localStorage.getItem(`${STORAGE_KEY_HISTORY}_${noteId}`);
+      const data =
+        localStorage.getItem(`${STORAGE_KEY_HISTORY}_${noteId}`) ||
+        localStorage.getItem(`purejot_history_v1_${noteId}`);
       if (!data) return [];
       return JSON.parse(data);
     } catch {
