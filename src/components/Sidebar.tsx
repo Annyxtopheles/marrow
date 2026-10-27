@@ -272,24 +272,30 @@ export const Sidebar: React.FC<SidebarProps> = ({
     setContextMenu({ x: e.clientX, y: e.clientY, items });
   };
 
-  const borderColor = isLightMode ? 'border-[#e4e0d7]' : 'border-white/[0.06]';
+  const borderColor = isLightMode ? 'border-[#e4e0d7]' : 'border-white/[0.08]';
   const sidebarBg = isLightMode ? 'bg-[#f4f1ea]' : 'bg-[#131416]';
-  const itemHover = isLightMode ? 'hover:bg-black/[0.04]' : 'hover:bg-white/[0.04]';
+  const itemHover = isLightMode ? 'hover:bg-black/[0.04]' : 'hover:bg-white/[0.05]';
   const activeItem = isLightMode
-    ? 'bg-black/[0.06] text-[#1c1a17] font-medium'
-    : 'bg-white/[0.06] text-[#dedad4] font-medium';
-  const subtextColor = isLightMode ? 'text-[#847f78]' : 'text-[#85827e]';
+    ? 'bg-black/[0.06] text-[#1c1a17] font-semibold'
+    : 'bg-white/[0.08] text-[#f5f2eb] font-semibold';
+  const baseTextColor = isLightMode ? 'text-[#383531]' : 'text-[#c5c1ba]';
+  const headerText = isLightMode ? 'text-[#1c1a17]' : 'text-[#f0ece4]';
+  const mutedText = isLightMode ? 'text-[#706c64]' : 'text-neutral-400';
+  const inactiveNoteText = isLightMode
+    ? 'text-[#3c3935] hover:text-[#1c1a17]'
+    : 'text-[#c5c1ba] hover:text-[#f5f2eb]';
+  const folderText = isLightMode ? 'text-[#252320]' : 'text-[#dedad4]';
 
   return (
     <aside
-      className={`w-64 h-full flex flex-col ${sidebarBg} border-r ${borderColor} select-none text-xs ${subtextColor}`}
+      className={`w-64 h-full flex flex-col ${sidebarBg} border-r ${borderColor} select-none text-xs ${baseTextColor}`}
       onContextMenu={handleEmptySpaceContextMenu}
     >
       {/* Header */}
       <div className={`flex items-center justify-between px-3.5 py-3 border-b ${borderColor}`}>
         <div className="flex items-center gap-2">
-          <BookOpen className="h-4 w-4 opacity-70" />
-          <span className="font-medium tracking-tight text-sm text-inherit">
+          <BookOpen className={`h-4 w-4 ${isLightMode ? 'text-[#504c45]' : 'text-neutral-300'}`} />
+          <span className={`font-semibold tracking-tight text-sm ${headerText}`}>
             Vault Library
           </span>
         </div>
@@ -317,13 +323,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Search Bar */}
       <div className={`p-2.5 border-b ${borderColor}`}>
         <div className="relative flex items-center">
-          <Search className="absolute left-2.5 h-3.5 w-3.5 opacity-40" />
+          <Search className={`absolute left-2.5 h-3.5 w-3.5 ${mutedText}`} />
           <input
             type="text"
             placeholder="Search documents..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className={`w-full rounded-md pl-8 pr-3 py-1.5 text-xs placeholder-neutral-500/50 focus:outline-none transition border ${
+            className={`w-full rounded-md pl-8 pr-3 py-1.5 text-xs placeholder:text-neutral-400/70 focus:outline-none transition border ${
               isLightMode
                 ? 'bg-black/[0.02] border-black/[0.07] text-[#2c2a27]'
                 : 'bg-white/[0.02] border-white/[0.07] text-[#dedad4]'
@@ -338,7 +344,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               type="button"
               onClick={() => setSelectedTag(null)}
               className={`px-2 py-0.5 rounded-md text-[10px] transition shrink-0 ${
-                selectedTag === null ? activeItem : `${itemHover} opacity-70`
+                selectedTag === null ? activeItem : `${itemHover} ${mutedText} hover:text-inherit`
               }`}
             >
               All
@@ -352,11 +358,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   selectedTag === tag
                     ? activeItem
                     : isLightMode
-                    ? 'border-black/[0.06] bg-black/[0.02] opacity-70'
-                    : 'border-white/[0.06] bg-white/[0.02] opacity-70'
+                    ? 'border-black/[0.08] bg-black/[0.03] text-[#555] hover:text-[#1c1a17]'
+                    : 'border-white/[0.08] bg-white/[0.04] text-neutral-300 hover:text-[#f0ece4]'
                 }`}
               >
-                <Tag className="h-2.5 w-2.5 opacity-50" />
+                <Tag className="h-2.5 w-2.5 opacity-60" />
                 #{tag}
               </button>
             ))}
@@ -379,11 +385,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
               >
                 <div className="flex items-center gap-1.5 truncate flex-1 mr-2">
                   {isCollapsed ? (
-                    <ChevronRight className="h-3 w-3 opacity-40 shrink-0" />
+                    <ChevronRight className={`h-3 w-3 shrink-0 ${mutedText} group-hover:text-inherit`} />
                   ) : (
-                    <ChevronDown className="h-3 w-3 opacity-40 shrink-0" />
+                    <ChevronDown className={`h-3 w-3 shrink-0 ${mutedText} group-hover:text-inherit`} />
                   )}
-                  <FolderIcon className="h-3.5 w-3.5 opacity-60 shrink-0" />
+                  <FolderIcon className={`h-3.5 w-3.5 shrink-0 ${isLightMode ? 'text-[#504c45]' : 'text-neutral-300'}`} />
                   {renamingFolderId === folder.id ? (
                     <input
                       type="text"
@@ -403,11 +409,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       }`}
                     />
                   ) : (
-                    <span className="truncate">{folder.name}</span>
+                    <span className={`truncate font-medium ${folderText}`}>{folder.name}</span>
                   )}
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
-                  <span className="text-[10px] opacity-50 group-hover:opacity-0 transition">{folderNotes.length}</span>
+                  <span className={`text-[10px] font-medium ${mutedText} group-hover:opacity-0 transition`}>{folderNotes.length}</span>
                   {onDeleteFolder && (
                     <button
                       type="button"
@@ -457,7 +463,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                               }`}
                             />
                           ) : (
-                            <span className="truncate">{note.title || 'Untitled'}</span>
+                            <span className={`truncate ${isActive ? 'font-semibold' : inactiveNoteText}`}>{note.title || 'Untitled'}</span>
                           )}
                         </div>
                         <div className="flex items-center gap-1 shrink-0">
@@ -505,7 +511,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Loose Root Notes */}
         <div className="pt-2">
-          <div className="text-[10px] uppercase tracking-wider opacity-40 px-2 pb-1">
+          <div className={`text-[10px] uppercase tracking-wider font-medium px-2 pb-1 ${mutedText}`}>
             General
           </div>
           {sortNotes(filteredNotes.filter((n) => !n.folderId)).map((note) => {
@@ -539,7 +545,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       }`}
                     />
                   ) : (
-                    <span className="truncate">{note.title || 'Untitled'}</span>
+                    <span className={`truncate ${isActive ? 'font-semibold' : inactiveNoteText}`}>{note.title || 'Untitled'}</span>
                   )}
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
@@ -584,7 +590,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Footer Status Bar */}
       <div className={`border-t ${borderColor} px-3 py-2 flex items-center justify-between text-[11px]`}>
-        <div className="flex items-center gap-1.5 opacity-60">
+        <div className={`flex items-center gap-1.5 ${mutedText}`}>
           <BookOpen className="h-3.5 w-3.5" />
           <span>{notes.length} {notes.length === 1 ? 'document' : 'documents'}</span>
         </div>
@@ -592,7 +598,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <button
           type="button"
           onClick={onOpenSettings}
-          className={`p-1 rounded-md ${itemHover} transition opacity-70 hover:opacity-100`}
+          className={`p-1 rounded-md ${itemHover} transition ${mutedText} hover:text-inherit`}
           title="Settings"
         >
           <Settings className="h-3.5 w-3.5" />

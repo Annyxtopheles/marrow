@@ -44,20 +44,28 @@ export const BacklinksPanel: React.FC<BacklinksPanelProps> = ({
     });
   });
 
-  const border = isLightMode ? 'border-[#e4e0d7]' : 'border-white/[0.06]';
+  const border = isLightMode ? 'border-[#e4e0d7]' : 'border-white/[0.08]';
   const panelBg = isLightMode ? 'bg-[#f4f1ea]' : 'bg-[#131416]';
   const activeTabClass = isLightMode
-    ? 'border-[#302e2b] text-[#222] font-medium'
-    : 'border-white/80 text-[#f0ece4] font-medium';
-  const subtext = isLightMode ? 'text-[#857f77]' : 'text-[#84817d]';
+    ? 'border-[#302e2b] text-[#1c1a17] font-semibold'
+    : 'border-white text-[#f5f2eb] font-semibold';
+  const inactiveTabClass = isLightMode
+    ? 'border-transparent text-[#706c64] hover:text-[#1c1a17]'
+    : 'border-transparent text-neutral-400 hover:text-[#f0ece4]';
+  const baseText = isLightMode ? 'text-[#383531]' : 'text-[#c5c1ba]';
+  const headerText = isLightMode ? 'text-[#1c1a17]' : 'text-[#f0ece4]';
+  const labelText = isLightMode ? 'text-[#706c64]' : 'text-neutral-400';
+  const noteTitleText = isLightMode ? 'text-[#1c1a17]' : 'text-[#f0ece4]';
+  const excerptText = isLightMode ? 'text-[#55514a]' : 'text-[#aba69e]';
+  const metaText = isLightMode ? 'text-[#757068]' : 'text-neutral-400';
 
   return (
     <div
-      className={`flex flex-col h-full ${panelBg} border-l ${border} ${subtext} w-72 text-xs`}
+      className={`flex flex-col h-full ${panelBg} border-l ${border} ${baseText} w-72 text-xs`}
     >
-      <div className={`flex items-center justify-between border-b ${border} px-3 py-2.5`}>
-        <div className="flex items-center gap-1.5 font-medium text-inherit">
-          <Link2 className="h-4 w-4 opacity-70" />
+      <div className={`flex items-center justify-between border-b ${border} px-3 py-2.5 ${headerText}`}>
+        <div className="flex items-center gap-1.5 font-semibold">
+          <Link2 className="h-4 w-4 opacity-80" />
           <span>Knowledge Graph</span>
         </div>
       </div>
@@ -66,7 +74,7 @@ export const BacklinksPanel: React.FC<BacklinksPanelProps> = ({
         <button
           onClick={() => setActiveTab('links')}
           className={`py-2 text-center transition border-b-2 ${
-            activeTab === 'links' ? activeTabClass : 'border-transparent opacity-60 hover:opacity-100'
+            activeTab === 'links' ? activeTabClass : inactiveTabClass
           }`}
         >
           Backlinks ({backlinks.length})
@@ -74,7 +82,7 @@ export const BacklinksPanel: React.FC<BacklinksPanelProps> = ({
         <button
           onClick={() => setActiveTab('graph')}
           className={`py-2 text-center transition border-b-2 ${
-            activeTab === 'graph' ? activeTabClass : 'border-transparent opacity-60 hover:opacity-100'
+            activeTab === 'graph' ? activeTabClass : inactiveTabClass
           }`}
         >
           Graph
@@ -84,15 +92,15 @@ export const BacklinksPanel: React.FC<BacklinksPanelProps> = ({
       <div className="flex-1 overflow-y-auto p-3">
         {activeTab === 'links' ? (
           <div className="space-y-3">
-            <div className="text-[10px] uppercase tracking-wider opacity-50">
+            <div className={`text-[10px] uppercase tracking-wider font-medium ${labelText}`}>
               Linked to "{activeNote.title}"
             </div>
 
             {backlinks.length === 0 ? (
-              <div className="opacity-50 text-center py-8 leading-relaxed">
+              <div className={`text-center py-8 leading-relaxed ${labelText}`}>
                 No documents link to this entry yet.
                 <br />
-                Type <code className="opacity-80 font-medium">[[{activeNote.title}]]</code> in any note to connect them.
+                Type <code className="opacity-90 font-medium">[[{activeNote.title}]]</code> in any note to connect them.
               </div>
             ) : (
               <div className="space-y-2">
@@ -102,23 +110,23 @@ export const BacklinksPanel: React.FC<BacklinksPanelProps> = ({
                     onClick={() => onSelectNote(note)}
                     className={`group cursor-pointer p-2.5 rounded-lg border transition space-y-1.5 ${
                       isLightMode
-                        ? 'border-black/[0.06] bg-black/[0.02] hover:bg-black/[0.05]'
-                        : 'border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.05]'
+                        ? 'border-black/[0.08] bg-black/[0.02] hover:bg-black/[0.05]'
+                        : 'border-white/[0.08] bg-white/[0.03] hover:bg-white/[0.06]'
                     }`}
                   >
                     <div className="flex items-center justify-between font-medium">
                       <span className="flex items-center gap-1.5 truncate">
-                        <FileText className="h-3.5 w-3.5 opacity-60 shrink-0" />
-                        <span className="truncate">{note.title}</span>
+                        <FileText className={`h-3.5 w-3.5 shrink-0 ${isLightMode ? 'text-[#555]' : 'text-neutral-300'}`} />
+                        <span className={`truncate font-semibold ${noteTitleText}`}>{note.title}</span>
                       </span>
-                      <ArrowUpRight className="h-3.5 w-3.5 opacity-40 group-hover:opacity-100 transition shrink-0" />
+                      <ArrowUpRight className={`h-3.5 w-3.5 transition shrink-0 ${metaText} group-hover:text-inherit`} />
                     </div>
 
-                    <div className="text-[11px] opacity-70 line-clamp-2 leading-relaxed">
+                    <div className={`text-[11px] line-clamp-2 leading-relaxed ${excerptText}`}>
                       {note.content.replace(/<[^>]+>/g, ' ')}
                     </div>
 
-                    <div className="flex items-center gap-2 text-[10px] opacity-50">
+                    <div className={`flex items-center gap-2 text-[10px] ${metaText}`}>
                       <span>{note.wordCount} words</span>
                       <span>•</span>
                       <span>{StorageService.formatInterval(note.updatedAt)}</span>
@@ -130,7 +138,7 @@ export const BacklinksPanel: React.FC<BacklinksPanelProps> = ({
           </div>
         ) : (
           <div className="space-y-3">
-            <div className="text-[10px] uppercase tracking-wider opacity-50 flex items-center justify-between">
+            <div className={`text-[10px] uppercase tracking-wider font-medium flex items-center justify-between ${labelText}`}>
               <span>Vault Nodes</span>
               <span>{allNotes.length} notes</span>
             </div>
@@ -184,7 +192,7 @@ export const BacklinksPanel: React.FC<BacklinksPanelProps> = ({
                 ))}
               </svg>
             </div>
-            <p className="text-[11px] opacity-60 text-center">
+            <p className={`text-[11px] text-center ${labelText}`}>
               Click any node in the graph to jump to that document.
             </p>
           </div>
