@@ -955,3 +955,50 @@ test('Editor: Lossless HTML-to-Markdown and Markdown-to-HTML Round-Tripping', as
   const roundTrippedHtml = markdownToHtml(md);
   assert.equal(roundTrippedHtml, originalHtml);
 });
+
+test('ProseCadence: Offline sentence rhythm, dialogue ratio, adverbs, and proximity echoes', async () => {
+  const sampleHtml =
+    '<p>Rain fell. The lantern flickered softly against the wet cobblestones while Elena waited silently by the iron gate.</p>' +
+    '<p>“Stay back right now,” Marcus whispered urgently as the lantern flickered again.</p>';
+
+  const plain = sampleHtml
+    .replace(/<\/(p|h1|h2|h3|blockquote|li|div)>/gi, '. ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  const words = plain
+    .split(/\s+/)
+    .map((w) => w.replace(/^[^a-zA-Z0-9']+|[^a-zA-Z0-9']+$/g, ''))
+    .filter(Boolean);
+
+  assert.equal(words.length, 30);
+
+  // Dialogue ratio check (“Stay back right now,” = 4 words out of 30 => 13%)
+  const dialogueMatches = plain.match(/(?:"[^"]*"|“[^”]*”)/g) || [];
+  const dialogueWordCount = dialogueMatches.reduce(
+    (sum, seg) => sum + seg.replace(/["“”]/g, '').trim().split(/\s+/).filter(Boolean).length,
+    0
+  );
+  assert.equal(dialogueWordCount, 4);
+  assert.equal(Math.round((dialogueWordCount / words.length) * 100), 13);
+
+  // Adverbs check: softly, silently, urgently = 3
+  const lowerWords = words.map((w) => w.toLowerCase().replace(/[^a-z]/g, ''));
+  const adverbs = lowerWords.filter((w) => w.length >= 5 && w.endsWith('ly'));
+  assert.deepEqual(adverbs, ['softly', 'silently', 'urgently']);
+
+  // Proximity echoes check: "lantern" and "flickered" repeat within 45 words
+  const echoCounts = new Map();
+  for (let i = 0; i < lowerWords.length; i++) {
+    const w = lowerWords[i];
+    if (w.length < 5) continue;
+    for (let j = i + 1; j < Math.min(lowerWords.length, i + 45); j++) {
+      if (lowerWords[j] === w) {
+        echoCounts.set(w, (echoCounts.get(w) || 1) + 1);
+      }
+    }
+  }
+  assert.equal(echoCounts.get('lantern'), 2);
+  assert.equal(echoCounts.get('flickered'), 2);
+});

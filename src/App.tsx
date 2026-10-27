@@ -33,6 +33,10 @@ export function App() {
   const [isCompileOpen, setIsCompileOpen] = useState(false);
   const [compileFolderId, setCompileFolderId] = useState<string | null>(null);
   const [isThemeMenuOpen, setIsThemeMenuOpen] = useState(false);
+  const [selectedLumenPassage, setSelectedLumenPassage] = useState<{
+    text: string;
+    timestamp: number;
+  } | null>(null);
   const themeMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -1198,6 +1202,10 @@ export function App() {
             onToggleFocus={() =>
               handleUpdateSettings({ ...settings, focusMode: !settings.focusMode })
             }
+            onAskLumen={(selectedText) => {
+              setSelectedLumenPassage({ text: selectedText, timestamp: Date.now() });
+              setIsTimelineOpen(true);
+            }}
             isLightMode={isLightMode}
           />
         ) : (
@@ -1237,6 +1245,8 @@ export function App() {
             settings={settings}
             onUpdateSettings={handleUpdateSettings}
             onOpenSettings={() => setIsSettingsOpen(true)}
+            selectedPassage={selectedLumenPassage}
+            onClearSelectedPassage={() => setSelectedLumenPassage(null)}
           />
         )}
 

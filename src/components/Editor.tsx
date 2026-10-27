@@ -1,10 +1,13 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import type { Note, EditorSettings } from '../types';
 import { AccessoryBar } from './AccessoryBar';
 import { HistorySliderModal } from './HistorySliderModal';
+import { analyzeProseCadence } from '../services/cadence';
+import { THEMES } from '../services/themes';
 import {
   Code,
   Eye,
@@ -24,6 +27,8 @@ import {
   Clock,
   Crosshair,
   History,
+  Activity,
+  Sparkles,
 } from 'lucide-react';
 import { DictationService, ReadAloudService, isSpeechRecognitionSupported, isSpeechSynthesisSupported } from '../services/speech';
 
@@ -137,6 +142,7 @@ interface EditorProps {
   saveStatus: 'saved' | 'saving';
   onToggleTypewriter: () => void;
   onToggleFocus: () => void;
+  onAskLumen?: (selectedText: string) => void;
   isLightMode: boolean;
 }
 
@@ -152,9 +158,16 @@ export const Editor: React.FC<EditorProps> = ({
   saveStatus,
   onToggleTypewriter,
   onToggleFocus,
+  onAskLumen,
   isLightMode,
 }) => {
   const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [showCadenceLens, setShowCadenceLens] = useState(false);
+  const [selectionToolbar, setSelectionToolbar] = useState<{
+    top: number;
+    left: number;
+    text: string;
+  } | null>(null);
   const [rawMarkdownMode, setRawMarkdownMode] = useState(false);
   const [markdownContent, setMarkdownContent] = useState('');
   const [isAddingTag, setIsAddingTag] = useState(false);
@@ -387,6 +400,65 @@ export const Editor: React.FC<EditorProps> = ({
       editor.off('selectionUpdate', handleSelectionUpdate);
     };
   }, [editor, settings.typewriterMode]);
+
+  // Whisper-quiet inline selection bar tracking
+  useEffect(() => {
+    if (!editor || rawMarkdownMode) {
+      return;
+    }
+
+    const updateSelectionBar = () => {
+      const { from, to, empty } = editor.state.selection;
+      if (empty || to - from < 2) {
+        setSelectionToolbar(null);
+        return;
+      }
+      const selectedText = editor.state.doc.textBetween(from, to, ' ').trim();
+      if (!selectedText) {
+        setSelectionToolbar(null);
+        return;
+      }
+
+      const domSelection = window.getSelection();
+      if (!domSelection || domSelection.rangeCount === 0) {
+        setSelectionToolbar(null);
+        return;
+      }
+
+      const range = domSelection.getRangeAt(0);
+      const rect = range.getBoundingClientRect();
+      if (rect.width === 0 && rect.height === 0) {
+        setSelectionToolbar(null);
+        return;
+      }
+
+      const clampedLeft = Math.max(140, Math.min(window.innerWidth - 140, rect.left + rect.width / 2));
+      const clampedTop = Math.max(52, rect.top - 10);
+
+      setSelectionToolbar({
+        top: clampedTop,
+        left: clampedLeft,
+        text: selectedText,
+      });
+    };
+
+    const handleScroll = () => setSelectionToolbar(null);
+    const containerEl = editorContainerRef.current;
+
+    editor.on('selectionUpdate', updateSelectionBar);
+    containerEl?.addEventListener('scroll', handleScroll, { passive: true });
+
+    return () => {
+      editor.off('selectionUpdate', updateSelectionBar);
+      containerEl?.removeEventListener('scroll', handleScroll);
+    };
+  }, [editor, rawMarkdownMode]);
+
+  const currentTheme = THEMES[settings.theme] || THEMES.charcoal;
+  const cadenceMetrics = useMemo(
+    () => (showCadenceLens ? analyzeProseCadence(note.content) : null),
+    [showCadenceLens, note.content]
+  );
 
   useEffect(() => {
     if (titleHeadingRef.current && titleHeadingRef.current.innerText !== (note.title || '')) {
@@ -750,6 +822,17 @@ export const Editor: React.FC<EditorProps> = ({
             >
               <Tag className="h-3.5 w-3.5" />
             </button>
+
+            <button
+              type="button"
+              onClick={() => setShowCadenceLens(!showCadenceLens)}
+              className={`rounded-md p-1.5 transition flex items-center gap-1 ${
+                showCadenceLens ? activeBtn : `${btnHover} text-neutral-400`
+              }`}
+              title="Prose Cadence & Rhythm Lens (100% Offline Craft Diagnostics)"
+            >
+              <Activity className="h-3.5 w-3.5" />
+            </button>
           </div>
         ) : (
           <div className="flex items-center gap-2 text-neutral-400 text-[11px]">
@@ -789,6 +872,115 @@ export const Editor: React.FC<EditorProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Offline Prose Cadence & Rhythm Lens */}
+      {showCadenceLens && cadenceMetrics && (
+        <div
+          className={`px-4 md:px-6 py-2.5 border-b ${subBarBorder} ${
+            isLightMode ? 'bg-black/[0.015]' : 'bg-white/[0.015]'
+          } text-xs select-none animate-in fade-in duration-150`}
+        >
+          <div className="max-w-[72ch] mx-auto flex flex-col gap-2.5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <Activity
+                  className="h-3.5 w-3.5 opacity-80"
+                  style={{ color: currentTheme.tokens.accentColor }}
+                />
+                <span className="font-semibold tracking-tight">Prose Cadence &amp; Rhythm</span>
+                <span
+                  className={`px-2 py-0.5 rounded text-[10px] font-medium border ${
+                    isLightMode
+                      ? 'bg-black/[0.03] border-black/[0.08] text-[#383531]'
+                      : 'bg-white/[0.04] border-white/[0.08] text-[#c5c1ba]'
+                  }`}
+                >
+                  {cadenceMetrics.pacingLabel}
+                </span>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-4 text-[11px] tabular-nums opacity-85">
+                <div>
+                  <span className="opacity-55 mr-1">Avg Sentence:</span>
+                  <span className="font-semibold">{cadenceMetrics.avgSentenceWords}w</span>
+                  <span className="opacity-45 ml-1">({cadenceMetrics.sentenceCount} sentences)</span>
+                </div>
+                <div>
+                  <span className="opacity-55 mr-1">Rhythm:</span>
+                  <span title="Short sentences (≤8 words)">
+                    {cadenceMetrics.rhythmDistribution.short} short
+                  </span>
+                  <span className="opacity-35 mx-1">·</span>
+                  <span title="Medium sentences (9–20 words)">
+                    {cadenceMetrics.rhythmDistribution.medium} med
+                  </span>
+                  <span className="opacity-35 mx-1">·</span>
+                  <span title="Long sentences (≥21 words)">
+                    {cadenceMetrics.rhythmDistribution.long} long
+                  </span>
+                </div>
+                <div>
+                  <span className="opacity-55 mr-1">Dialogue:</span>
+                  <span className="font-semibold">{cadenceMetrics.dialogueRatio}%</span>
+                </div>
+                <div>
+                  <span className="opacity-55 mr-1">Adverbs (-ly):</span>
+                  <span className="font-semibold">{cadenceMetrics.adverbCount}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Sentence-Length Rhythm Sparkbar & Proximity Word Echoes */}
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-0.5">
+              {cadenceMetrics.sentenceLengths.length > 0 && (
+                <div
+                  className="flex items-end gap-[3px] h-4"
+                  title="Sentence-by-sentence length rhythm across recent sentences"
+                >
+                  {cadenceMetrics.sentenceLengths.map((len, i) => {
+                    const heightPct = Math.max(18, Math.min(100, Math.round((len / 32) * 100)));
+                    return (
+                      <span
+                        key={i}
+                        className="w-1 rounded-xs transition-all"
+                        style={{
+                          height: `${heightPct}%`,
+                          backgroundColor:
+                            len >= 22
+                              ? currentTheme.tokens.accentColor
+                              : isLightMode
+                              ? 'rgba(0,0,0,0.28)'
+                              : 'rgba(255,255,255,0.28)',
+                        }}
+                      />
+                    );
+                  })}
+                </div>
+              )}
+
+              <div className="flex items-center gap-1.5 flex-wrap text-[11px]">
+                <span className="opacity-50">Proximity Echoes:</span>
+                {cadenceMetrics.wordEchoes.length === 0 ? (
+                  <span className="opacity-65 italic">None detected within 45 words</span>
+                ) : (
+                  cadenceMetrics.wordEchoes.map((echo) => (
+                    <span
+                      key={echo.word}
+                      className={`px-1.5 py-0.5 rounded text-[10px] tabular-nums border ${
+                        isLightMode
+                          ? 'bg-black/[0.03] border-black/[0.08] text-[#383531]'
+                          : 'bg-white/[0.04] border-white/[0.08] text-[#c5c1ba]'
+                      }`}
+                    >
+                      {echo.word} <span className="opacity-55">×{echo.count}</span>
+                    </span>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Editor Scroll Container */}
       <div
@@ -942,6 +1134,110 @@ export const Editor: React.FC<EditorProps> = ({
           theme={settings.theme}
         />
       )}
+
+      {/* Whisper-Quiet Floating Selection Action Bar (Portal to body to avoid containing-block clipping) */}
+      {selectionToolbar &&
+        !rawMarkdownMode &&
+        typeof document !== 'undefined' &&
+        createPortal(
+          <div
+            style={{
+              position: 'fixed',
+              top: `${selectionToolbar.top}px`,
+              left: `${selectionToolbar.left}px`,
+              transform: 'translate(-50%, -100%)',
+            }}
+            onMouseDown={(e) => {
+              // Prevent losing editor text selection when clicking toolbar buttons
+              e.preventDefault();
+            }}
+            className={`z-50 flex items-center gap-0.5 px-1.5 py-1 rounded-lg border shadow-lg backdrop-blur-md text-xs select-none animate-in fade-in duration-100 ${
+              isLightMode
+                ? 'bg-[#ffffff]/95 border-black/[0.1] text-[#1c1a17] shadow-black/10'
+                : 'bg-[#18191c]/95 border-white/[0.12] text-[#f0ece4] shadow-black/50'
+            }`}
+          >
+            <button
+              type="button"
+              onClick={() => editor?.chain().focus().toggleBold().run()}
+              className={`p-1.5 rounded transition ${
+                editor?.isActive('bold')
+                  ? isLightMode
+                    ? 'bg-black/10 font-semibold'
+                    : 'bg-white/15 font-semibold'
+                  : 'hover:bg-black/5 dark:hover:bg-white/10 opacity-80 hover:opacity-100'
+              }`}
+              title="Bold"
+            >
+              <Bold className="h-3.5 w-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => editor?.chain().focus().toggleItalic().run()}
+              className={`p-1.5 rounded transition ${
+                editor?.isActive('italic')
+                  ? isLightMode
+                    ? 'bg-black/10 font-semibold'
+                    : 'bg-white/15 font-semibold'
+                  : 'hover:bg-black/5 dark:hover:bg-white/10 opacity-80 hover:opacity-100'
+              }`}
+              title="Italic"
+            >
+              <Italic className="h-3.5 w-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => editor?.chain().focus().toggleBlockquote().run()}
+              className={`p-1.5 rounded transition ${
+                editor?.isActive('blockquote')
+                  ? isLightMode
+                    ? 'bg-black/10 font-semibold'
+                    : 'bg-white/15 font-semibold'
+                  : 'hover:bg-black/5 dark:hover:bg-white/10 opacity-80 hover:opacity-100'
+              }`}
+              title="Blockquote"
+            >
+              <Quote className="h-3.5 w-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                insertWikilink();
+                setSelectionToolbar(null);
+              }}
+              className="p-1.5 rounded transition hover:bg-black/5 dark:hover:bg-white/10 opacity-80 hover:opacity-100"
+              title="Wrap as [[Wikilink]]"
+            >
+              <Link2 className="h-3.5 w-3.5" />
+            </button>
+
+            {onAskLumen && (
+              <>
+                <div
+                  className={`mx-1 h-3.5 w-px ${
+                    isLightMode ? 'bg-black/10' : 'bg-white/10'
+                  }`}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    onAskLumen(selectionToolbar.text);
+                    setSelectionToolbar(null);
+                  }}
+                  className="flex items-center gap-1 px-2 py-1 rounded text-[11px] font-medium transition hover:bg-black/5 dark:hover:bg-white/10"
+                  title="Send selected passage to Lumen Editorial Partner"
+                >
+                  <Sparkles
+                    className="h-3 w-3 shrink-0"
+                    style={{ color: currentTheme.tokens.accentColor }}
+                  />
+                  <span>Ask Lumen</span>
+                </button>
+              </>
+            )}
+          </div>,
+          document.body
+        )}
     </div>
   );
 };
