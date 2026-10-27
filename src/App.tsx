@@ -461,7 +461,8 @@ export function App() {
     const target = notes.find((n) => n.id === noteId);
     if (!target) return;
 
-    const nextNotes = notes.map((n) => (n.id === noteId ? { ...n, pinned: !n.pinned } : n));
+    const newPinned = !target.pinned;
+    const nextNotes = notes.map((n) => (n.id === noteId ? { ...n, pinned: newPinned } : n));
     setNotes(nextNotes);
     StorageService.saveNotes(nextNotes);
 
@@ -473,6 +474,14 @@ export function App() {
     };
     setUndoStack((prev) => [action, ...prev.slice(0, 49)]);
     setRedoStack([]);
+
+    showToast({
+      id: `toast-${Date.now()}`,
+      message: `${newPinned ? 'Pinned' : 'Unpinned'} "${target.title || 'Untitled Document'}"`,
+      actionLabel: 'Undo',
+      undoHint: true,
+      onAction: handleUndo,
+    });
   };
 
   const handleRenameNote = (noteId: string, newTitle: string) => {

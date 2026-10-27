@@ -470,22 +470,27 @@ export const Sidebar: React.FC<SidebarProps> = ({
                             <span className="truncate">{note.title || 'Untitled'}</span>
                           )}
                         </div>
-                        <div className="flex items-center gap-0.5 shrink-0">
-                          {/* Pin button: low opacity when idle hover, full opacity when pinned */}
+                        <div className="flex items-center gap-1 shrink-0">
+                          {/* Pin button */}
                           <button
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
                               onTogglePin(note.id);
                             }}
-                            className={`p-1 rounded transition ${
+                            className={`p-1.5 rounded-md transition-all ${
                               note.pinned
-                                ? 'opacity-100 text-inherit'
-                                : 'opacity-0 group-hover:opacity-40 hover:!opacity-100'
+                                ? isLightMode
+                                  ? 'text-black opacity-100 hover:opacity-75'
+                                  : 'text-white opacity-100 hover:opacity-75'
+                                : 'opacity-30 hover:opacity-100'
                             }`}
                             title={note.pinned ? 'Unpin note' : 'Pin note'}
                           >
-                            <Pin className={`h-2.5 w-2.5 ${note.pinned ? 'fill-current' : ''}`} />
+                            <Pin
+                              className="h-3.5 w-3.5 transition-transform active:scale-90"
+                              fill={note.pinned ? 'currentColor' : 'none'}
+                            />
                           </button>
                           <button
                             type="button"
@@ -493,10 +498,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                               e.stopPropagation();
                               onDeleteNote(note.id);
                             }}
-                            className="p-1 opacity-0 group-hover:opacity-60 hover:!opacity-100 hover:text-rose-400 transition"
+                            className="p-1.5 rounded-md opacity-0 group-hover:opacity-60 hover:!opacity-100 hover:text-rose-400 transition"
                             title="Delete note"
                           >
-                            <Trash2 className="h-2.5 w-2.5" />
+                            <Trash2 className="h-3.5 w-3.5" />
                           </button>
                         </div>
                       </div>
@@ -547,22 +552,27 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     <span className="truncate">{note.title || 'Untitled'}</span>
                   )}
                 </div>
-                <div className="flex items-center gap-0.5 shrink-0">
-                  {/* Pin button: low opacity when idle hover, full opacity when pinned */}
+                <div className="flex items-center gap-1 shrink-0">
+                  {/* Pin button */}
                   <button
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
                       onTogglePin(note.id);
                     }}
-                    className={`p-1 rounded transition ${
+                    className={`p-1.5 rounded-md transition-all ${
                       note.pinned
-                        ? 'opacity-100 text-inherit'
-                        : 'opacity-0 group-hover:opacity-40 hover:!opacity-100'
+                        ? isLightMode
+                          ? 'text-black opacity-100 hover:opacity-75'
+                          : 'text-white opacity-100 hover:opacity-75'
+                        : 'opacity-30 hover:opacity-100'
                     }`}
                     title={note.pinned ? 'Unpin note' : 'Pin note'}
                   >
-                    <Pin className={`h-2.5 w-2.5 ${note.pinned ? 'fill-current' : ''}`} />
+                    <Pin
+                      className="h-3.5 w-3.5 transition-transform active:scale-90"
+                      fill={note.pinned ? 'currentColor' : 'none'}
+                    />
                   </button>
                   <button
                     type="button"
@@ -570,10 +580,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       e.stopPropagation();
                       onDeleteNote(note.id);
                     }}
-                    className="p-1 opacity-0 group-hover:opacity-60 hover:!opacity-100 hover:text-rose-400 transition"
+                    className="p-1.5 rounded-md opacity-0 group-hover:opacity-60 hover:!opacity-100 hover:text-rose-400 transition"
                     title="Delete note"
                   >
-                    <Trash2 className="h-2.5 w-2.5" />
+                    <Trash2 className="h-3.5 w-3.5" />
                   </button>
                 </div>
               </div>

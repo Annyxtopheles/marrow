@@ -102,13 +102,21 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
               <button
                 type="button"
                 disabled={item.disabled}
-                onClick={() => {
+                onMouseDown={(e) => {
+                  e.stopPropagation();
                   if (item.onClick) {
                     item.onClick();
                     onClose();
                   }
                 }}
-                className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-md transition text-left ${
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (item.onClick) {
+                    item.onClick();
+                    onClose();
+                  }
+                }}
+                className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-md transition text-left cursor-pointer ${
                   item.danger
                     ? 'text-rose-500 hover:bg-rose-500/10'
                     : item.disabled
@@ -117,7 +125,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                 } ${isSubmenuOpen ? (isLightMode ? 'bg-black/[0.05]' : 'bg-white/[0.06]') : ''}`}
               >
                 <div className="flex items-center gap-2 truncate">
-                  {item.icon && <span className="opacity-70 shrink-0">{item.icon}</span>}
+                  {item.icon && <span className="opacity-80 shrink-0">{item.icon}</span>}
                   <span className="truncate">{item.label}</span>
                 </div>
                 {hasSubmenu && <ChevronRight className="h-3 w-3 opacity-40 ml-2 shrink-0" />}
@@ -136,11 +144,17 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                       <button
                         key={sub.label}
                         type="button"
-                        onClick={() => {
+                        onMouseDown={(e) => {
+                          e.stopPropagation();
                           sub.onClick();
                           onClose();
                         }}
-                        className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md transition text-left ${hoverBg} ${
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          sub.onClick();
+                          onClose();
+                        }}
+                        className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md transition text-left cursor-pointer ${hoverBg} ${
                           sub.active ? 'font-medium opacity-100' : 'opacity-80'
                         }`}
                       >
