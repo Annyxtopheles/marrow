@@ -925,10 +925,9 @@ export function App() {
             </button>
             <div className="flex items-center gap-2">
               <img
-                src="/marrow-wordmark.svg"
+                src={isLightMode ? '/marrow wordmark logo dark.svg' : '/marrow wordmark logo.svg'}
                 alt="Marrow"
                 className="h-[13px] w-auto object-contain select-none opacity-90 -translate-y-[1px]"
-                style={{ filter: isLightMode ? 'brightness(0) opacity(0.8)' : undefined }}
               />
               <span
                 className={`text-[10px] leading-none px-1.5 py-1 rounded-md border flex items-center justify-center ${
@@ -1025,10 +1024,9 @@ export function App() {
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center text-center p-8 text-neutral-500">
             <img
-              src="/marrow-icon.svg"
+              src={isLightMode ? '/marrow logo icon dark.svg' : '/marrow logo icon.svg'}
               alt="Marrow"
               className="h-8 w-8 mb-3 opacity-60"
-              style={{ filter: isLightMode ? 'brightness(0) opacity(0.6)' : undefined }}
             />
             <h3 className="text-base font-medium text-inherit mb-1">No Document Open</h3>
             <p className="text-xs max-w-sm mb-4 text-neutral-400">
