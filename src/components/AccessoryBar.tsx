@@ -42,6 +42,18 @@ export const AccessoryBar: React.FC<AccessoryBarProps> = ({
   saveStatus,
   isLightMode,
 }) => {
+  // Native Speech-to-Text & Text-to-Speech hooks must be unconditional
+  const [isListening, setIsListening] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const dictationRef = useRef<DictationService | null>(null);
+
+  useEffect(() => {
+    return () => {
+      dictationRef.current?.stop();
+      ReadAloudService.stop();
+    };
+  }, []);
+
   if (!editor) return null;
 
   const insertPair = (open: string, close: string) => {
@@ -72,18 +84,6 @@ export const AccessoryBar: React.FC<AccessoryBarProps> = ({
   const btnHover = isLightMode ? 'hover:bg-black/[0.05] hover:text-[#222]' : 'hover:bg-white/[0.06] hover:text-[#eee]';
   const activeBtn = isLightMode ? 'bg-black/[0.08] text-[#111]' : 'bg-white/[0.08] text-[#f2efe9]';
   const divider = isLightMode ? 'bg-[#e4e0d7]' : 'bg-white/[0.07]';
-
-  // Native Speech-to-Text & Text-to-Speech
-  const [isListening, setIsListening] = useState(false);
-  const [isSpeaking, setIsSpeaking] = useState(false);
-  const dictationRef = useRef<DictationService | null>(null);
-
-  useEffect(() => {
-    return () => {
-      dictationRef.current?.stop();
-      ReadAloudService.stop();
-    };
-  }, []);
 
   const toggleDictation = () => {
     if (isListening) {

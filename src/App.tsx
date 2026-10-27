@@ -28,7 +28,7 @@ export function App() {
   const [isSyncOpen, setIsSyncOpen] = useState(false);
 
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const lastSnapshotRef = useRef<number>(Date.now());
+  const lastSnapshotRef = useRef<number>(0);
 
   const activeNote = notes.find((n) => n.id === activeNoteId) || notes[0] || null;
 

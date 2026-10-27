@@ -98,18 +98,24 @@ export const Editor: React.FC<EditorProps> = ({
     if (editor && editor.getHTML() !== note.content) {
       editor.commands.setContent(note.content, { emitUpdate: false });
     }
-    setMarkdownContent(
-      note.content
-        .replace(/<h1>(.*?)<\/h1>/gi, '# $1\n\n')
-        .replace(/<h2>(.*?)<\/h2>/gi, '## $1\n\n')
-        .replace(/<h3>(.*?)<\/h3>/gi, '### $1\n\n')
-        .replace(/<p>(.*?)<\/p>/gi, '$1\n\n')
-        .replace(/<blockquote>(.*?)<\/blockquote>/gi, '> $1\n\n')
-        .replace(/<em>(.*?)<\/em>/gi, '*$1*')
-        .replace(/<strong>(.*?)<\/strong>/gi, '**$1**')
-        .replace(/<br\s*\/?>/gi, '\n')
-    );
   }, [note.id]);
+
+  const toggleMarkdownMode = () => {
+    if (!rawMarkdownMode) {
+      setMarkdownContent(
+        note.content
+          .replace(/<h1>(.*?)<\/h1>/gi, '# $1\n\n')
+          .replace(/<h2>(.*?)<\/h2>/gi, '## $1\n\n')
+          .replace(/<h3>(.*?)<\/h3>/gi, '### $1\n\n')
+          .replace(/<p>(.*?)<\/p>/gi, '$1\n\n')
+          .replace(/<blockquote>(.*?)<\/blockquote>/gi, '> $1\n\n')
+          .replace(/<em>(.*?)<\/em>/gi, '*$1*')
+          .replace(/<strong>(.*?)<\/strong>/gi, '**$1**')
+          .replace(/<br\s*\/?>/gi, '\n')
+      );
+    }
+    setRawMarkdownMode(!rawMarkdownMode);
+  };
 
   // PureWriter Typewriter scrolling: center active line on selection change
   useEffect(() => {
@@ -205,7 +211,7 @@ export const Editor: React.FC<EditorProps> = ({
         </div>
 
         <button
-          onClick={() => setRawMarkdownMode(!rawMarkdownMode)}
+          onClick={toggleMarkdownMode}
           className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] transition text-neutral-400 ${btnHover} ${
             rawMarkdownMode
               ? isLightMode

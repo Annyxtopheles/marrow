@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
+import type { HistoryRecord } from '../types';
 import { StorageService } from '../services/storage';
 import { X, RotateCcw, Calendar, FileText, Check } from 'lucide-react';
 
@@ -19,16 +20,20 @@ export const HistorySliderModal: React.FC<HistorySliderModalProps> = ({
   const [selectedIndex, setSelectedIndex] = useState<number>(0);
   const [copied, setCopied] = useState(false);
 
-  const records = history.length > 0 ? history : [
-    {
-      id: 'current',
-      noteId,
-      timestamp: Date.now(),
-      content: '<p>Initial draft snapshot...</p>',
-      title: noteTitle,
-      wordCount: 0,
-    },
-  ];
+  const records = useMemo<HistoryRecord[]>(() => {
+    return history.length > 0
+      ? history
+      : [
+          {
+            id: 'current',
+            noteId,
+            timestamp: 0,
+            content: '<p>Initial draft snapshot...</p>',
+            title: noteTitle,
+            wordCount: 0,
+          },
+        ];
+  }, [history, noteId, noteTitle]);
 
   const currentRecord = records[selectedIndex] || records[0];
 
