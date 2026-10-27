@@ -97,6 +97,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const [renamingFolderId, setRenamingFolderId] = useState<string | null>(null);
   const [editingFolderName, setEditingFolderName] = useState('');
 
+  // Drag and drop state
+  const [draggedNoteId, setDraggedNoteId] = useState<string | null>(null);
+  const [dragOverFolderId, setDragOverFolderId] = useState<string | null>(null);
+  const [isDragOverRoot, setIsDragOverRoot] = useState(false);
+
   // Context menu state
   const [contextMenu, setContextMenu] = useState<{
     x: number;
@@ -420,7 +425,54 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   setEditingFolderName(folder.name);
                 }}
                 onContextMenu={(e) => handleFolderContextMenu(e, folder)}
-                className={`flex items-center justify-between px-2 py-1.5 rounded-md cursor-pointer group transition ${itemHover}`}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  e.dataTransfer.dropEffect = 'move';
+                  if (dragOverFolderId !== folder.id) {
+                    setDragOverFolderId(folder.id);
+                  }
+                }}
+                onDragEnter={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setDragOverFolderId(folder.id);
+                }}
+                onDragLeave={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+                    setDragOverFolderId(null);
+                  }
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  const noteId = e.dataTransfer.getData('text/plain') || draggedNoteId;
+                  if (noteId && onMoveNote) {
+                    onMoveNote(noteId, folder.id);
+                    if (collapsedFolders[folder.id]) {
+                      setCollapsedFolders((prev) => ({ ...prev, [folder.id]: false }));
+                    }
+                  }
+                  setDragOverFolderId(null);
+                  setDraggedNoteId(null);
+                }}
+                className={`flex items-center justify-between px-2 py-1.5 rounded-md cursor-pointer group transition ${
+                  dragOverFolderId === folder.id
+                    ? isLightMode
+                      ? 'bg-black/[0.08] ring-1 ring-inset ring-black/25'
+                      : 'bg-white/[0.12] ring-1 ring-inset ring-white/30'
+                    : itemHover
+                }`}
+                style={
+                  dragOverFolderId === folder.id
+                    ? {
+                        backgroundColor: currentTheme.tokens.accentBg,
+                        boxShadow: `inset 0 0 0 1.5px ${currentTheme.tokens.accentColor}`,
+                      }
+                    : undefined
+                }
               >
                 <div className="flex items-center gap-1.5 truncate flex-1 mr-2">
                   {isCollapsed ? (
@@ -483,12 +535,68 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </div>
 
               {!isCollapsed && (
-                <div className={`pl-4 border-l ${borderColor} ml-2 space-y-0.5`}>
+                <div
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.dataTransfer.dropEffect = 'move';
+                    if (dragOverFolderId !== folder.id) {
+                      setDragOverFolderId(folder.id);
+                    }
+                  }}
+                  onDragEnter={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setDragOverFolderId(folder.id);
+                  }}
+                  onDragLeave={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+                      setDragOverFolderId(null);
+                    }
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const noteId = e.dataTransfer.getData('text/plain') || draggedNoteId;
+                    if (noteId && onMoveNote) {
+                      onMoveNote(noteId, folder.id);
+                    }
+                    setDragOverFolderId(null);
+                    setDraggedNoteId(null);
+                  }}
+                  className={`pl-4 border-l ${borderColor} ml-2 space-y-0.5 rounded-r transition-colors ${
+                    dragOverFolderId === folder.id ? 'bg-black/[0.03] dark:bg-white/[0.03]' : ''
+                  }`}
+                >
+                  {folderNotes.length === 0 && (
+                    <div
+                      className={`py-1.5 px-2 text-[11px] italic transition ${
+                        dragOverFolderId === folder.id ? 'opacity-80 font-medium' : 'opacity-40'
+                      }`}
+                    >
+                      Empty folder — drop files here
+                    </div>
+                  )}
                   {folderNotes.map((note) => {
                     const isActive = note.id === activeNoteId;
+                    const isDraggingThis = draggedNoteId === note.id;
                     return (
                       <div
                         key={note.id}
+                        draggable={renamingNoteId !== note.id}
+                        onDragStart={(e) => {
+                          e.stopPropagation();
+                          e.dataTransfer.setData('text/plain', note.id);
+                          e.dataTransfer.effectAllowed = 'move';
+                          setDraggedNoteId(note.id);
+                        }}
+                        onDragEnd={() => {
+                          setDraggedNoteId(null);
+                          setDragOverFolderId(null);
+                          setIsDragOverRoot(false);
+                        }}
                         onClick={() => renamingNoteId !== note.id && onSelectNote(note)}
                         onDoubleClick={(e) => {
                           e.stopPropagation();
@@ -496,9 +604,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
                           setEditingTitle(note.title || 'Untitled');
                         }}
                         onContextMenu={(e) => handleNoteContextMenu(e, note)}
-                        className={`group flex items-center justify-between px-2 py-1.5 rounded-md cursor-pointer transition ${
+                        className={`group flex items-center justify-between px-2 py-1.5 rounded-md cursor-pointer transition select-none ${
                           isActive ? activeItem : itemHover
-                        }`}
+                        } ${isDraggingThis ? 'opacity-40 scale-[0.98]' : ''}`}
                       >
                         <div className="truncate flex-1 mr-2">
                           {renamingNoteId === note.id ? (
@@ -580,15 +688,73 @@ export const Sidebar: React.FC<SidebarProps> = ({
         })}
 
         {/* Loose Root Notes */}
-        <div className="pt-2">
-          <div className={`text-[10px] uppercase tracking-wider font-medium px-2 pb-1 ${mutedText}`}>
-            General
+        <div
+          onDragOver={(e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            if (!isDragOverRoot) setIsDragOverRoot(true);
+          }}
+          onDragEnter={(e) => {
+            e.preventDefault();
+            setIsDragOverRoot(true);
+          }}
+          onDragLeave={(e) => {
+            e.preventDefault();
+            if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+              setIsDragOverRoot(false);
+            }
+          }}
+          onDrop={(e) => {
+            e.preventDefault();
+            const noteId = e.dataTransfer.getData('text/plain') || draggedNoteId;
+            if (noteId && onMoveNote) {
+              onMoveNote(noteId, null);
+            }
+            setIsDragOverRoot(false);
+            setDraggedNoteId(null);
+          }}
+          className={`pt-2 pb-6 rounded-lg transition-all ${
+            isDragOverRoot
+              ? isLightMode
+                ? 'bg-black/[0.04] ring-1 ring-inset ring-black/20'
+                : 'bg-white/[0.06] ring-1 ring-inset ring-white/20'
+              : ''
+          }`}
+          style={
+            isDragOverRoot
+              ? {
+                  backgroundColor: currentTheme.tokens.accentBg,
+                  boxShadow: `inset 0 0 0 1.5px ${currentTheme.tokens.accentColor}`,
+                }
+              : undefined
+          }
+        >
+          <div className={`text-[10px] uppercase tracking-wider font-medium px-2 pb-1 flex items-center justify-between ${mutedText}`}>
+            <span>General</span>
+            {isDragOverRoot && (
+              <span className="text-[9px] font-normal" style={{ color: currentTheme.tokens.accentColor }}>
+                Drop to move to General
+              </span>
+            )}
           </div>
           {sortNotes(filteredNotes.filter((n) => !n.folderId)).map((note) => {
             const isActive = note.id === activeNoteId;
+            const isDraggingThis = draggedNoteId === note.id;
             return (
               <div
                 key={note.id}
+                draggable={renamingNoteId !== note.id}
+                onDragStart={(e) => {
+                  e.stopPropagation();
+                  e.dataTransfer.setData('text/plain', note.id);
+                  e.dataTransfer.effectAllowed = 'move';
+                  setDraggedNoteId(note.id);
+                }}
+                onDragEnd={() => {
+                  setDraggedNoteId(null);
+                  setDragOverFolderId(null);
+                  setIsDragOverRoot(false);
+                }}
                 onClick={() => renamingNoteId !== note.id && onSelectNote(note)}
                 onDoubleClick={(e) => {
                   e.stopPropagation();
@@ -596,9 +762,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   setEditingTitle(note.title || 'Untitled');
                 }}
                 onContextMenu={(e) => handleNoteContextMenu(e, note)}
-                className={`group flex items-center justify-between px-2.5 py-1.5 rounded-md cursor-pointer transition ${
+                className={`group flex items-center justify-between px-2.5 py-1.5 rounded-md cursor-pointer transition select-none ${
                   isActive ? activeItem : itemHover
-                }`}
+                } ${isDraggingThis ? 'opacity-40 scale-[0.98]' : ''}`}
               >
                 <div className="truncate flex-1 mr-2">
                   {renamingNoteId === note.id ? (

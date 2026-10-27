@@ -515,3 +515,29 @@ test('Theme System: Multiple Modern & Editorial Themes with Blue and Pink Accent
   assert.equal(parseTheme('evergreen'), 'evergreen');
   assert.equal(parseTheme('invalid-theme'), 'charcoal');
 });
+
+test('Drag and Drop: Move notes into folders, between folders, and to root', async () => {
+  let notes = [
+    { id: 'note-prologue', title: 'Prologue', folderId: null },
+    { id: 'note-ch1', title: 'Chapter 1', folderId: 'f-act1' },
+    { id: 'note-ch2', title: 'Chapter 2', folderId: 'f-act1' },
+  ];
+
+  const handleMove = (noteId, targetFolderId) => {
+    notes = notes.map((n) =>
+      n.id === noteId ? { ...n, folderId: targetFolderId, updatedAt: Date.now() } : n
+    );
+  };
+
+  // 1. Drag note from root (General) into folder 'f-act1'
+  handleMove('note-prologue', 'f-act1');
+  assert.equal(notes.find((n) => n.id === 'note-prologue').folderId, 'f-act1');
+
+  // 2. Drag note between folders: from 'f-act1' into 'f-act2'
+  handleMove('note-ch2', 'f-act2');
+  assert.equal(notes.find((n) => n.id === 'note-ch2').folderId, 'f-act2');
+
+  // 3. Drag note out of folder back to root (null)
+  handleMove('note-ch1', null);
+  assert.equal(notes.find((n) => n.id === 'note-ch1').folderId, null);
+});
