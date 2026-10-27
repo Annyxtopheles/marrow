@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import type { Note, TimelineEntry, ThemeMode } from '../types';
+import React, { useState, useEffect, useCallback } from 'react';
+import type { Note, TimelineEntry, ThemeMode, SceneBeat } from '../types';
 import { StorageService } from '../services/storage';
 import { THEMES } from '../services/themes';
 import {
@@ -8,6 +8,9 @@ import {
   Plus,
   Play,
   Square,
+  ListTodo,
+  Check,
+  Trash2,
 } from 'lucide-react';
 
 interface TimelinePanelProps {
@@ -28,10 +31,62 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
   theme,
 }) => {
   const currentTheme = THEMES[theme || 'charcoal'] || THEMES.charcoal;
-  const [activeTab, setActiveTab] = useState<'intervals' | 'story' | 'logs'>('intervals');
+  const [activeTab, setActiveTab] = useState<'intervals' | 'story' | 'beats' | 'logs'>('intervals');
 
   const [newLogNote, setNewLogNote] = useState('');
   const [newLogType, setNewLogType] = useState<TimelineEntry['type']>('revision');
+  const [newBeatText, setNewBeatText] = useState('');
+
+  const handleAddBeat = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!activeNote || !newBeatText.trim()) return;
+      const now = Date.now();
+      const newBeat: SceneBeat = {
+        id: `beat-${now}`,
+        text: newBeatText.trim(),
+        done: false,
+      };
+      const nextBeats = [...(activeNote.sceneBeats || []), newBeat];
+      onUpdateNote({
+        ...activeNote,
+        sceneBeats: nextBeats,
+        updatedAt: now,
+      });
+      setNewBeatText('');
+    },
+    [activeNote, newBeatText, onUpdateNote]
+  );
+
+  const handleToggleBeat = useCallback(
+    (beatId: string) => {
+      if (!activeNote || !activeNote.sceneBeats) return;
+      const now = Date.now();
+      const nextBeats = activeNote.sceneBeats.map((b) =>
+        b.id === beatId ? { ...b, done: !b.done } : b
+      );
+      onUpdateNote({
+        ...activeNote,
+        sceneBeats: nextBeats,
+        updatedAt: now,
+      });
+    },
+    [activeNote, onUpdateNote]
+  );
+
+  const handleDeleteBeat = useCallback(
+    (beatId: string) => {
+      if (!activeNote || !activeNote.sceneBeats) return;
+      const now = Date.now();
+      const nextBeats = activeNote.sceneBeats.filter((b) => b.id !== beatId);
+      onUpdateNote({
+        ...activeNote,
+        sceneBeats: nextBeats,
+        updatedAt: now,
+      });
+    },
+    [activeNote, onUpdateNote]
+  );
 
   const [sprintActive, setSprintActive] = useState(false);
   const [sprintSeconds, setSprintSeconds] = useState(0);
@@ -160,30 +215,42 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
         </div>
       </div>
 
-      <div className={`grid grid-cols-3 border-b ${border} text-[11px]`}>
+      <div className={`grid grid-cols-4 border-b ${border} text-[11px]`}>
         <button
           onClick={() => setActiveTab('intervals')}
-          className={`py-2 text-center transition border-b-2 ${
+          className={`py-2 text-center transition border-b-2 truncate ${
             activeTab === 'intervals' ? activeTabClass : inactiveTabClass
           }`}
+          title="Cadence, Sprints & Intervals"
         >
           Intervals
         </button>
         <button
           onClick={() => setActiveTab('story')}
-          className={`py-2 text-center transition border-b-2 ${
+          className={`py-2 text-center transition border-b-2 truncate ${
             activeTab === 'story' ? activeTabClass : inactiveTabClass
           }`}
+          title="Plot Chronology & Dates"
         >
           Story
         </button>
         <button
+          onClick={() => setActiveTab('beats')}
+          className={`py-2 text-center transition border-b-2 truncate ${
+            activeTab === 'beats' ? activeTabClass : inactiveTabClass
+          }`}
+          title="Chapter Synopsis & Scene Beats Checklist"
+        >
+          Beats
+        </button>
+        <button
           onClick={() => setActiveTab('logs')}
-          className={`py-2 text-center transition border-b-2 ${
+          className={`py-2 text-center transition border-b-2 truncate ${
             activeTab === 'logs' ? activeTabClass : inactiveTabClass
           }`}
+          title="Revision Micro-Logs"
         >
-          Micro-Logs
+          Logs
         </button>
       </div>
 
@@ -371,6 +438,139 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
                   );
                 })
               )}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'beats' && (
+          <div className="space-y-4">
+            {/* Chapter Synopsis & Objective */}
+            <div className={`p-3 rounded-lg border ${cardBg} space-y-2`}>
+              <div className="flex items-center justify-between">
+                <span className={`font-semibold flex items-center gap-1.5 ${headerText}`}>
+                  <ListTodo className="h-3.5 w-3.5" style={{ color: currentTheme.tokens.accentColor }} />
+                  Chapter Synopsis
+                </span>
+                <span className="text-[10px] opacity-50 font-mono">Scratchpad</span>
+              </div>
+              <textarea
+                placeholder="Jot chapter objective, POV notes, or key reveals (e.g. Lola confronts Vance; plant the bronze key)..."
+                value={activeNote?.synopsis || ''}
+                onChange={(e) => {
+                  if (activeNote) {
+                    onUpdateNote({
+                      ...activeNote,
+                      synopsis: e.target.value,
+                      updatedAt: Date.now(),
+                    });
+                  }
+                }}
+                className={`w-full rounded-md p-2 text-xs leading-relaxed outline-none resize-y min-h-[85px] border focus:border-current transition ${
+                  isLightMode
+                    ? 'bg-black/[0.02] border-black/[0.08] text-[#2c2a27]'
+                    : 'bg-white/[0.02] border-white/[0.08] text-[#dedad4]'
+                }`}
+              />
+              <p className="text-[10px] opacity-50 leading-tight">
+                Kept alongside drafting. Does not affect manuscript word count.
+              </p>
+            </div>
+
+            {/* Scene Beats Checklist */}
+            <div className={`p-3 rounded-lg border ${cardBg} space-y-3`}>
+              <div className="flex items-center justify-between">
+                <span className={`font-semibold flex items-center gap-1.5 ${headerText}`}>
+                  <ListTodo className="h-3.5 w-3.5" style={{ color: currentTheme.tokens.accentColor }} />
+                  Scene Beats Checklist
+                </span>
+                {activeNote?.sceneBeats && activeNote.sceneBeats.length > 0 && (
+                  <span className="text-[10px] font-mono opacity-60">
+                    {activeNote.sceneBeats.filter((b) => b.done).length} / {activeNote.sceneBeats.length}
+                  </span>
+                )}
+              </div>
+
+              {/* Add Beat Form */}
+              <form onSubmit={handleAddBeat} className="flex items-center gap-1.5">
+                <input
+                  type="text"
+                  placeholder="New scene beat..."
+                  value={newBeatText}
+                  onChange={(e) => setNewBeatText(e.target.value)}
+                  className={`flex-1 rounded px-2 py-1 text-xs outline-none border ${
+                    isLightMode
+                      ? 'bg-black/[0.02] border-black/[0.08] text-[#2c2a27]'
+                      : 'bg-white/[0.02] border-white/[0.08] text-[#dedad4]'
+                  }`}
+                />
+                <button
+                  type="submit"
+                  disabled={!newBeatText.trim()}
+                  className="px-2.5 py-1 rounded text-xs font-semibold disabled:opacity-40 transition shadow-xs hover:opacity-90 active:scale-95"
+                  style={{
+                    backgroundColor: currentTheme.tokens.accentColor,
+                    color: currentTheme.tokens.accentContrast,
+                  }}
+                >
+                  <Plus className="h-3 w-3" />
+                </button>
+              </form>
+
+              {/* Beats list */}
+              <div className="space-y-1">
+                {(!activeNote?.sceneBeats || activeNote.sceneBeats.length === 0) ? (
+                  <div className={`text-center py-4 text-[11px] ${labelText}`}>
+                    No scene beats added yet. Outline key beats to track while drafting.
+                  </div>
+                ) : (
+                  activeNote.sceneBeats.map((beat) => (
+                    <div
+                      key={beat.id}
+                      className={`group flex items-center justify-between p-1.5 rounded-md border border-transparent hover:border-inherit/10 transition ${
+                        beat.done ? 'opacity-50' : ''
+                      }`}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => handleToggleBeat(beat.id)}
+                        className="flex items-center gap-2 flex-1 text-left mr-2 min-w-0"
+                      >
+                        <span
+                          className={`h-3.5 w-3.5 rounded border flex items-center justify-center shrink-0 transition ${
+                            beat.done
+                              ? 'border-transparent text-white'
+                              : isLightMode
+                              ? 'border-black/30'
+                              : 'border-white/30'
+                          }`}
+                          style={{
+                            backgroundColor: beat.done ? currentTheme.tokens.accentColor : undefined,
+                            color: beat.done ? currentTheme.tokens.accentContrast : undefined,
+                          }}
+                        >
+                          {beat.done && <Check className="h-2.5 w-2.5" />}
+                        </span>
+                        <span
+                          className={`text-xs truncate ${
+                            beat.done ? 'line-through opacity-70' : ''
+                          }`}
+                        >
+                          {beat.text}
+                        </span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteBeat(beat.id)}
+                        className="opacity-0 group-hover:opacity-60 hover:!opacity-100 p-0.5 rounded transition text-inherit"
+                        title="Delete beat"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
           </div>
         )}

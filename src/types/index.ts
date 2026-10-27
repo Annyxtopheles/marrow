@@ -15,6 +15,12 @@ export interface HistoryRecord {
   wordCount: number;
 }
 
+export interface SceneBeat {
+  id: string;
+  text: string;
+  done: boolean;
+}
+
 export interface Note {
   id: string;
   title: string;
@@ -30,6 +36,8 @@ export interface Note {
   favorite: boolean;
   targetWordCount?: number;
   inUniverseDate?: string;
+  synopsis?: string;
+  sceneBeats?: SceneBeat[];
   timelineLog: TimelineEntry[];
 }
 

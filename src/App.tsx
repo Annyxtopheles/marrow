@@ -8,7 +8,8 @@ import { TimelinePanel } from './components/TimelinePanel';
 import { BacklinksPanel } from './components/BacklinksPanel';
 import { SettingsModal } from './components/SettingsModal';
 import { SyncModal } from './components/SyncModal';
-import { PanelLeftClose, PanelLeft, Clock, Link2, Plus, Cloud, RotateCcw, X, Palette } from 'lucide-react';
+import { CompileModal } from './components/CompileModal';
+import { PanelLeftClose, PanelLeft, Clock, Link2, Plus, Cloud, RotateCcw, X, Palette, BookOpen } from 'lucide-react';
 
 export function App() {
   const [notes, setNotes] = useState<Note[]>(() => StorageService.getNotes());
@@ -29,6 +30,8 @@ export function App() {
   const [isBacklinksOpen, setIsBacklinksOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isSyncOpen, setIsSyncOpen] = useState(false);
+  const [isCompileOpen, setIsCompileOpen] = useState(false);
+  const [compileFolderId, setCompileFolderId] = useState<string | null>(null);
   const [isThemeMenuOpen, setIsThemeMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -1012,6 +1015,20 @@ export function App() {
               <span>Sync</span>
             </button>
 
+            <button
+              onClick={() => {
+                setCompileFolderId(null);
+                setIsCompileOpen(true);
+              }}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] transition ${
+                isCompileOpen ? activeBtn : `${buttonHover} text-neutral-400`
+              }`}
+              title="Compile & Export Complete Manuscript"
+            >
+              <BookOpen className="h-3 w-3" />
+              <span>Compile</span>
+            </button>
+
             {/* Quick Theme Switcher */}
             <div className="relative">
               <button
@@ -1095,6 +1112,10 @@ export function App() {
             onMoveNote={handleMoveNote}
             onDuplicateNote={handleDuplicateNote}
             onOpenSettings={() => setIsSettingsOpen(true)}
+            onOpenCompile={(folderId) => {
+              setCompileFolderId(folderId || null);
+              setIsCompileOpen(true);
+            }}
             isLightMode={isLightMode}
             theme={settings.theme}
           />
@@ -1189,6 +1210,18 @@ export function App() {
           settings={settings}
           onRestoreVault={handleRestoreVault}
           onClose={() => setIsSyncOpen(false)}
+          isLightMode={isLightMode}
+          theme={settings.theme}
+        />
+      )}
+
+      {/* Manuscript Compiler Modal */}
+      {isCompileOpen && (
+        <CompileModal
+          notes={notes}
+          folders={folders}
+          initialFolderId={compileFolderId}
+          onClose={() => setIsCompileOpen(false)}
           isLightMode={isLightMode}
           theme={settings.theme}
         />

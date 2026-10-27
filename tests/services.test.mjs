@@ -541,3 +541,164 @@ test('Drag and Drop: Move notes into folders, between folders, and to root', asy
   handleMove('note-ch1', null);
   assert.equal(notes.find((n) => n.id === 'note-ch1').folderId, null);
 });
+
+test('Folder Quick-Add: Create note with direct folder association', async () => {
+
+  const createNoteInFolder = (folderId = null) => {
+    return {
+      id: `n-${Date.now()}`,
+      title: 'Untitled Draft',
+      content: '',
+      folderId,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      wordCount: 0,
+      charCount: 0,
+      readingTime: 0,
+      tags: [],
+    };
+  };
+
+  // Quick add inside Act I folder
+  const noteAct1 = createNoteInFolder('f-act1');
+  assert.equal(noteAct1.folderId, 'f-act1');
+
+  // Quick add inside Act II folder
+  const noteAct2 = createNoteInFolder('f-act2');
+  assert.equal(noteAct2.folderId, 'f-act2');
+
+  // General add without folder
+  const rootNote = createNoteInFolder(null);
+  assert.equal(rootNote.folderId, null);
+});
+
+test('Manuscript Compiler: Filter by scope, format chapters, dividers, and metrics', async () => {
+  const notes = [
+    {
+      id: 'n1',
+      title: 'Prologue: Before Dawn',
+      content: '<p>The city was quiet under the shroud of mist.</p>',
+      folderId: 'f-novel',
+      wordCount: 8,
+      inUniverseDate: 'Summer, 1842',
+      createdAt: 1000,
+    },
+    {
+      id: 'n2',
+      title: 'Chapter 1: The Arrival',
+      content: '<p>The train hissed to a complete stop at platform nine.</p>',
+      folderId: 'f-novel',
+      wordCount: 9,
+      inUniverseDate: 'Autumn, 1842',
+      createdAt: 2000,
+    },
+    {
+      id: 'n3',
+      title: 'Worldbuilding Notes',
+      content: '<p>Magic system rules and timeline notes.</p>',
+      folderId: 'f-lore',
+      wordCount: 6,
+      createdAt: 3000,
+    },
+  ];
+
+  // Helper compiler
+  const compileManuscript = ({ targetFolderId, includeHeadings, divider, format, includeDates }) => {
+    const targetNotes = targetFolderId
+      ? notes.filter((n) => n.folderId === targetFolderId)
+      : notes;
+
+    const sections = targetNotes.map((n) => {
+      let body = n.content.replace(/<p>(.*?)<\/p>/gi, '$1\n\n').trim();
+      let parts = [];
+      if (includeHeadings) {
+        parts.push(format === 'markdown' ? `# ${n.title}` : n.title.toUpperCase());
+      }
+      if (includeDates && n.inUniverseDate) {
+        parts.push(format === 'markdown' ? `*${n.inUniverseDate}*` : `[${n.inUniverseDate}]`);
+      }
+      parts.push(body);
+      return parts.join('\n\n');
+    });
+
+    const dividerStr = divider === 'lines' ? '\n\n---\n\n' : '\n\n* * *\n\n';
+    const manuscript = sections.join(dividerStr);
+    const totalWords = targetNotes.reduce((acc, n) => acc + n.wordCount, 0);
+
+    return { manuscript, totalWords, count: targetNotes.length };
+  };
+
+  // 1. Compile novel folder only
+  const compiledFolder = compileManuscript({
+    targetFolderId: 'f-novel',
+    includeHeadings: true,
+    divider: 'lines',
+    format: 'markdown',
+    includeDates: true,
+  });
+
+  assert.equal(compiledFolder.count, 2);
+  assert.equal(compiledFolder.totalWords, 17);
+  assert.ok(compiledFolder.manuscript.includes('# Prologue: Before Dawn'));
+  assert.ok(compiledFolder.manuscript.includes('*Summer, 1842*'));
+  assert.ok(compiledFolder.manuscript.includes('---'));
+  assert.ok(compiledFolder.manuscript.includes('# Chapter 1: The Arrival'));
+  assert.ok(!compiledFolder.manuscript.includes('Worldbuilding Notes'));
+
+  // 2. Compile entire vault in plain text
+  const compiledVault = compileManuscript({
+    targetFolderId: null,
+    includeHeadings: true,
+    divider: 'asterisks',
+    format: 'txt',
+    includeDates: false,
+  });
+
+  assert.equal(compiledVault.count, 3);
+  assert.equal(compiledVault.totalWords, 23);
+  assert.ok(compiledVault.manuscript.includes('PROLOGUE: BEFORE DAWN'));
+  assert.ok(compiledVault.manuscript.includes('* * *'));
+  assert.ok(compiledVault.manuscript.includes('WORLDBUILDING NOTES'));
+});
+
+test('Scene Beats Checklist & Chapter Synopsis: Add, toggle, delete, and progress', async () => {
+  let note = {
+    id: 'n-beat-test',
+    title: 'Chapter 4',
+    content: '<p>Content</p>',
+    synopsis: 'Elena confronts the guildmaster about the forged contract.',
+    sceneBeats: [
+      { id: 'b1', text: 'Enter guildhall in disguise', done: true },
+      { id: 'b2', text: 'Present the wax seal', done: false },
+    ],
+  };
+
+  // Synopsis verification
+  assert.equal(note.synopsis, 'Elena confronts the guildmaster about the forged contract.');
+
+  // Progress check
+  const completedCount = note.sceneBeats.filter((b) => b.done).length;
+  assert.equal(completedCount, 1);
+  assert.equal(note.sceneBeats.length, 2);
+
+  // Add beat
+  const newBeat = { id: 'b3', text: 'Escape before the guards seal the courtyard', done: false };
+  note = { ...note, sceneBeats: [...note.sceneBeats, newBeat] };
+  assert.equal(note.sceneBeats.length, 3);
+
+  // Toggle beat b2 to done
+  note = {
+    ...note,
+    sceneBeats: note.sceneBeats.map((b) => (b.id === 'b2' ? { ...b, done: true } : b)),
+  };
+  const updatedCompleted = note.sceneBeats.filter((b) => b.done).length;
+  assert.equal(updatedCompleted, 2);
+
+  // Delete beat b1
+  note = {
+    ...note,
+    sceneBeats: note.sceneBeats.filter((b) => b.id !== 'b1'),
+  };
+  assert.equal(note.sceneBeats.length, 2);
+  assert.equal(note.sceneBeats.some((b) => b.id === 'b1'), false);
+});

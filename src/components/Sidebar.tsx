@@ -18,6 +18,7 @@ import {
   FolderInput,
   Copy,
   Download,
+  Plus,
 } from 'lucide-react';
 import { ContextMenu, type ContextMenuItem, type ContextMenuSubItem } from './ContextMenu';
 
@@ -62,6 +63,7 @@ interface SidebarProps {
   onMoveNote?: (noteId: string, targetFolderId: string | null) => void;
   onDuplicateNote?: (note: Note) => void;
   onOpenSettings: () => void;
+  onOpenCompile?: (folderId?: string | null) => void;
   isLightMode: boolean;
   theme?: ThemeMode;
 }
@@ -81,6 +83,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onMoveNote,
   onDuplicateNote,
   onOpenSettings,
+  onOpenCompile,
   isLightMode,
   theme,
 }) => {
@@ -247,6 +250,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
         onClick: () => startRenameFolder(folder),
       },
       {
+        label: 'Compile Manuscript...',
+        icon: <BookOpen className="h-3 w-3" />,
+        onClick: () => onOpenCompile && onOpenCompile(folder.id),
+      },
+      {
         label: 'sep-folder',
         separator: true,
       },
@@ -275,6 +283,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
         label: 'New Folder',
         icon: <FolderPlus className="h-3 w-3" />,
         onClick: () => setShowFolderModal(true),
+      },
+      {
+        label: 'Compile Entire Vault...',
+        icon: <BookOpen className="h-3 w-3" />,
+        onClick: () => onOpenCompile && onOpenCompile(null),
       },
     ];
 
@@ -514,8 +527,26 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     </span>
                   )}
                 </div>
-                <div className="flex items-center gap-1 shrink-0">
-                  <span className={`text-[10px] font-medium ${mutedText} group-hover:opacity-0 transition`}>{folderNotes.length}</span>
+                <div className="flex items-center gap-0.5 shrink-0">
+                  <span className={`text-[10px] font-medium ${mutedText} group-hover:hidden transition`}>
+                    {folderNotes.length}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onCreateNote(folder.id);
+                      if (collapsedFolders[folder.id]) {
+                        setCollapsedFolders((prev) => ({ ...prev, [folder.id]: false }));
+                      }
+                    }}
+                    className={`p-1 rounded opacity-0 group-hover:opacity-100 ${
+                      isLightMode ? 'hover:text-[#111] hover:bg-black/[0.06]' : 'hover:text-white hover:bg-white/[0.08]'
+                    } transition`}
+                    title="New note in this folder"
+                  >
+                    <Plus className="h-3 w-3" />
+                  </button>
                   {onDeleteFolder && (
                     <button
                       type="button"
@@ -523,8 +554,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         e.stopPropagation();
                         onDeleteFolder(folder.id);
                       }}
-                      className={`p-1 opacity-0 group-hover:opacity-100 ${
-                        isLightMode ? 'hover:text-[#111]' : 'hover:text-white'
+                      className={`p-1 rounded opacity-0 group-hover:opacity-100 ${
+                        isLightMode ? 'hover:text-[#111] hover:bg-black/[0.06]' : 'hover:text-white hover:bg-white/[0.08]'
                       } transition`}
                       title="Delete folder"
                     >
