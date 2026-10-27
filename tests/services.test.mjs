@@ -796,3 +796,162 @@ test('EditorialMarkdown: Structure classification for headers, dividers, and lis
   assert.equal(classifyBlock('- Sight: amber light\n- Scent: old parchment'), 'bullet-list');
   assert.equal(classifyBlock('Elena carries an antique brass time-tracker.'), 'paragraph');
 });
+
+test('AIService: Wikilink-Aware Lore & Character Memory Extraction', async () => {
+  const extractLinkedNotes = (activeNote, allNotes) => {
+    if (!activeNote) return [];
+    const linkedMap = new Map();
+    const activeSource = `${activeNote.content || ''} ${activeNote.synopsis || ''}`;
+    const regex = /\[\[(.*?)\]\]/g;
+    let match;
+
+    while ((match = regex.exec(activeSource)) !== null) {
+      const targetTitle = match[1].trim().toLowerCase();
+      if (!targetTitle) continue;
+      const found = allNotes.find(
+        (n) => n.id !== activeNote.id && n.title.trim().toLowerCase() === targetTitle
+      );
+      if (found) linkedMap.set(found.id, found);
+    }
+
+    const activeTitleLower = (activeNote.title || '').trim().toLowerCase();
+    if (activeTitleLower) {
+      for (const candidate of allNotes) {
+        if (candidate.id === activeNote.id || linkedMap.has(candidate.id)) continue;
+        const candidateSource = `${candidate.content || ''} ${candidate.synopsis || ''}`.toLowerCase();
+        if (candidateSource.includes(`[[${activeTitleLower}]]`)) {
+          linkedMap.set(candidate.id, candidate);
+        }
+      }
+    }
+
+    return Array.from(linkedMap.values());
+  };
+
+  const vault = [
+    {
+      id: 'n-ch1',
+      title: 'Chapter 1: Ashfall',
+      synopsis: 'Check [[The Obsidian Pact]] lore before scene end.',
+      content: '<p>She met [[Elena Vane]] by the river.</p>',
+    },
+    {
+      id: 'n-elena',
+      title: 'Elena Vane',
+      content: '<p>Dossier: Former captain of the watch. Appears in [[Chapter 1: Ashfall]].</p>',
+    },
+    {
+      id: 'n-pact',
+      title: 'The Obsidian Pact',
+      content: '<p>Signed in Cycle 302.</p>',
+    },
+    {
+      id: 'n-backlink',
+      title: 'Epilogue Notes',
+      content: '<p>Mirrors the opening image from [[Chapter 1: Ashfall]].</p>',
+    },
+    {
+      id: 'n-unrelated',
+      title: 'Unrelated Grocery List',
+      content: '<p>Nothing linked here.</p>',
+    },
+  ];
+
+  const linked = extractLinkedNotes(vault[0], vault);
+  assert.equal(linked.length, 3);
+  assert.ok(linked.some((n) => n.id === 'n-elena'));
+  assert.ok(linked.some((n) => n.id === 'n-pact'));
+  assert.ok(linked.some((n) => n.id === 'n-backlink'));
+  assert.ok(!linked.some((n) => n.id === 'n-unrelated'));
+});
+
+test('Editor: Lossless HTML-to-Markdown and Markdown-to-HTML Round-Tripping', async () => {
+  const inlineToMd = (str) =>
+    str
+      .replace(/<strong>([\s\S]*?)<\/strong>/gi, '**$1**')
+      .replace(/<em>([\s\S]*?)<\/em>/gi, '*$1*')
+      .replace(/<code>([\s\S]*?)<\/code>/gi, '`$1`');
+
+  const htmlToMarkdown = (html) =>
+    html
+      .replace(/<hr\s*\/?>/gi, '---\n\n')
+      .replace(/<h2>([\s\S]*?)<\/h2>/gi, (_, inner) => `## ${inlineToMd(inner).trim()}\n\n`)
+      .replace(/<blockquote>([\s\S]*?)<\/blockquote>/gi, (_, inner) => {
+        const paragraphs = inner
+          .replace(/<p>([\s\S]*?)<\/p>/gi, '$1\n')
+          .trim()
+          .split('\n')
+          .map((line) => `> ${inlineToMd(line).trim()}`)
+          .join('\n');
+        return `${paragraphs}\n\n`;
+      })
+      .replace(/<ol>([\s\S]*?)<\/ol>/gi, (_, inner) => {
+        let idx = 1;
+        const items = inner.replace(/<li>([\s\S]*?)<\/li>/gi, (__, item) => {
+          const cleanItem = inlineToMd(item.replace(/<\/?p>/gi, '').trim());
+          return `${idx++}. ${cleanItem}\n`;
+        });
+        return `${items.trim()}\n\n`;
+      })
+      .replace(/<ul>([\s\S]*?)<\/ul>/gi, (_, inner) => {
+        const items = inner.replace(/<li>([\s\S]*?)<\/li>/gi, (__, item) => {
+          const cleanItem = inlineToMd(item.replace(/<\/?p>/gi, '').trim());
+          return `- ${cleanItem}\n`;
+        });
+        return `${items.trim()}\n\n`;
+      })
+      .replace(/<p>([\s\S]*?)<\/p>/gi, (_, inner) => `${inlineToMd(inner)}\n\n`)
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+
+  const formatInline = (text) =>
+    text
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+      .replace(/`([^`]+)`/g, '<code>$1</code>');
+
+  const markdownToHtml = (markdown) => {
+    const blocks = markdown.split(/\n\s*\n/);
+    return blocks
+      .map((block) => {
+        const trimmed = block.trim();
+        if (!trimmed) return '';
+        if (/^[-*_]{3,}$/.test(trimmed)) return '<hr>';
+        if (trimmed.startsWith('## ')) return `<h2>${formatInline(trimmed.slice(3))}</h2>`;
+        const lines = trimmed.split('\n');
+        if (lines.every((l) => l.trim().startsWith('>'))) {
+          const quoteParagraphs = lines
+            .map((l) => `<p>${formatInline(l.trim().replace(/^>\s?/, ''))}</p>`)
+            .join('');
+          return `<blockquote>${quoteParagraphs}</blockquote>`;
+        }
+        if (lines.every((l) => /^[-*•]\s+/.test(l.trim()))) {
+          const listItems = lines
+            .map((l) => `<li><p>${formatInline(l.trim().replace(/^[-*•]\s+/, ''))}</p></li>`)
+            .join('');
+          return `<ul>${listItems}</ul>`;
+        }
+        if (lines.every((l) => /^\d+[.)]\s+/.test(l.trim()))) {
+          const listItems = lines
+            .map((l) => `<li><p>${formatInline(l.trim().replace(/^\d+[.)]\s+/, ''))}</p></li>`)
+            .join('');
+          return `<ol>${listItems}</ol>`;
+        }
+        return `<p>${formatInline(trimmed)}</p>`;
+      })
+      .join('');
+  };
+
+  const originalHtml =
+    '<h2>Scene Notes</h2><ul><li><p>First <strong>clue</strong></p></li><li><p>Second <em>clue</em></p></li></ul><ol><li><p>Step one</p></li><li><p>Step two</p></li></ol><blockquote><p>Line one</p><p>Line two</p></blockquote><hr><p>Final paragraph.</p>';
+
+  const md = htmlToMarkdown(originalHtml);
+  assert.ok(md.includes('- First **clue**'));
+  assert.ok(md.includes('- Second *clue*'));
+  assert.ok(md.includes('1. Step one'));
+  assert.ok(md.includes('> Line one\n> Line two'));
+  assert.ok(md.includes('---'));
+
+  const roundTrippedHtml = markdownToHtml(md);
+  assert.equal(roundTrippedHtml, originalHtml);
+});

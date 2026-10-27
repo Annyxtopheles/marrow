@@ -1,4 +1,4 @@
-import type { AIMessage, SceneBeat } from '../types';
+import type { AIMessage, Note, SceneBeat } from '../types';
 
 export type AIPersona = 'editor' | 'visionary' | 'critic';
 
@@ -26,6 +26,13 @@ export const PERSONA_CONFIGS: Record<
   },
 };
 
+export interface LinkedNoteContext {
+  title: string;
+  synopsis?: string;
+  inUniverseDate?: string;
+  content: string;
+}
+
 export interface GenerateAIOptions {
   apiKey: string;
   model?: 'gemini-3.5-flash-lite' | 'gemini-3.8-flash';
@@ -34,23 +41,91 @@ export interface GenerateAIOptions {
   noteSynopsis?: string;
   noteContentHtml: string;
   selectedText?: string;
+  linkedNotes?: LinkedNoteContext[];
   userPrompt: string;
   history?: AIMessage[];
 }
 
+export const extractLinkedNotes = (activeNote: Note | null, allNotes: Note[]): Note[] => {
+  if (!activeNote) return [];
+
+  const linkedMap = new Map<string, Note>();
+  const activeSource = `${activeNote.content || ''} ${activeNote.synopsis || ''}`;
+  const regex = /\[\[(.*?)\]\]/g;
+  let match: RegExpExecArray | null;
+
+  // 1. Outgoing [[Wikilinks]] from activeNote -> target notes in vault
+  while ((match = regex.exec(activeSource)) !== null) {
+    const targetTitle = match[1].trim().toLowerCase();
+    if (!targetTitle) continue;
+    const found = allNotes.find(
+      (n) => n.id !== activeNote.id && n.title.trim().toLowerCase() === targetTitle
+    );
+    if (found) {
+      linkedMap.set(found.id, found);
+    }
+  }
+
+  // 2. Incoming 1-hop backlinks from vault notes -> [[activeNote.title]]
+  const activeTitleLower = (activeNote.title || '').trim().toLowerCase();
+  if (activeTitleLower) {
+    for (const candidate of allNotes) {
+      if (candidate.id === activeNote.id || linkedMap.has(candidate.id)) continue;
+      const candidateSource = `${candidate.content || ''} ${candidate.synopsis || ''}`.toLowerCase();
+      if (candidateSource.includes(`[[${activeTitleLower}]]`)) {
+        linkedMap.set(candidate.id, candidate);
+      }
+    }
+  }
+
+  return Array.from(linkedMap.values());
+};
+
 export const cleanHtmlToText = (html: string): string => {
   return html
+    .replace(/<hr\s*\/?>/gi, '\n---\n\n')
     .replace(/<h1>(.*?)<\/h1>/gi, '# $1\n\n')
     .replace(/<h2>(.*?)<\/h2>/gi, '## $1\n\n')
     .replace(/<h3>(.*?)<\/h3>/gi, '### $1\n\n')
+    .replace(/<blockquote>([\s\S]*?)<\/blockquote>/gi, (_, inner: string) => {
+      const cleanedInner = inner
+        .replace(/<p>(.*?)<\/p>/gi, '$1\n')
+        .replace(/<br\s*\/?>/gi, '\n')
+        .replace(/<[^>]+>/g, '')
+        .trim();
+      return (
+        cleanedInner
+          .split('\n')
+          .map((line) => `> ${line}`)
+          .join('\n') + '\n\n'
+      );
+    })
+    .replace(/<ol>([\s\S]*?)<\/ol>/gi, (_, inner: string) => {
+      let idx = 1;
+      return (
+        inner.replace(/<li>([\s\S]*?)<\/li>/gi, (__, item: string) => {
+          const cleanItem = item.replace(/<\/?p>/gi, '').trim();
+          return `${idx++}. ${cleanItem}\n`;
+        }) + '\n'
+      );
+    })
+    .replace(/<ul>([\s\S]*?)<\/ul>/gi, (_, inner: string) => {
+      return (
+        inner.replace(/<li>([\s\S]*?)<\/li>/gi, (__, item: string) => {
+          const cleanItem = item.replace(/<\/?p>/gi, '').trim();
+          return `- ${cleanItem}\n`;
+        }) + '\n'
+      );
+    })
     .replace(/<p>(.*?)<\/p>/gi, '$1\n\n')
-    .replace(/<blockquote>(.*?)<\/blockquote>/gi, '> $1\n\n')
     .replace(/<em>(.*?)<\/em>/gi, '*$1*')
     .replace(/<strong>(.*?)<\/strong>/gi, '**$1**')
+    .replace(/<code>(.*?)<\/code>/gi, '`$1`')
     .replace(/<li>(.*?)<\/li>/gi, '- $1\n')
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<[^>]+>/g, '')
     .replace(/&nbsp;/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
     .trim();
 };
 
@@ -91,6 +166,7 @@ export const AIService = {
       noteSynopsis,
       noteContentHtml,
       selectedText,
+      linkedNotes = [],
       userPrompt,
       history = [],
     } = options;
@@ -111,8 +187,22 @@ export const AIService = {
       contextHeader += `Highlighted Selection for Analysis:\n"${selectedText.trim()}"\n`;
     }
     if (cleanContent) {
-      contextHeader += `Document Draft Text:\n"""\n${cleanContent.slice(0, 40000)}\n"""\n================================\n\n`;
+      contextHeader += `Document Draft Text:\n"""\n${cleanContent.slice(0, 40000)}\n"""\n`;
     }
+    if (linkedNotes.length > 0) {
+      contextHeader += `\n=== LINKED LORE & CHARACTER DOSSIERS (${linkedNotes.length} connected vault entries) ===\n`;
+      for (const linked of linkedNotes.slice(0, 8)) {
+        const linkedBody = cleanHtmlToText(linked.content).slice(0, 2500);
+        contextHeader += `\n--- [[${linked.title}]]${linked.inUniverseDate ? ` (${linked.inUniverseDate})` : ''} ---\n`;
+        if (linked.synopsis && linked.synopsis.trim()) {
+          contextHeader += `Synopsis: ${linked.synopsis.trim()}\n`;
+        }
+        if (linkedBody) {
+          contextHeader += `${linkedBody}\n`;
+        }
+      }
+    }
+    contextHeader += `================================\n\n`;
 
     // Build conversation contents
     const contents: Array<{ role: 'user' | 'model'; parts: Array<{ text: string }> }> = [];

@@ -28,16 +28,51 @@ import {
 import { DictationService, ReadAloudService, isSpeechRecognitionSupported, isSpeechSynthesisSupported } from '../services/speech';
 
 const htmlToMarkdown = (html: string): string => {
+  const inlineToMd = (str: string): string =>
+    str
+      .replace(/<strong>([\s\S]*?)<\/strong>/gi, '**$1**')
+      .replace(/<b>([\s\S]*?)<\/b>/gi, '**$1**')
+      .replace(/<em>([\s\S]*?)<\/em>/gi, '*$1*')
+      .replace(/<i>([\s\S]*?)<\/i>/gi, '*$1*')
+      .replace(/<code>([\s\S]*?)<\/code>/gi, '`$1`')
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"');
+
   return html
-    .replace(/<h1>(.*?)<\/h1>/gi, '# $1\n\n')
-    .replace(/<h2>(.*?)<\/h2>/gi, '## $1\n\n')
-    .replace(/<h3>(.*?)<\/h3>/gi, '### $1\n\n')
-    .replace(/<p>(.*?)<\/p>/gi, '$1\n\n')
-    .replace(/<blockquote>(.*?)<\/blockquote>/gi, '> $1\n\n')
-    .replace(/<em>(.*?)<\/em>/gi, '*$1*')
-    .replace(/<strong>(.*?)<\/strong>/gi, '**$1**')
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/&nbsp;/g, ' ')
+    .replace(/<hr\s*\/?>/gi, '---\n\n')
+    .replace(/<h1>([\s\S]*?)<\/h1>/gi, (_, inner) => `# ${inlineToMd(inner).trim()}\n\n`)
+    .replace(/<h2>([\s\S]*?)<\/h2>/gi, (_, inner) => `## ${inlineToMd(inner).trim()}\n\n`)
+    .replace(/<h3>([\s\S]*?)<\/h3>/gi, (_, inner) => `### ${inlineToMd(inner).trim()}\n\n`)
+    .replace(/<blockquote>([\s\S]*?)<\/blockquote>/gi, (_, inner: string) => {
+      const paragraphs = inner
+        .replace(/<p>([\s\S]*?)<\/p>/gi, '$1\n')
+        .trim()
+        .split('\n')
+        .map((line) => `> ${inlineToMd(line).trim()}`)
+        .join('\n');
+      return `${paragraphs}\n\n`;
+    })
+    .replace(/<ol>([\s\S]*?)<\/ol>/gi, (_, inner: string) => {
+      let idx = 1;
+      const items = inner.replace(/<li>([\s\S]*?)<\/li>/gi, (__, item: string) => {
+        const cleanItem = inlineToMd(item.replace(/<\/?p>/gi, '').trim());
+        return `${idx++}. ${cleanItem}\n`;
+      });
+      return `${items.trim()}\n\n`;
+    })
+    .replace(/<ul>([\s\S]*?)<\/ul>/gi, (_, inner: string) => {
+      const items = inner.replace(/<li>([\s\S]*?)<\/li>/gi, (__, item: string) => {
+        const cleanItem = inlineToMd(item.replace(/<\/?p>/gi, '').trim());
+        return `- ${cleanItem}\n`;
+      });
+      return `${items.trim()}\n\n`;
+    })
+    .replace(/<p>([\s\S]*?)<\/p>/gi, (_, inner) => `${inlineToMd(inner)}\n\n`)
+    .replace(/\n{3,}/g, '\n\n')
     .trim();
 };
 
@@ -54,6 +89,9 @@ const markdownToHtml = (markdown: string): string => {
     .map((block) => {
       const trimmed = block.trim();
       if (!trimmed) return '';
+      if (/^[-*_]{3,}$/.test(trimmed)) {
+        return '<hr>';
+      }
       if (trimmed.startsWith('### ')) {
         return `<h3>${formatInline(trimmed.slice(4))}</h3>`;
       }
@@ -63,8 +101,24 @@ const markdownToHtml = (markdown: string): string => {
       if (trimmed.startsWith('# ')) {
         return `<h1>${formatInline(trimmed.slice(2))}</h1>`;
       }
-      if (trimmed.startsWith('> ')) {
-        return `<blockquote><p>${formatInline(trimmed.slice(2))}</p></blockquote>`;
+      const lines = trimmed.split('\n');
+      if (lines.every((l) => l.trim().startsWith('>'))) {
+        const quoteParagraphs = lines
+          .map((l) => `<p>${formatInline(l.trim().replace(/^>\s?/, ''))}</p>`)
+          .join('');
+        return `<blockquote>${quoteParagraphs}</blockquote>`;
+      }
+      if (lines.every((l) => /^[-*•]\s+/.test(l.trim()))) {
+        const listItems = lines
+          .map((l) => `<li><p>${formatInline(l.trim().replace(/^[-*•]\s+/, ''))}</p></li>`)
+          .join('');
+        return `<ul>${listItems}</ul>`;
+      }
+      if (lines.every((l) => /^\d+[.)]\s+/.test(l.trim()))) {
+        const listItems = lines
+          .map((l) => `<li><p>${formatInline(l.trim().replace(/^\d+[.)]\s+/, ''))}</p></li>`)
+          .join('');
+        return `<ol>${listItems}</ol>`;
       }
       return `<p>${formatInline(trimmed.replace(/\n/g, '<br>'))}</p>`;
     })

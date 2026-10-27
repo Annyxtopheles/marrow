@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import type { Note, TimelineEntry, ThemeMode, SceneBeat, EditorSettings, AIMessage } from '../types';
 import { StorageService } from '../services/storage';
 import { THEMES } from '../services/themes';
-import { AIService, parseBeatsFromResponse, type AIPersona } from '../services/ai';
+import { AIService, extractLinkedNotes, parseBeatsFromResponse, type AIPersona } from '../services/ai';
 import { EditorialMarkdown } from './EditorialMarkdown';
 import {
   Clock,
@@ -18,6 +18,8 @@ import {
   Copy,
   Settings,
   Lightbulb,
+  Link2,
+  X,
 } from 'lucide-react';
 
 interface TimelinePanelProps {
@@ -30,6 +32,8 @@ interface TimelinePanelProps {
   settings?: EditorSettings;
   onUpdateSettings?: (settings: EditorSettings) => void;
   onOpenSettings?: () => void;
+  selectedPassage?: { text: string; timestamp: number } | null;
+  onClearSelectedPassage?: () => void;
 }
 
 export const TimelinePanel: React.FC<TimelinePanelProps> = ({
@@ -42,9 +46,21 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
   settings,
   onUpdateSettings,
   onOpenSettings,
+  selectedPassage,
+  onClearSelectedPassage,
 }) => {
   const currentTheme = THEMES[theme || 'charcoal'] || THEMES.charcoal;
   const [activeTab, setActiveTab] = useState<'intervals' | 'story' | 'beats' | 'logs' | 'lumen'>('intervals');
+
+  const [prevPassageTimestamp, setPrevPassageTimestamp] = useState<number | null>(null);
+  if (selectedPassage && selectedPassage.timestamp !== prevPassageTimestamp) {
+    setPrevPassageTimestamp(selectedPassage.timestamp);
+    if (activeTab !== 'lumen') {
+      setActiveTab('lumen');
+    }
+  }
+
+  const linkedNotes = activeNote ? extractLinkedNotes(activeNote, allNotes) : [];
 
   const [newLogNote, setNewLogNote] = useState('');
   const [newLogType, setNewLogType] = useState<TimelineEntry['type']>('revision');
@@ -121,10 +137,15 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
     setAiError(null);
     setIsAILoading(true);
 
+    const stagedQuote = selectedPassage?.text?.trim() || undefined;
+    const displayPrompt = stagedQuote
+      ? `> "${stagedQuote.slice(0, 180)}${stagedQuote.length > 180 ? '…' : ''}"\n\n${promptText.trim()}`
+      : promptText.trim();
+
     const userMsg: AIMessage = {
       id: `msg-u-${Date.now()}`,
       role: 'user',
-      content: promptText.trim(),
+      content: displayPrompt,
       timestamp: Date.now(),
       actionType,
     };
@@ -135,6 +156,9 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
       aiMessages: nextHistory,
     });
     setAiInput('');
+    if (stagedQuote && onClearSelectedPassage) {
+      onClearSelectedPassage();
+    }
 
     try {
       const responseText = await AIService.generateEditorialResponse({
@@ -144,6 +168,13 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
         noteTitle: activeNote.title,
         noteSynopsis: activeNote.synopsis,
         noteContentHtml: activeNote.content,
+        selectedText: stagedQuote,
+        linkedNotes: linkedNotes.map((n) => ({
+          title: n.title,
+          synopsis: n.synopsis,
+          inUniverseDate: n.inUniverseDate,
+          content: n.content,
+        })),
         userPrompt: promptText.trim(),
         history: activeNote.aiMessages || [],
       });
@@ -418,7 +449,7 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
                   <Zap className="h-3.5 w-3.5" style={{ color: currentTheme.tokens.accentColor }} />
                   Writing Sprint
                 </span>
-                <span className={`font-mono text-xs tabular-nums ${labelText}`}>{formatTimer(sprintSeconds)}</span>
+                <span className={`text-xs tabular-nums ${labelText}`}>{formatTimer(sprintSeconds)}</span>
               </div>
 
               {sprintActive ? (
@@ -580,7 +611,7 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
                         }}
                       />
 
-                      <div className={`text-[10px] font-mono ${labelText}`}>
+                      <div className={`text-[10px] tabular-nums ${labelText}`}>
                         {note.inUniverseDate}
                       </div>
                       <div className={`truncate mt-0.5 font-semibold ${isCurrent ? headerText : (isLightMode ? 'text-[#201e1b]' : 'text-[#dedad4]')}`}>
@@ -606,7 +637,7 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
                   <ListTodo className="h-3.5 w-3.5" style={{ color: currentTheme.tokens.accentColor }} />
                   Chapter Synopsis
                 </span>
-                <span className="text-[10px] opacity-50 font-mono">Scratchpad</span>
+                <span className="text-[10px] opacity-50">Scratchpad</span>
               </div>
               <textarea
                 placeholder="Jot chapter objective, POV notes, or key reveals (e.g. Lola confronts Vance; plant the bronze key)..."
@@ -639,7 +670,7 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
                   Scene Beats Checklist
                 </span>
                 {activeNote?.sceneBeats && activeNote.sceneBeats.length > 0 && (
-                  <span className="text-[10px] font-mono opacity-60">
+                  <span className="text-[10px] tabular-nums opacity-60">
                     {activeNote.sceneBeats.filter((b) => b.done).length} / {activeNote.sceneBeats.length}
                   </span>
                 )}
@@ -819,7 +850,11 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
                     placeholder="Paste Gemini API key (AQ... or AIza...)"
                     value={directKeyInput}
                     onChange={(e) => setDirectKeyInput(e.target.value)}
-                    className={`w-full rounded px-2.5 py-1.5 text-xs font-mono border focus:outline-none ${
+                    data-zoho-ignore="true"
+                    data-lpignore="true"
+                    data-1p-ignore="true"
+                    autoComplete="off"
+                    className={`w-full rounded px-2.5 py-1.5 text-xs tabular-nums border focus:outline-none ${
                       isLightMode
                         ? 'bg-black/[0.03] border-black/[0.1] text-neutral-800'
                         : 'bg-white/[0.04] border-white/[0.1] text-neutral-200'
@@ -892,6 +927,36 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
                   </div>
                 </div>
 
+                {/* Wikilink Lore & Character Memory Context Indicator */}
+                {linkedNotes.length > 0 && (
+                  <div className={`px-2.5 py-2 rounded-lg border ${cardBg} space-y-1.5`}>
+                    <div className="flex items-center justify-between text-[10px]">
+                      <span className="flex items-center gap-1.5 font-medium opacity-70">
+                        <Link2 className="h-3 w-3 opacity-70" />
+                        <span>Linked Vault Memory Active</span>
+                      </span>
+                      <span className="tabular-nums opacity-50">{linkedNotes.length} connected</span>
+                    </div>
+                    <div className="flex flex-wrap gap-1">
+                      {linkedNotes.slice(0, 6).map((ln) => (
+                        <button
+                          key={ln.id}
+                          type="button"
+                          onClick={() => onSelectNote(ln)}
+                          className={`px-1.5 py-0.5 rounded text-[10px] truncate max-w-[140px] border transition ${
+                            isLightMode
+                              ? 'bg-black/[0.03] border-black/[0.08] text-[#383531] hover:bg-black/[0.07]'
+                              : 'bg-white/[0.04] border-white/[0.08] text-[#c5c1ba] hover:bg-white/[0.08]'
+                          }`}
+                          title={`Jump to [[${ln.title}]] (automatically included in Lumen context)`}
+                        >
+                          [[{ln.title}]]
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {/* Editorial Prompt Chips */}
                 <div className="space-y-1.5">
                   <div className="text-[10px] font-medium uppercase tracking-wider opacity-60">
@@ -909,7 +974,7 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
                       }
                       className={`p-2 rounded-lg border text-left transition flex items-start gap-1.5 ${cardBg} hover:opacity-90 active:scale-98`}
                     >
-                      <Zap className="h-3.5 w-3.5 shrink-0 mt-0.5 text-rose-500/70 dark:text-rose-400/60" />
+                      <Zap className="h-3.5 w-3.5 shrink-0 mt-0.5 opacity-65" />
                       <div>
                         <div className="font-medium leading-none">Critique Scene</div>
                         <div className="text-[10px] opacity-60 mt-1 leading-tight">Pacing &amp; tension</div>
@@ -927,7 +992,7 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
                       }
                       className={`p-2 rounded-lg border text-left transition flex items-start gap-1.5 ${cardBg} hover:opacity-90 active:scale-98`}
                     >
-                      <Lightbulb className="h-3.5 w-3.5 shrink-0 mt-0.5 text-amber-600/70 dark:text-amber-400/60" />
+                      <Lightbulb className="h-3.5 w-3.5 shrink-0 mt-0.5 opacity-65" />
                       <div>
                         <div className="font-medium leading-none">Sensory Details</div>
                         <div className="text-[10px] opacity-60 mt-1 leading-tight">Sight, sound, smell</div>
@@ -945,7 +1010,7 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
                       }
                       className={`p-2 rounded-lg border text-left transition flex items-start gap-1.5 ${cardBg} hover:opacity-90 active:scale-98`}
                     >
-                      <Sparkles className="h-3.5 w-3.5 shrink-0 mt-0.5 text-sky-600/70 dark:text-sky-400/60" />
+                      <Sparkles className="h-3.5 w-3.5 shrink-0 mt-0.5 opacity-65" />
                       <div>
                         <div className="font-medium leading-none">Brainstorm Move</div>
                         <div className="text-[10px] opacity-60 mt-1 leading-tight">Obstacles &amp; twists</div>
@@ -963,7 +1028,7 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
                       }
                       className={`p-2 rounded-lg border text-left transition flex items-start gap-1.5 ${cardBg} hover:opacity-90 active:scale-98`}
                     >
-                      <ListTodo className="h-3.5 w-3.5 shrink-0 mt-0.5 text-emerald-600/70 dark:text-emerald-400/60" />
+                      <ListTodo className="h-3.5 w-3.5 shrink-0 mt-0.5 opacity-65" />
                       <div>
                         <div className="font-medium leading-none">Suggest Beats</div>
                         <div className="text-[10px] opacity-60 mt-1 leading-tight">Outline checklist</div>
@@ -1072,7 +1137,35 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
                 </div>
 
                 {/* Input Bar */}
-                <div className="pt-2 sticky bottom-0">
+                <div className="pt-2 sticky bottom-0 space-y-1.5">
+                  {selectedPassage?.text && (
+                    <div
+                      className={`p-2 rounded-md border text-[11px] flex items-start justify-between gap-2 ${
+                        isLightMode
+                          ? 'bg-black/[0.04] border-black/[0.1] text-[#2c2a27]'
+                          : 'bg-white/[0.05] border-white/[0.1] text-[#dedad4]'
+                      }`}
+                    >
+                      <div className="min-w-0 flex-1">
+                        <div className="text-[10px] uppercase tracking-wider opacity-50 font-medium mb-0.5">
+                          Selected Passage Attached
+                        </div>
+                        <div className="line-clamp-2 italic opacity-85">
+                          “{selectedPassage.text}”
+                        </div>
+                      </div>
+                      {onClearSelectedPassage && (
+                        <button
+                          type="button"
+                          onClick={onClearSelectedPassage}
+                          className="opacity-50 hover:opacity-100 p-0.5 rounded transition shrink-0"
+                          title="Detach selected passage"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      )}
+                    </div>
+                  )}
                   <form
                     autoComplete="off"
                     onSubmit={(e) => {
