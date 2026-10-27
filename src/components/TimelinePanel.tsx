@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import type { Note, TimelineEntry, ThemeMode, SceneBeat } from '../types';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import type { Note, TimelineEntry, ThemeMode, SceneBeat, EditorSettings, AIMessage } from '../types';
 import { StorageService } from '../services/storage';
 import { THEMES } from '../services/themes';
+import { AIService, parseBeatsFromResponse, type AIPersona } from '../services/ai';
 import {
   Clock,
   Zap,
@@ -11,6 +12,11 @@ import {
   ListTodo,
   Check,
   Trash2,
+  Sparkles,
+  Send,
+  Copy,
+  Settings,
+  Lightbulb,
 } from 'lucide-react';
 
 interface TimelinePanelProps {
@@ -20,6 +26,9 @@ interface TimelinePanelProps {
   onUpdateNote: (note: Note) => void;
   isLightMode: boolean;
   theme?: ThemeMode;
+  settings?: EditorSettings;
+  onUpdateSettings?: (settings: EditorSettings) => void;
+  onOpenSettings?: () => void;
 }
 
 export const TimelinePanel: React.FC<TimelinePanelProps> = ({
@@ -29,13 +38,25 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
   onUpdateNote,
   isLightMode,
   theme,
+  settings,
+  onUpdateSettings,
+  onOpenSettings,
 }) => {
   const currentTheme = THEMES[theme || 'charcoal'] || THEMES.charcoal;
-  const [activeTab, setActiveTab] = useState<'intervals' | 'story' | 'beats' | 'logs'>('intervals');
+  const [activeTab, setActiveTab] = useState<'intervals' | 'story' | 'beats' | 'logs' | 'muse'>('intervals');
 
   const [newLogNote, setNewLogNote] = useState('');
   const [newLogType, setNewLogType] = useState<TimelineEntry['type']>('revision');
   const [newBeatText, setNewBeatText] = useState('');
+
+  // Muse / AI State
+  const [aiInput, setAiInput] = useState('');
+  const [isAILoading, setIsAILoading] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+  const [beatsImportSuccess, setBeatsImportSuccess] = useState(false);
+  const [directKeyInput, setDirectKeyInput] = useState('');
+  const chatBottomRef = useRef<HTMLDivElement>(null);
 
   const handleAddBeat = useCallback(
     (e: React.FormEvent) => {
@@ -87,6 +108,108 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
     },
     [activeNote, onUpdateNote]
   );
+
+  const handleSendAIMessage = async (promptText: string, actionType: AIMessage['actionType'] = 'chat') => {
+    if (!activeNote || !promptText.trim()) return;
+    const apiKey = settings?.geminiApiKey || '';
+    if (!apiKey.trim()) {
+      setAiError('Please enter a Google Gemini API Key in Settings to consult your Muse.');
+      return;
+    }
+
+    setAiError(null);
+    setIsAILoading(true);
+
+    const userMsg: AIMessage = {
+      id: `msg-u-${Date.now()}`,
+      role: 'user',
+      content: promptText.trim(),
+      timestamp: Date.now(),
+      actionType,
+    };
+
+    const nextHistory = [...(activeNote.aiMessages || []), userMsg];
+    onUpdateNote({
+      ...activeNote,
+      aiMessages: nextHistory,
+    });
+    setAiInput('');
+
+    try {
+      const responseText = await AIService.generateEditorialResponse({
+        apiKey,
+        model: settings?.aiModel || 'gemini-3.5-flash-lite',
+        persona: (settings?.aiPersona as AIPersona) || 'editor',
+        noteTitle: activeNote.title,
+        noteSynopsis: activeNote.synopsis,
+        noteContentHtml: activeNote.content,
+        userPrompt: promptText.trim(),
+        history: activeNote.aiMessages || [],
+      });
+
+      const assistantMsg: AIMessage = {
+        id: `msg-a-${Date.now()}`,
+        role: 'assistant',
+        content: responseText,
+        timestamp: Date.now(),
+        actionType,
+      };
+
+      onUpdateNote({
+        ...activeNote,
+        aiMessages: [...nextHistory, assistantMsg],
+      });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setAiError(msg);
+    } finally {
+      setIsAILoading(false);
+      setTimeout(() => {
+        chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    }
+  };
+
+  const handleImportParsedBeats = (content: string) => {
+    if (!activeNote) return;
+    const parsed = parseBeatsFromResponse(content);
+    if (parsed.length === 0) return;
+
+    const existing = activeNote.sceneBeats || [];
+    const updated = [...existing, ...parsed];
+    onUpdateNote({
+      ...activeNote,
+      sceneBeats: updated,
+      updatedAt: Date.now(),
+    });
+    setBeatsImportSuccess(true);
+    setTimeout(() => setBeatsImportSuccess(false), 3000);
+  };
+
+  const handleClearAIChat = () => {
+    if (!activeNote) return;
+    onUpdateNote({
+      ...activeNote,
+      aiMessages: [],
+    });
+  };
+
+  const handleSaveDirectKey = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!directKeyInput.trim() || !onUpdateSettings || !settings) return;
+    onUpdateSettings({
+      ...settings,
+      geminiApiKey: directKeyInput.trim(),
+    });
+    setDirectKeyInput('');
+    setAiError(null);
+  };
+
+  const handleCopyText = (text: string, index: number) => {
+    navigator.clipboard.writeText(text);
+    setCopiedIndex(index);
+    setTimeout(() => setCopiedIndex(null), 2000);
+  };
 
   const [sprintActive, setSprintActive] = useState(false);
   const [sprintSeconds, setSprintSeconds] = useState(0);
@@ -210,16 +333,25 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
 
   return (
     <div
-      className={`flex flex-col h-full ${panelBg} border-l ${border} ${baseText} w-72 text-xs`}
+      className={`flex flex-col h-full ${panelBg} border-l ${border} ${baseText} w-80 text-xs`}
     >
       <div className={`flex items-center justify-between border-b ${border} px-3 py-2.5 ${headerText}`}>
         <div className="flex items-center gap-1.5 font-semibold">
-          <Clock className="h-4 w-4 opacity-80" />
-          <span>Timeline</span>
+          {activeTab === 'muse' ? (
+            <>
+              <Sparkles className="h-4 w-4" style={{ color: currentTheme.tokens.accentColor }} />
+              <span>Muse Editorial Partner</span>
+            </>
+          ) : (
+            <>
+              <Clock className="h-4 w-4 opacity-80" />
+              <span>Timeline</span>
+            </>
+          )}
         </div>
       </div>
 
-      <div className={`grid grid-cols-4 border-b ${border} text-[11px]`}>
+      <div className={`grid grid-cols-5 border-b ${border} text-[11px]`}>
         <button
           onClick={() => setActiveTab('intervals')}
           className={`py-2 text-center transition border-b-2 truncate ${
@@ -255,6 +387,16 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
           title="Revision Micro-Logs"
         >
           Logs
+        </button>
+        <button
+          onClick={() => setActiveTab('muse')}
+          className={`py-2 text-center transition border-b-2 truncate flex items-center justify-center gap-1 ${
+            activeTab === 'muse' ? activeTabClass : inactiveTabClass
+          }`}
+          title="AI Editorial Partner & Muse"
+        >
+          <Sparkles className="h-3 w-3 shrink-0" style={{ color: currentTheme.tokens.accentColor }} />
+          <span>Muse</span>
         </button>
       </div>
 
@@ -647,6 +789,327 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
                 ))
               )}
             </div>
+          </div>
+        )}
+
+        {activeTab === 'muse' && (
+          <div className="flex flex-col h-full space-y-3">
+            {/* If no API key is configured */}
+            {!settings?.geminiApiKey ? (
+              <div className={`p-4 rounded-lg border ${cardBg} space-y-3`}>
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-4 w-4" style={{ color: currentTheme.tokens.accentColor }} />
+                  <span className={`font-semibold ${headerText}`}>Connect Gemini AI</span>
+                </div>
+                <p className={`text-xs leading-relaxed ${labelText}`}>
+                  Marrow uses Google Gemini to provide a quiet, craft-focused editorial sounding board without stealing your voice.
+                </p>
+                <form onSubmit={handleSaveDirectKey} className="space-y-2">
+                  <input
+                    type="password"
+                    placeholder="Paste Gemini API key (AQ... or AIza...)"
+                    value={directKeyInput}
+                    onChange={(e) => setDirectKeyInput(e.target.value)}
+                    className={`w-full rounded px-2.5 py-1.5 text-xs font-mono border focus:outline-none ${
+                      isLightMode
+                        ? 'bg-black/[0.03] border-black/[0.1] text-neutral-800'
+                        : 'bg-white/[0.04] border-white/[0.1] text-neutral-200'
+                    }`}
+                  />
+                  <div className="flex items-center justify-between pt-1">
+                    <a
+                      href="https://aistudio.google.com/apikey"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-[10px] underline opacity-60 hover:opacity-100"
+                    >
+                      Get free key ↗
+                    </a>
+                    <button
+                      type="submit"
+                      disabled={!directKeyInput.trim()}
+                      className="px-3 py-1 rounded text-xs font-semibold disabled:opacity-40 transition shadow-sm hover:opacity-90"
+                      style={{
+                        backgroundColor: currentTheme.tokens.accentColor,
+                        color: currentTheme.tokens.accentContrast,
+                      }}
+                    >
+                      Save Key
+                    </button>
+                  </div>
+                </form>
+              </div>
+            ) : (
+              <>
+                {/* Active Persona Banner & Quick Switcher */}
+                <div className={`p-2.5 rounded-lg border ${cardBg} space-y-1.5`}>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-medium uppercase tracking-wider opacity-60">
+                      Editorial Persona
+                    </span>
+                    {onOpenSettings && (
+                      <button
+                        type="button"
+                        onClick={onOpenSettings}
+                        className="opacity-50 hover:opacity-100 p-0.5 rounded transition"
+                        title="AI Settings"
+                      >
+                        <Settings className="h-3 w-3" />
+                      </button>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-3 gap-1">
+                    {(['editor', 'muse', 'critic'] as AIPersona[]).map((p) => {
+                      const isSel = (settings.aiPersona || 'editor') === p;
+                      return (
+                        <button
+                          key={p}
+                          type="button"
+                          onClick={() => onUpdateSettings && onUpdateSettings({ ...settings, aiPersona: p })}
+                          className={`py-1 px-1.5 rounded text-[10px] font-medium capitalize text-center truncate transition border ${
+                            isSel
+                              ? isLightMode
+                                ? 'bg-black text-white border-black shadow-xs'
+                                : 'bg-white text-black border-white shadow-xs'
+                              : isLightMode
+                              ? 'border-black/[0.08] hover:bg-black/[0.04] text-[#444]'
+                              : 'border-white/[0.08] hover:bg-white/[0.05] text-[#aaa]'
+                          }`}
+                        >
+                          {p === 'editor' ? 'Editor' : p === 'muse' ? 'Muse' : 'Critic'}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Editorial Prompt Chips */}
+                <div className="space-y-1.5">
+                  <div className="text-[10px] font-medium uppercase tracking-wider opacity-60">
+                    Quick Consultation
+                  </div>
+                  <div className="grid grid-cols-2 gap-1.5 text-[11px]">
+                    <button
+                      type="button"
+                      disabled={isAILoading}
+                      onClick={() =>
+                        handleSendAIMessage(
+                          'Please diagnose this scene: evaluate dramatic tension, pacing, and dialogue authenticity. Highlight what works and where the momentum dips.',
+                          'critique'
+                        )
+                      }
+                      className={`p-2 rounded-lg border text-left transition flex items-start gap-1.5 ${cardBg} hover:opacity-90 active:scale-98`}
+                    >
+                      <Zap className="h-3.5 w-3.5 shrink-0 mt-0.5" style={{ color: currentTheme.tokens.accentColor }} />
+                      <div>
+                        <div className="font-medium leading-none">Critique Scene</div>
+                        <div className="text-[10px] opacity-60 mt-1 leading-tight">Pacing &amp; tension</div>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      disabled={isAILoading}
+                      onClick={() =>
+                        handleSendAIMessage(
+                          'Provide vivid sensory cues across 5 lenses (Sight, Sound, Scent, Texture, Metaphor) to deepen the sensory texture of this scene.',
+                          'sensory'
+                        )
+                      }
+                      className={`p-2 rounded-lg border text-left transition flex items-start gap-1.5 ${cardBg} hover:opacity-90 active:scale-98`}
+                    >
+                      <Lightbulb className="h-3.5 w-3.5 shrink-0 mt-0.5 text-amber-500" />
+                      <div>
+                        <div className="font-medium leading-none">Sensory Details</div>
+                        <div className="text-[10px] opacity-60 mt-1 leading-tight">Sight, sound, smell</div>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      disabled={isAILoading}
+                      onClick={() =>
+                        handleSendAIMessage(
+                          'Suggest 3 unexpected obstacles, dramatic complications, or plot twists that could challenge the protagonist in this scene.',
+                          'brainstorm'
+                        )
+                      }
+                      className={`p-2 rounded-lg border text-left transition flex items-start gap-1.5 ${cardBg} hover:opacity-90 active:scale-98`}
+                    >
+                      <Sparkles className="h-3.5 w-3.5 shrink-0 mt-0.5 text-sky-400" />
+                      <div>
+                        <div className="font-medium leading-none">Brainstorm Move</div>
+                        <div className="text-[10px] opacity-60 mt-1 leading-tight">Obstacles &amp; twists</div>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      disabled={isAILoading}
+                      onClick={() =>
+                        handleSendAIMessage(
+                          'Based on this chapter\'s title, synopsis, and current draft, suggest 4 to 5 discrete scene beats for this chapter. Format each beat as a clear numbered line (1. Beat, 2. Beat).',
+                          'beats'
+                        )
+                      }
+                      className={`p-2 rounded-lg border text-left transition flex items-start gap-1.5 ${cardBg} hover:opacity-90 active:scale-98`}
+                    >
+                      <ListTodo className="h-3.5 w-3.5 shrink-0 mt-0.5 text-emerald-400" />
+                      <div>
+                        <div className="font-medium leading-none">Suggest Beats</div>
+                        <div className="text-[10px] opacity-60 mt-1 leading-tight">Outline checklist</div>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Error Banner */}
+                {aiError && (
+                  <div className="p-2.5 rounded-lg border border-red-500/20 bg-red-500/10 text-red-400 text-xs flex items-start gap-2">
+                    <span className="shrink-0">⚠️</span>
+                    <span className="flex-1 leading-tight text-[11px]">{aiError}</span>
+                  </div>
+                )}
+
+                {/* Import Success Banner */}
+                {beatsImportSuccess && (
+                  <div className="p-2.5 rounded-lg border border-emerald-500/20 bg-emerald-500/10 text-emerald-400 text-xs flex items-center gap-2 animate-in fade-in">
+                    <Check className="h-3.5 w-3.5 shrink-0" />
+                    <span className="flex-1 leading-tight text-[11px]">Beats added to Scene Beats checklist!</span>
+                  </div>
+                )}
+
+                {/* Conversation Thread */}
+                <div className="space-y-3 pt-1">
+                  {(!activeNote?.aiMessages || activeNote.aiMessages.length === 0) ? (
+                    <div className={`text-center py-6 ${labelText} space-y-1`}>
+                      <div className="opacity-60 text-xs font-medium">Your desk is quiet.</div>
+                      <div className="text-[11px] opacity-40">Tap a consultation chip above or ask anything below.</div>
+                    </div>
+                  ) : (
+                    activeNote.aiMessages.map((msg, idx) => (
+                      <div
+                        key={msg.id}
+                        className={`p-2.5 rounded-lg border text-xs leading-relaxed space-y-1.5 ${
+                          msg.role === 'user'
+                            ? isLightMode
+                              ? 'bg-black/[0.04] border-black/[0.08] ml-3 text-right'
+                              : 'bg-white/[0.05] border-white/[0.08] ml-3 text-right'
+                            : `${cardBg} mr-1`
+                        }`}
+                      >
+                        <div className={`flex items-center justify-between text-[10px] font-medium opacity-50 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
+                          <span className="uppercase tracking-wider">
+                            {msg.role === 'user' ? 'Author' : 'Editorial Partner'}
+                          </span>
+                          <div className="flex items-center gap-1.5">
+                            {msg.role === 'assistant' && (
+                              <button
+                                type="button"
+                                onClick={() => handleCopyText(msg.content, idx)}
+                                className="opacity-60 hover:opacity-100 transition p-0.5"
+                                title="Copy editorial advice"
+                              >
+                                {copiedIndex === idx ? <Check className="h-2.5 w-2.5 text-emerald-400" /> : <Copy className="h-2.5 w-2.5" />}
+                              </button>
+                            )}
+                            <span>
+                              {new Date(msg.timestamp).toLocaleTimeString([], {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className={`whitespace-pre-wrap text-left ${isLightMode ? 'text-[#1c1a17]' : 'text-[#e5e1d8]'}`}>
+                          {msg.content}
+                        </div>
+
+                        {/* If beats action, show 1-click import button */}
+                        {msg.role === 'assistant' && msg.actionType === 'beats' && (
+                          <div className="pt-1.5 border-t border-black/[0.06] dark:border-white/[0.06] flex justify-end">
+                            <button
+                              type="button"
+                              onClick={() => handleImportParsedBeats(msg.content)}
+                              className="flex items-center gap-1.5 px-2.5 py-1 rounded text-[10px] font-semibold transition shadow-xs hover:opacity-90 active:scale-95"
+                              style={{
+                                backgroundColor: currentTheme.tokens.accentColor,
+                                color: currentTheme.tokens.accentContrast,
+                              }}
+                            >
+                              <Plus className="h-3 w-3" />
+                              <span>Add to Scene Beats Checklist</span>
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  )}
+
+                  {/* Loading Spinner */}
+                  {isAILoading && (
+                    <div className={`p-3 rounded-lg border ${cardBg} flex items-center gap-2 text-xs opacity-75 animate-pulse`}>
+                      <Sparkles className="h-3.5 w-3.5 animate-spin" style={{ color: currentTheme.tokens.accentColor }} />
+                      <span>Consulting editorial partner...</span>
+                    </div>
+                  )}
+
+                  <div ref={chatBottomRef} />
+                </div>
+
+                {/* Input Bar */}
+                <div className="pt-2 sticky bottom-0">
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      handleSendAIMessage(aiInput, 'chat');
+                    }}
+                    className="space-y-1.5"
+                  >
+                    <div className="relative">
+                      <input
+                        type="text"
+                        placeholder="Ask about this scene, dialogue, pacing..."
+                        value={aiInput}
+                        onChange={(e) => setAiInput(e.target.value)}
+                        disabled={isAILoading}
+                        className={`w-full rounded-md px-3 py-2 text-xs border focus:outline-none pr-9 transition ${
+                          isLightMode
+                            ? 'bg-[#ffffff] border-black/[0.12] text-[#1c1a17] focus:border-black/30'
+                            : 'bg-[#1e2024] border-white/[0.12] text-[#dedad4] focus:border-white/30'
+                        }`}
+                      />
+                      <button
+                        type="submit"
+                        disabled={!aiInput.trim() || isAILoading}
+                        className="absolute right-1.5 top-1/2 -translate-y-1/2 p-1 rounded disabled:opacity-30 transition hover:opacity-90"
+                        style={{
+                          backgroundColor: currentTheme.tokens.accentColor,
+                          color: currentTheme.tokens.accentContrast,
+                        }}
+                        title="Send message"
+                      >
+                        <Send className="h-3 w-3" />
+                      </button>
+                    </div>
+
+                    {activeNote?.aiMessages && activeNote.aiMessages.length > 0 && (
+                      <div className="flex justify-end">
+                        <button
+                          type="button"
+                          onClick={handleClearAIChat}
+                          className="text-[10px] opacity-40 hover:opacity-100 transition flex items-center gap-1"
+                        >
+                          <Trash2 className="h-2.5 w-2.5" />
+                          <span>Clear Muse Conversation</span>
+                        </button>
+                      </div>
+                    )}
+                  </form>
+                </div>
+              </>
+            )}
           </div>
         )}
       </div>

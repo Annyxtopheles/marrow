@@ -21,6 +21,14 @@ export interface SceneBeat {
   done: boolean;
 }
 
+export interface AIMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: number;
+  actionType?: 'critique' | 'sensory' | 'beats' | 'brainstorm' | 'chat';
+}
+
 export interface Note {
   id: string;
   title: string;
@@ -38,6 +46,7 @@ export interface Note {
   inUniverseDate?: string;
   synopsis?: string;
   sceneBeats?: SceneBeat[];
+  aiMessages?: AIMessage[];
   timelineLog: TimelineEntry[];
 }
 
@@ -74,6 +83,9 @@ export interface EditorSettings {
   dualModePreview: boolean;
   dailyWordGoal?: number; // default 1000
   activeGoalView?: 'chapter' | 'daily'; // default 'chapter'
+  geminiApiKey?: string;
+  aiModel?: 'gemini-3.5-flash-lite' | 'gemini-3.8-flash';
+  aiPersona?: 'editor' | 'muse' | 'critic';
 }
 
 export interface WritingSprint {

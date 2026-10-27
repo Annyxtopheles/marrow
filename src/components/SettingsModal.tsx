@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import type { EditorSettings, FontFamily } from '../types';
-import { X, Sliders, Download } from 'lucide-react';
+import { X, Sliders, Download, Sparkles } from 'lucide-react';
 import { THEMES, VALID_THEMES } from '../services/themes';
 
 interface SettingsModalProps {
@@ -18,6 +18,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onExportVault,
   isLightMode,
 }) => {
+  const [showApiKey, setShowApiKey] = useState(false);
   const currentTheme = THEMES[settings.theme] || THEMES.charcoal;
   const update = <K extends keyof EditorSettings>(key: K, value: EditorSettings[K]) => {
     onUpdateSettings({ ...settings, [key]: value });
@@ -211,6 +212,89 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   className="accent-stone-400 h-4 w-4 cursor-pointer"
                 />
               </label>
+            </div>
+          </div>
+
+          {/* AI Editorial Assistant (Gemini) */}
+          <div className={`space-y-3 pt-2 border-t ${border}`}>
+            <div className="flex items-center justify-between">
+              <label className="text-[11px] uppercase tracking-wider opacity-60 flex items-center gap-1.5 font-medium">
+                <Sparkles className="h-3 w-3" style={{ color: currentTheme.tokens.accentColor }} />
+                <span>AI Editorial Assistant (Google Gemini)</span>
+              </label>
+              <span className="text-[10px] opacity-60">BYOK / Local-first</span>
+            </div>
+
+            <div className="space-y-2.5">
+              <div className="space-y-1">
+                <label className="text-[11px] opacity-75">Gemini API Key</label>
+                <div className="relative">
+                  <input
+                    type={showApiKey ? 'text' : 'password'}
+                    value={settings.geminiApiKey || ''}
+                    onChange={(e) => update('geminiApiKey', e.target.value.trim())}
+                    placeholder="Paste your Gemini API key (AQ... or AIza...)"
+                    className={`w-full rounded-md px-3 py-1.5 text-xs font-mono border focus:outline-none pr-16 ${
+                      isLightMode
+                        ? 'bg-black/[0.03] border-black/[0.1] text-neutral-800'
+                        : 'bg-white/[0.04] border-white/[0.1] text-neutral-200'
+                    }`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowApiKey(!showApiKey)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] opacity-60 hover:opacity-100 px-1.5 py-0.5 rounded"
+                  >
+                    {showApiKey ? 'Hide' : 'Show'}
+                  </button>
+                </div>
+                <div className="text-[10px] opacity-50 flex items-center justify-between">
+                  <span>Stored securely in browser localStorage.</span>
+                  <a
+                    href="https://aistudio.google.com/apikey"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="underline hover:opacity-100"
+                  >
+                    Get free API key ↗
+                  </a>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 pt-1">
+                <div className="space-y-1">
+                  <label className="text-[11px] opacity-75">Model</label>
+                  <select
+                    value={settings.aiModel || 'gemini-3.5-flash-lite'}
+                    onChange={(e) => update('aiModel', e.target.value as any)}
+                    className={`w-full rounded-md px-2.5 py-1.5 text-xs border focus:outline-none ${
+                      isLightMode
+                        ? 'bg-black/[0.03] border-black/[0.1] text-neutral-800'
+                        : 'bg-neutral-800 border-white/[0.1] text-neutral-200'
+                    }`}
+                  >
+                    <option value="gemini-3.5-flash-lite">Gemini 3.5 Flash-Lite (Fast &amp; Steady)</option>
+                    <option value="gemini-3.8-flash">Gemini 3.8 Flash (Deep Reasoning)</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[11px] opacity-75">Default Persona</label>
+                  <select
+                    value={settings.aiPersona || 'editor'}
+                    onChange={(e) => update('aiPersona', e.target.value as any)}
+                    className={`w-full rounded-md px-2.5 py-1.5 text-xs border focus:outline-none ${
+                      isLightMode
+                        ? 'bg-black/[0.03] border-black/[0.1] text-neutral-800'
+                        : 'bg-neutral-800 border-white/[0.1] text-neutral-200'
+                    }`}
+                  >
+                    <option value="editor">Editorial Partner (Pacing &amp; Structure)</option>
+                    <option value="muse">Creative Muse (Sensory &amp; Imagery)</option>
+                    <option value="critic">Sharp Critic (Plot &amp; Stakes)</option>
+                  </select>
+                </div>
+              </div>
             </div>
           </div>
 

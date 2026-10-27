@@ -706,3 +706,69 @@ test('Scene Beats Checklist & Chapter Synopsis: Add, toggle, delete, and progres
   assert.equal(note.sceneBeats.length, 2);
   assert.equal(note.sceneBeats.some((b) => b.id === 'b1'), false);
 });
+
+test('AIService: HTML-to-text cleanup and Scene Beats parser', async () => {
+  const cleanHtmlToText = (html) => {
+    return html
+      .replace(/<h1>(.*?)<\/h1>/gi, '# $1\n\n')
+      .replace(/<h2>(.*?)<\/h2>/gi, '## $1\n\n')
+      .replace(/<h3>(.*?)<\/h3>/gi, '### $1\n\n')
+      .replace(/<p>(.*?)<\/p>/gi, '$1\n\n')
+      .replace(/<blockquote>(.*?)<\/blockquote>/gi, '> $1\n\n')
+      .replace(/<em>(.*?)<\/em>/gi, '*$1*')
+      .replace(/<strong>(.*?)<\/strong>/gi, '**$1**')
+      .replace(/<li>(.*?)<\/li>/gi, '- $1\n')
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<[^>]+>/g, '')
+      .replace(/&nbsp;/g, ' ')
+      .trim();
+  };
+
+  const sampleHtml = '<h2>The Confrontation</h2><p>Elena stood <strong>frozen</strong> in the doorway.</p><blockquote>"You shouldn\'t have come," he whispered.</blockquote>';
+  const cleaned = cleanHtmlToText(sampleHtml);
+  assert.ok(cleaned.includes('## The Confrontation'));
+  assert.ok(cleaned.includes('Elena stood **frozen** in the doorway.'));
+  assert.ok(cleaned.includes('> "You shouldn\'t have come," he whispered.'));
+  assert.ok(!cleaned.includes('<p>'));
+
+  // Test Beats Parser from Gemini LLM output
+  const parseBeatsFromResponse = (text) => {
+    const lines = text.split('\n');
+    const beats = [];
+    let index = 1;
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      const match = trimmed.match(/^(?:(?:\d+[.)])|[-*•])\s*(.*)$/);
+      if (match && match[1]) {
+        const beatText = match[1]
+          .replace(/^\[[ xX]\]\s*/, '')
+          .replace(/^\*\*(.*?)\*\*:?\s*/, '$1: ')
+          .trim();
+        if (beatText.length > 2 && beatText.length < 250) {
+          beats.push({
+            id: `beat-ai-test-${index++}`,
+            text: beatText,
+            done: false,
+          });
+        }
+      }
+    }
+    return beats;
+  };
+
+  const aiOutput = `Here are the suggested scene beats:
+1. **The Arrival**: Elena enters the dimly lit sanctuary under cover of the storm.
+2. The Encounter: Marcus refuses to hand over the cipher cylinder.
+3. [ ] A sudden noise in the corridor alerts both to the inquisitor's guards.
+- Elena escapes across the rooftops with half the manuscript.
+`;
+
+  const parsedBeats = parseBeatsFromResponse(aiOutput);
+  assert.equal(parsedBeats.length, 4);
+  assert.equal(parsedBeats[0].text, 'The Arrival: Elena enters the dimly lit sanctuary under cover of the storm.');
+  assert.equal(parsedBeats[1].text, 'The Encounter: Marcus refuses to hand over the cipher cylinder.');
+  assert.equal(parsedBeats[2].text, "A sudden noise in the corridor alerts both to the inquisitor's guards.");
+  assert.equal(parsedBeats[3].text, 'Elena escapes across the rooftops with half the manuscript.');
+  assert.equal(parsedBeats.every((b) => !b.done), true);
+});

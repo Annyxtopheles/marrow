@@ -1182,6 +1182,9 @@ export function App() {
             onUpdateNote={handleUpdateNote}
             isLightMode={isLightMode}
             theme={settings.theme}
+            settings={settings}
+            onUpdateSettings={handleUpdateSettings}
+            onOpenSettings={() => setIsSettingsOpen(true)}
           />
         )}
 

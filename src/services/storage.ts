@@ -24,6 +24,9 @@ export const DEFAULT_SETTINGS: EditorSettings = {
   dualModePreview: false,
   dailyWordGoal: 1000,
   activeGoalView: 'chapter',
+  geminiApiKey: '',
+  aiModel: 'gemini-3.5-flash-lite',
+  aiPersona: 'editor',
 };
 
 const SEED_FOLDERS: Folder[] = [
