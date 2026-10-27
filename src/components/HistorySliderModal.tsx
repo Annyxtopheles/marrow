@@ -111,7 +111,7 @@ export const HistorySliderModal: React.FC<HistorySliderModalProps> = ({
         </div>
 
         {/* Content Preview */}
-        <div className="flex-1 overflow-y-auto p-6 font-serif text-sm leading-relaxed text-neutral-300 select-text bg-black/40">
+        <div className="flex-1 overflow-y-auto p-6 text-sm leading-relaxed text-neutral-300 select-text bg-black/40">
           <div className="max-w-prose mx-auto">
             <h3 className="text-lg font-bold text-white mb-4 pb-2 border-b border-neutral-800 font-sans">
               {currentRecord.title || 'Untitled'}

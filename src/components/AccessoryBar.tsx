@@ -147,7 +147,7 @@ export const AccessoryBar: React.FC<AccessoryBarProps> = ({
         <button
           type="button"
           onClick={() => insertPair('“', '”')}
-          className={`rounded-md px-2 py-0.5 font-serif text-sm transition ${btnHover}`}
+          className={`rounded-md px-2 py-0.5 text-sm transition ${btnHover}`}
           title="Smart double quotes"
         >
           “”
@@ -155,7 +155,7 @@ export const AccessoryBar: React.FC<AccessoryBarProps> = ({
         <button
           type="button"
           onClick={() => insertPair('‘', '’')}
-          className={`rounded-md px-2 py-0.5 font-serif text-sm transition ${btnHover}`}
+          className={`rounded-md px-2 py-0.5 text-sm transition ${btnHover}`}
           title="Smart single quotes"
         >
           ‘’
@@ -179,7 +179,7 @@ export const AccessoryBar: React.FC<AccessoryBarProps> = ({
         <button
           type="button"
           onClick={() => insertPair('《', '》')}
-          className={`rounded-md px-2 py-0.5 font-serif text-xs transition ${btnHover}`}
+          className={`rounded-md px-2 py-0.5 text-xs transition ${btnHover}`}
           title="Book title brackets"
         >
           《》
@@ -187,7 +187,7 @@ export const AccessoryBar: React.FC<AccessoryBarProps> = ({
         <button
           type="button"
           onClick={() => insertPair('— ', ' ')}
-          className={`rounded-md px-2 py-0.5 font-serif text-xs transition ${btnHover}`}
+          className={`rounded-md px-2 py-0.5 text-xs transition ${btnHover}`}
           title="Em dash"
         >
           —

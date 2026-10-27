@@ -320,7 +320,7 @@ export function App() {
               className="h-8 w-8 mb-3 opacity-60"
               style={{ filter: isLightMode ? 'brightness(0) opacity(0.6)' : undefined }}
             />
-            <h3 className="text-base font-serif font-medium text-inherit mb-1">No Document Open</h3>
+            <h3 className="text-base font-medium text-inherit mb-1">No Document Open</h3>
             <p className="text-xs max-w-sm mb-4 text-neutral-400">
               Select an entry from your vault or draft a new piece.
             </p>

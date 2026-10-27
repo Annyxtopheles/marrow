@@ -96,7 +96,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <div className={`flex items-center justify-between px-3.5 py-3 border-b ${borderColor}`}>
         <div className="flex items-center gap-2">
           <BookOpen className="h-4 w-4 opacity-70" />
-          <span className="font-serif font-medium tracking-tight text-sm text-inherit">
+          <span className="font-medium tracking-tight text-sm text-inherit">
             Vault Library
           </span>
         </div>

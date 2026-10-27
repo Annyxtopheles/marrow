@@ -177,6 +177,25 @@ export const Editor: React.FC<EditorProps> = ({
     });
   };
 
+  const handleContainerClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!editor || rawMarkdownMode) return;
+
+    const target = e.target as HTMLElement;
+
+    // Do nothing if clicking on inputs, textareas, or buttons
+    if (target === titleInputRef.current || target.closest('input, button, textarea')) {
+      return;
+    }
+
+    // If clicking directly on a text block, let ProseMirror place the cursor naturally
+    if (target.closest('p, h1, h2, h3, blockquote, ul, ol, li')) {
+      return;
+    }
+
+    // Clicking anywhere in the blank space beneath or around the text focuses at the end of the note
+    editor.commands.focus('end');
+  };
+
   const fontClass =
     settings.fontFamily === 'serif'
       ? 'font-serif'
@@ -229,7 +248,8 @@ export const Editor: React.FC<EditorProps> = ({
       {/* Editor Scroll Container */}
       <div
         ref={editorContainerRef}
-        className={`flex-1 overflow-y-auto px-6 md:px-16 lg:px-24 py-10 transition-all ${
+        onClick={handleContainerClick}
+        className={`flex-1 overflow-y-auto px-6 md:px-16 lg:px-24 py-10 transition-all cursor-text ${
           settings.typewriterMode ? 'typewriter-mode' : ''
         }`}
         style={{

@@ -126,7 +126,7 @@ export const TimeJotPanel: React.FC<TimeJotPanelProps> = ({
       <div className={`flex items-center justify-between border-b ${border} px-3 py-2.5`}>
         <div className="flex items-center gap-1.5 font-medium text-inherit">
           <Clock className="h-4 w-4 opacity-70" />
-          <span className="font-serif">TimeJot Timeline</span>
+          <span>TimeJot Timeline</span>
         </div>
       </div>
 

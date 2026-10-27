@@ -58,7 +58,7 @@ export const BacklinksPanel: React.FC<BacklinksPanelProps> = ({
       <div className={`flex items-center justify-between border-b ${border} px-3 py-2.5`}>
         <div className="flex items-center gap-1.5 font-medium text-inherit">
           <Link2 className="h-4 w-4 opacity-70" />
-          <span className="font-serif">Obsidian Knowledge Graph</span>
+          <span>Obsidian Knowledge Graph</span>
         </div>
       </div>
 
@@ -159,15 +159,16 @@ export const BacklinksPanel: React.FC<BacklinksPanelProps> = ({
                   <g
                     key={node.id}
                     onClick={() => onSelectNote(node)}
-                    className="cursor-pointer transition-transform hover:scale-115"
+                    className="cursor-pointer group"
                   >
                     <circle
                       cx={node.x}
                       cy={node.y}
-                      r={node.isCurrent ? 6 : 4}
-                      fill={node.isCurrent ? (isLightMode ? '#444' : '#dedad4') : (isLightMode ? '#999' : '#73706b')}
-                      stroke={node.isCurrent ? '#8a7d6e' : 'transparent'}
-                      strokeWidth="1.5"
+                      r={node.isCurrent ? 6 : 4.5}
+                      fill={node.isCurrent ? (isLightMode ? '#333' : '#ede9e2') : (isLightMode ? '#888' : '#787570')}
+                      stroke={node.isCurrent ? (isLightMode ? '#000' : '#fff') : 'transparent'}
+                      strokeWidth={node.isCurrent ? 1.5 : 1}
+                      className="transition-colors group-hover:fill-stone-200"
                     />
                     <text
                       x={node.x}
@@ -175,7 +176,7 @@ export const BacklinksPanel: React.FC<BacklinksPanelProps> = ({
                       fontSize="9"
                       fill={isLightMode ? '#555' : '#a8a5a0'}
                       textAnchor="middle"
-                      className="select-none"
+                      className="select-none transition-colors group-hover:fill-stone-100"
                     >
                       {node.title.slice(0, 10)}
                     </text>

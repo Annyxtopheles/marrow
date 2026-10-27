@@ -8,7 +8,7 @@ const STORAGE_KEY_SETTINGS = 'marrow_settings_v1';
 
 export const DEFAULT_SETTINGS: EditorSettings = {
   theme: 'charcoal',
-  fontFamily: 'serif',
+  fontFamily: 'sans',
   fontSize: 19,
   lineHeight: 1.85,
   paragraphSpacing: 18,
