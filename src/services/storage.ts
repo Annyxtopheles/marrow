@@ -24,7 +24,7 @@ export const DEFAULT_SETTINGS: EditorSettings = {
   dualModePreview: false,
   dailyWordGoal: 1000,
   activeGoalView: 'chapter',
-  geminiApiKey: '',
+  geminiApiKey: import.meta.env.VITE_GEMINI_API_KEY || '',
   aiModel: 'gemini-3.5-flash-lite',
   aiPersona: 'editor',
 };
