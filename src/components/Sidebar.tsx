@@ -326,19 +326,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     : 'bg-[#131416]';
 
   const itemHover = isLightMode ? 'hover:bg-black/[0.04]' : 'hover:bg-white/[0.05]';
-  const activeItem = theme === 'nordic'
-    ? 'bg-sky-500/15 text-sky-200 font-semibold border-l-2 border-sky-400 pl-1.5'
-    : theme === 'sakura'
-    ? 'bg-rose-500/10 text-rose-900 font-semibold border-l-2 border-rose-500 pl-1.5'
-    : theme === 'dreamscape'
-    ? 'bg-fuchsia-500/15 text-fuchsia-950 font-semibold border-l-2 border-fuchsia-500 pl-1.5'
-    : theme === 'sepia'
-    ? 'bg-amber-600/15 text-amber-950 font-semibold border-l-2 border-amber-600 pl-1.5'
-    : theme === 'evergreen'
-    ? 'bg-emerald-500/15 text-emerald-200 font-semibold border-l-2 border-emerald-400 pl-1.5'
-    : theme === 'grunge'
-    ? 'bg-amber-400/15 text-amber-300 font-semibold border-l-2 border-amber-400 pl-1.5'
-    : isLightMode
+  const activeItem = isLightMode
     ? 'bg-black/[0.06] text-[#1c1a17] font-semibold'
     : 'bg-white/[0.08] text-[#f5f2eb] font-semibold';
   const baseTextColor = isLightMode ? 'text-[#383531]' : 'text-[#c5c1ba]';

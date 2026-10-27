@@ -9,7 +9,7 @@ import { BacklinksPanel } from './components/BacklinksPanel';
 import { SettingsModal } from './components/SettingsModal';
 import { SyncModal } from './components/SyncModal';
 import { CompileModal } from './components/CompileModal';
-import { PanelLeftClose, PanelLeft, Clock, Link2, Plus, Cloud, RotateCcw, X, Palette, BookOpen } from 'lucide-react';
+import { PanelLeftClose, PanelLeft, Clock, Link2, Plus, Cloud, RotateCcw, X, Palette, BookOpen, Maximize2, Minimize2 } from 'lucide-react';
 
 export function App() {
   const [notes, setNotes] = useState<Note[]>(() => StorageService.getNotes());
@@ -45,6 +45,24 @@ export function App() {
     window.addEventListener('mousedown', handleOutsideClick);
     return () => window.removeEventListener('mousedown', handleOutsideClick);
   }, [isThemeMenuOpen]);
+
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(Boolean(document.fullscreenElement));
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+
+  const handleToggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    } else {
+      document.exitFullscreen().catch(() => {});
+    }
+  };
 
   useEffect(() => {
     applyThemeToDocument(settings.theme);
@@ -1114,6 +1132,22 @@ export function App() {
                 </div>
               )}
             </div>
+
+            {/* Fullscreen Toggle */}
+            <button
+              type="button"
+              onClick={handleToggleFullscreen}
+              className={`p-1.5 rounded-md transition ${
+                isFullscreen ? activeBtn : `${buttonHover} text-neutral-400`
+              }`}
+              title={isFullscreen ? 'Exit Full Screen (Esc)' : 'Toggle Full Screen'}
+            >
+              {isFullscreen ? (
+                <Minimize2 className="h-3.5 w-3.5" />
+              ) : (
+                <Maximize2 className="h-3.5 w-3.5" />
+              )}
+            </button>
           </div>
         </header>
       )}
