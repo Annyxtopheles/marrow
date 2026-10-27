@@ -46,6 +46,11 @@
   background: rgba(140, 140, 145, 0.35);
 }
 
+/* Theme Accent Selection */
+::selection {
+  background: var(--theme-selection, rgba(140, 140, 145, 0.25));
+}
+
 /* PureWriter Soft Breathing Cursor */
 @keyframes pure-breathe {
   0%, 100% {
@@ -57,7 +62,7 @@
 }
 
 .breathing-cursor .ProseMirror {
-  caret-color: #c4b9a8;
+  caret-color: var(--theme-caret, #c4b9a8);
 }
 
 /* TipTap Editor Styling with Modern Editorial Touch */

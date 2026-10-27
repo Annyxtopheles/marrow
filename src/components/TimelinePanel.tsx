@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import type { Note, TimelineEntry } from '../types';
+import type { Note, TimelineEntry, ThemeMode } from '../types';
 import { StorageService } from '../services/storage';
 import {
   Clock,
@@ -15,6 +15,7 @@ interface TimelinePanelProps {
   onSelectNote: (note: Note) => void;
   onUpdateNote: (note: Note) => void;
   isLightMode: boolean;
+  theme?: ThemeMode;
 }
 
 export const TimelinePanel: React.FC<TimelinePanelProps> = ({
@@ -23,6 +24,7 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
   onSelectNote,
   onUpdateNote,
   isLightMode,
+  theme,
 }) => {
   const [activeTab, setActiveTab] = useState<'intervals' | 'story' | 'logs'>('intervals');
 
@@ -109,8 +111,29 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
   const wordsWrittenInSprint = Math.max(0, (activeNote?.wordCount || 0) - startSprintWordCount);
   const sprintProgress = Math.min(100, Math.round((wordsWrittenInSprint / sprintTargetWords) * 100));
 
-  const border = isLightMode ? 'border-[#e4e0d7]' : 'border-white/[0.08]';
-  const panelBg = isLightMode ? 'bg-[#f4f1ea]' : 'bg-[#131416]';
+  const border = theme === 'sakura'
+    ? 'border-[#e5e7eb]'
+    : theme === 'sepia'
+    ? 'border-[#e7ddce]'
+    : theme === 'nordic'
+    ? 'border-sky-500/15'
+    : theme === 'evergreen'
+    ? 'border-emerald-500/15'
+    : isLightMode
+    ? 'border-[#e4e0d7]'
+    : 'border-white/[0.08]';
+
+  const panelBg = theme === 'sakura'
+    ? 'bg-[#fafafc]'
+    : theme === 'sepia'
+    ? 'bg-[#f5eedd]'
+    : theme === 'nordic'
+    ? 'bg-[#111722]'
+    : theme === 'evergreen'
+    ? 'bg-[#0f1a14]'
+    : isLightMode
+    ? 'bg-[#f4f1ea]'
+    : 'bg-[#131416]';
   const cardBg = isLightMode
     ? 'bg-black/[0.02] border-black/[0.08]'
     : 'bg-white/[0.03] border-white/[0.08]';

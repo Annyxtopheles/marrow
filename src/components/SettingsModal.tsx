@@ -1,6 +1,7 @@
 import React from 'react';
-import type { EditorSettings, ThemeMode, FontFamily } from '../types';
+import type { EditorSettings, FontFamily } from '../types';
 import { X, Sliders, Download } from 'lucide-react';
+import { THEMES, VALID_THEMES } from '../services/themes';
 
 interface SettingsModalProps {
   settings: EditorSettings;
@@ -65,36 +66,46 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         <div className="p-6 space-y-6 overflow-y-auto max-h-[75vh] text-xs">
           {/* Low-Contrast Color Schemes */}
           <div className="space-y-2.5">
-            <label className="text-[11px] uppercase tracking-wider opacity-60 block">
-              Low-Contrast Color Palette
-            </label>
-            <div className="grid grid-cols-2 gap-3">
-              {[
-                {
-                  id: 'charcoal',
-                  name: 'Charcoal',
-                  sub: 'Warm Dark',
-                  style: 'bg-[#151618] text-[#dedad4]',
-                },
-                {
-                  id: 'canvas',
-                  name: 'Canvas Linen',
-                  sub: 'Warm Light',
-                  style: 'bg-[#f7f5f0] text-[#2c2a27]',
-                },
-              ].map((th) => (
-                <button
-                  key={th.id}
-                  type="button"
-                  onClick={() => update('theme', th.id as ThemeMode)}
-                  className={`p-3 rounded-lg border text-center transition flex flex-col items-center justify-center gap-1 ${th.style} ${
-                    settings.theme === th.id ? selectedOutline : unselectedOutline
-                  }`}
-                >
-                  <span className="text-xs">{th.name}</span>
-                  <span className="text-[10px] opacity-60">{th.sub}</span>
-                </button>
-              ))}
+            <div className="flex items-center justify-between">
+              <label className="text-[11px] uppercase tracking-wider opacity-60 block">
+                Editorial Atmosphere & Theme
+              </label>
+              <span className="text-[10px] opacity-40 font-mono">
+                {THEMES[settings.theme]?.name || 'Theme'}
+              </span>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+              {VALID_THEMES.map((themeId) => {
+                const th = THEMES[themeId];
+                const isSelected = settings.theme === th.id;
+                return (
+                  <button
+                    key={th.id}
+                    type="button"
+                    onClick={() => update('theme', th.id)}
+                    className={`p-2.5 rounded-lg border text-left transition relative flex flex-col justify-between gap-2 overflow-hidden ${
+                      isSelected ? selectedOutline : unselectedOutline
+                    }`}
+                    style={{
+                      backgroundColor: th.tokens.appBg,
+                      color: th.tokens.textColor,
+                    }}
+                  >
+                    <div className="flex items-center justify-between w-full">
+                      <span className="text-xs font-medium tracking-tight truncate">{th.name}</span>
+                      <span
+                        className="h-2.5 w-2.5 rounded-full shrink-0 shadow-xs"
+                        style={{ backgroundColor: th.accentColor }}
+                        title={`Accent: ${th.accentName}`}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between w-full text-[10px] opacity-60">
+                      <span>{th.sub}</span>
+                      <span className="capitalize text-[9px]">{th.category}</span>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           </div>
 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import type { Note } from '../types';
+import type { Note, ThemeMode } from '../types';
 import { StorageService } from '../services/storage';
 import { Link2, ArrowUpRight, FileText } from 'lucide-react';
 
@@ -8,6 +8,7 @@ interface BacklinksPanelProps {
   allNotes: Note[];
   onSelectNote: (note: Note) => void;
   isLightMode: boolean;
+  theme?: ThemeMode;
 }
 
 export const BacklinksPanel: React.FC<BacklinksPanelProps> = ({
@@ -15,6 +16,7 @@ export const BacklinksPanel: React.FC<BacklinksPanelProps> = ({
   allNotes,
   onSelectNote,
   isLightMode,
+  theme,
 }) => {
   const [activeTab, setActiveTab] = useState<'links' | 'graph'>('links');
 
@@ -44,8 +46,29 @@ export const BacklinksPanel: React.FC<BacklinksPanelProps> = ({
     });
   });
 
-  const border = isLightMode ? 'border-[#e4e0d7]' : 'border-white/[0.08]';
-  const panelBg = isLightMode ? 'bg-[#f4f1ea]' : 'bg-[#131416]';
+  const border = theme === 'sakura'
+    ? 'border-[#e5e7eb]'
+    : theme === 'sepia'
+    ? 'border-[#e7ddce]'
+    : theme === 'nordic'
+    ? 'border-sky-500/15'
+    : theme === 'evergreen'
+    ? 'border-emerald-500/15'
+    : isLightMode
+    ? 'border-[#e4e0d7]'
+    : 'border-white/[0.08]';
+
+  const panelBg = theme === 'sakura'
+    ? 'bg-[#fafafc]'
+    : theme === 'sepia'
+    ? 'bg-[#f5eedd]'
+    : theme === 'nordic'
+    ? 'bg-[#111722]'
+    : theme === 'evergreen'
+    ? 'bg-[#0f1a14]'
+    : isLightMode
+    ? 'bg-[#f4f1ea]'
+    : 'bg-[#131416]';
   const activeTabClass = isLightMode
     ? 'border-[#302e2b] text-[#1c1a17] font-semibold'
     : 'border-white text-[#f5f2eb] font-semibold';

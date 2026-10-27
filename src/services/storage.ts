@@ -1,5 +1,6 @@
 import type { Note, Folder, HistoryRecord, EditorSettings } from '../types';
 import { IndexedDBService } from './db';
+import { VALID_THEMES } from './themes';
 
 const STORAGE_KEY_NOTES = 'marrow_notes_v1';
 const STORAGE_KEY_FOLDERS = 'marrow_folders_v1';
@@ -199,7 +200,7 @@ export const StorageService = {
       const data = localStorage.getItem(STORAGE_KEY_SETTINGS) || localStorage.getItem('purejot_settings_v1');
       if (!data) return DEFAULT_SETTINGS;
       const parsed = JSON.parse(data);
-      const validTheme = parsed.theme === 'canvas' ? 'canvas' : 'charcoal';
+      const validTheme = VALID_THEMES.includes(parsed.theme) ? parsed.theme : 'charcoal';
       return { ...DEFAULT_SETTINGS, ...parsed, theme: validTheme };
     } catch {
       return DEFAULT_SETTINGS;

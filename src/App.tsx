@@ -1,13 +1,14 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import type { Note, Folder, EditorSettings, HistoryRecord, VaultAction, ToastNotification } from './types';
 import { StorageService } from './services/storage';
+import { THEMES, VALID_THEMES, isThemeLight, applyThemeToDocument } from './services/themes';
 import { Sidebar } from './components/Sidebar';
 import { Editor } from './components/Editor';
 import { TimelinePanel } from './components/TimelinePanel';
 import { BacklinksPanel } from './components/BacklinksPanel';
 import { SettingsModal } from './components/SettingsModal';
 import { SyncModal } from './components/SyncModal';
-import { PanelLeftClose, PanelLeft, Clock, Link2, Plus, Cloud, RotateCcw, X } from 'lucide-react';
+import { PanelLeftClose, PanelLeft, Clock, Link2, Plus, Cloud, RotateCcw, X, Palette } from 'lucide-react';
 
 export function App() {
   const [notes, setNotes] = useState<Note[]>(() => StorageService.getNotes());
@@ -28,6 +29,11 @@ export function App() {
   const [isBacklinksOpen, setIsBacklinksOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isSyncOpen, setIsSyncOpen] = useState(false);
+  const [isThemeMenuOpen, setIsThemeMenuOpen] = useState(false);
+
+  useEffect(() => {
+    applyThemeToDocument(settings.theme);
+  }, [settings.theme]);
 
   // Vault Undo/Redo & Toast System
   const [undoStack, setUndoStack] = useState<VaultAction[]>([]);
@@ -893,17 +899,48 @@ export function App() {
     URL.revokeObjectURL(url);
   };
 
-  const isLightMode = settings.theme === 'canvas';
+  const currentTheme = THEMES[settings.theme] || THEMES.charcoal;
+  const isLightMode = isThemeLight(settings.theme);
 
   const themeClasses = isLightMode
-    ? 'bg-[#f7f5f0] text-[#2c2a27]'
-    : 'bg-[#151618] text-[#dedad4]';
+    ? settings.theme === 'sakura'
+      ? 'bg-[#ffffff] text-[#18181b]'
+      : settings.theme === 'sepia'
+      ? 'bg-[#fbf7ee] text-[#362b21]'
+      : 'bg-[#f7f5f0] text-[#2c2a27]'
+    : settings.theme === 'nordic'
+    ? 'bg-[#0c1017] text-[#e2e8f0]'
+    : settings.theme === 'evergreen'
+    ? 'bg-[#09110d] text-[#dff0e6]'
+    : 'bg-[#121315] text-[#dedad4]';
 
-  const headerBorder = isLightMode ? 'border-[#e4e0d7]' : 'border-white/[0.07]';
-  const headerBg = isLightMode ? 'bg-[#f7f5f0]/90' : 'bg-[#151618]/90';
+  const headerBorder = isLightMode
+    ? settings.theme === 'sakura'
+      ? 'border-[#e5e7eb]'
+      : settings.theme === 'sepia'
+      ? 'border-[#e7ddce]'
+      : 'border-[#e4e0d7]'
+    : settings.theme === 'nordic'
+    ? 'border-sky-500/15'
+    : settings.theme === 'evergreen'
+    ? 'border-emerald-500/15'
+    : 'border-white/[0.07]';
+
+  const headerBg = isLightMode
+    ? settings.theme === 'sakura'
+      ? 'bg-[#fafafc]/95'
+      : settings.theme === 'sepia'
+      ? 'bg-[#f5eedd]/95'
+      : 'bg-[#f7f5f0]/90'
+    : settings.theme === 'nordic'
+    ? 'bg-[#111722]/95'
+    : settings.theme === 'evergreen'
+    ? 'bg-[#0f1a14]/95'
+    : 'bg-[#151618]/90';
+
   const buttonHover = isLightMode ? 'hover:bg-black/[0.05]' : 'hover:bg-white/[0.06]';
   const activeBtn = isLightMode
-    ? 'bg-black/[0.08] text-[#222] font-medium'
+    ? 'bg-black/[0.08] text-[#111] font-medium'
     : 'bg-white/[0.08] text-[#f0ece4] font-medium';
 
   return (
@@ -974,6 +1011,73 @@ export function App() {
               <Cloud className="h-3 w-3" />
               <span>Sync</span>
             </button>
+
+            {/* Quick Theme Switcher */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setIsThemeMenuOpen(!isThemeMenuOpen)}
+                className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] transition ${
+                  isThemeMenuOpen ? activeBtn : `${buttonHover} text-neutral-400`
+                }`}
+                title={`Current Theme: ${currentTheme.name}`}
+              >
+                <Palette className="h-3 w-3" />
+                <span className="hidden md:inline">{currentTheme.name}</span>
+                <span
+                  className="h-1.5 w-1.5 rounded-full shrink-0"
+                  style={{ backgroundColor: currentTheme.accentColor }}
+                />
+              </button>
+
+              {isThemeMenuOpen && (
+                <div
+                  className={`absolute right-0 mt-1.5 w-52 rounded-lg border shadow-xl p-1.5 z-50 text-xs backdrop-blur-md ${
+                    isLightMode
+                      ? 'bg-[#fffefb]/95 border-black/10 text-[#222]'
+                      : 'bg-[#18191c]/95 border-white/10 text-[#dedad4]'
+                  }`}
+                >
+                  <div className="px-2 py-1 text-[10px] uppercase tracking-wider opacity-50 font-medium">
+                    Editorial Theme
+                  </div>
+                  <div className="space-y-0.5">
+                    {VALID_THEMES.map((themeId) => {
+                      const th = THEMES[themeId];
+                      const isSel = settings.theme === th.id;
+                      return (
+                        <button
+                          key={th.id}
+                          type="button"
+                          onClick={() => {
+                            handleUpdateSettings({ ...settings, theme: th.id });
+                            setIsThemeMenuOpen(false);
+                          }}
+                          className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-md text-left transition ${
+                            isSel
+                              ? isLightMode
+                                ? 'bg-black/[0.08] font-semibold text-black'
+                                : 'bg-white/[0.1] font-semibold text-white'
+                              : isLightMode
+                              ? 'hover:bg-black/[0.04]'
+                              : 'hover:bg-white/[0.05]'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2 truncate">
+                            <span
+                              className="h-2 w-2 rounded-full shrink-0"
+                              style={{ backgroundColor: th.accentColor }}
+                            />
+                            <span className="truncate">{th.name}</span>
+                          </div>
+                          <span className="text-[10px] opacity-50 capitalize shrink-0">{th.sub}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </header>
       )}
@@ -997,6 +1101,7 @@ export function App() {
             onDuplicateNote={handleDuplicateNote}
             onOpenSettings={() => setIsSettingsOpen(true)}
             isLightMode={isLightMode}
+            theme={settings.theme}
           />
         )}
 
@@ -1050,6 +1155,7 @@ export function App() {
             onSelectNote={(n) => setActiveNoteId(n.id)}
             onUpdateNote={handleUpdateNote}
             isLightMode={isLightMode}
+            theme={settings.theme}
           />
         )}
 
@@ -1060,6 +1166,7 @@ export function App() {
             allNotes={notes}
             onSelectNote={(n) => setActiveNoteId(n.id)}
             isLightMode={isLightMode}
+            theme={settings.theme}
           />
         )}
       </div>

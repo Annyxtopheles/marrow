@@ -427,10 +427,30 @@ export const Editor: React.FC<EditorProps> = ({
       ? 'font-serif'
       : 'font-sans';
 
-  const subBarBorder = isLightMode ? 'border-[#e4e0d7]' : 'border-white/[0.06]';
+  const subBarBorder = isLightMode
+    ? settings.theme === 'sakura'
+      ? 'border-[#e5e7eb]'
+      : settings.theme === 'sepia'
+      ? 'border-[#e7ddce]'
+      : 'border-[#e4e0d7]'
+    : settings.theme === 'nordic'
+    ? 'border-sky-500/15'
+    : settings.theme === 'evergreen'
+    ? 'border-emerald-500/15'
+    : 'border-white/[0.06]';
   const btnHover = isLightMode ? 'hover:bg-black/[0.05] hover:text-[#111]' : 'hover:bg-white/[0.06] hover:text-[#fff]';
   const activeBtn = isLightMode ? 'bg-black/[0.08] text-[#111]' : 'bg-white/[0.08] text-[#f2efe9]';
-  const divider = isLightMode ? 'bg-[#e4e0d7]' : 'bg-white/[0.07]';
+  const divider = isLightMode
+    ? settings.theme === 'sakura'
+      ? 'bg-[#e5e7eb]'
+      : settings.theme === 'sepia'
+      ? 'bg-[#e7ddce]'
+      : 'bg-[#e4e0d7]'
+    : settings.theme === 'nordic'
+    ? 'bg-sky-500/20'
+    : settings.theme === 'evergreen'
+    ? 'bg-emerald-500/20'
+    : 'bg-white/[0.07]';
 
   return (
     <div className="flex-1 flex flex-col h-full bg-inherit relative overflow-hidden">

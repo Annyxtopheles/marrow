@@ -41,7 +41,13 @@ export interface Folder {
   order: number;
 }
 
-export type ThemeMode = 'charcoal' | 'canvas';
+export type ThemeMode =
+  | 'charcoal'
+  | 'canvas'
+  | 'nordic'
+  | 'sakura'
+  | 'sepia'
+  | 'evergreen';
 export type FontFamily = 'serif' | 'sans' | 'mono';
 
 export interface EditorSettings {
