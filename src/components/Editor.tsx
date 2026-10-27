@@ -5,7 +5,51 @@ import Placeholder from '@tiptap/extension-placeholder';
 import type { Note, EditorSettings } from '../types';
 import { AccessoryBar } from './AccessoryBar';
 import { HistorySliderModal } from './HistorySliderModal';
-import { Code } from 'lucide-react';
+import { Code, Eye, Download } from 'lucide-react';
+
+const htmlToMarkdown = (html: string): string => {
+  return html
+    .replace(/<h1>(.*?)<\/h1>/gi, '# $1\n\n')
+    .replace(/<h2>(.*?)<\/h2>/gi, '## $1\n\n')
+    .replace(/<h3>(.*?)<\/h3>/gi, '### $1\n\n')
+    .replace(/<p>(.*?)<\/p>/gi, '$1\n\n')
+    .replace(/<blockquote>(.*?)<\/blockquote>/gi, '> $1\n\n')
+    .replace(/<em>(.*?)<\/em>/gi, '*$1*')
+    .replace(/<strong>(.*?)<\/strong>/gi, '**$1**')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/&nbsp;/g, ' ')
+    .trim();
+};
+
+const formatInline = (text: string): string => {
+  return text
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+    .replace(/`([^`]+)`/g, '<code>$1</code>');
+};
+
+const markdownToHtml = (markdown: string): string => {
+  const blocks = markdown.split(/\n\s*\n/);
+  return blocks
+    .map((block) => {
+      const trimmed = block.trim();
+      if (!trimmed) return '';
+      if (trimmed.startsWith('### ')) {
+        return `<h3>${formatInline(trimmed.slice(4))}</h3>`;
+      }
+      if (trimmed.startsWith('## ')) {
+        return `<h2>${formatInline(trimmed.slice(3))}</h2>`;
+      }
+      if (trimmed.startsWith('# ')) {
+        return `<h1>${formatInline(trimmed.slice(2))}</h1>`;
+      }
+      if (trimmed.startsWith('> ')) {
+        return `<blockquote><p>${formatInline(trimmed.slice(2))}</p></blockquote>`;
+      }
+      return `<p>${formatInline(trimmed.replace(/\n/g, '<br>'))}</p>`;
+    })
+    .join('');
+};
 
 interface EditorProps {
   note: Note;
@@ -94,27 +138,56 @@ export const Editor: React.FC<EditorProps> = ({
     },
   });
 
+  const [prevNoteId, setPrevNoteId] = useState(note.id);
+  if (prevNoteId !== note.id) {
+    setPrevNoteId(note.id);
+    if (rawMarkdownMode) {
+      setMarkdownContent(htmlToMarkdown(note.content));
+    }
+  }
+
   useEffect(() => {
     if (editor && editor.getHTML() !== note.content) {
       editor.commands.setContent(note.content, { emitUpdate: false });
     }
-  }, [note.id]);
+  }, [editor, note.content, note.id]);
 
   const toggleMarkdownMode = () => {
-    if (!rawMarkdownMode) {
-      setMarkdownContent(
-        note.content
-          .replace(/<h1>(.*?)<\/h1>/gi, '# $1\n\n')
-          .replace(/<h2>(.*?)<\/h2>/gi, '## $1\n\n')
-          .replace(/<h3>(.*?)<\/h3>/gi, '### $1\n\n')
-          .replace(/<p>(.*?)<\/p>/gi, '$1\n\n')
-          .replace(/<blockquote>(.*?)<\/blockquote>/gi, '> $1\n\n')
-          .replace(/<em>(.*?)<\/em>/gi, '*$1*')
-          .replace(/<strong>(.*?)<\/strong>/gi, '**$1**')
-          .replace(/<br\s*\/?>/gi, '\n')
-      );
+    if (!rawMarkdownMode && editor) {
+      setMarkdownContent(htmlToMarkdown(editor.getHTML()));
+      setRawMarkdownMode(true);
+    } else {
+      if (editor) {
+        editor.commands.setContent(markdownToHtml(markdownContent));
+      }
+      setRawMarkdownMode(false);
     }
-    setRawMarkdownMode(!rawMarkdownMode);
+  };
+
+  const handleMarkdownChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const val = e.target.value;
+    setMarkdownContent(val);
+    const html = markdownToHtml(val);
+    if (editor) {
+      editor.commands.setContent(html);
+    }
+  };
+
+  const handleDownloadMarkdown = () => {
+    const md = rawMarkdownMode
+      ? markdownContent
+      : htmlToMarkdown(editor ? editor.getHTML() : note.content);
+    const safeTitle = (note.title || 'Untitled').trim().replace(/[/\\?%*:|"<>]/g, '-');
+    const fullContent = `# ${note.title || 'Untitled'}\n\n${md}`;
+    const blob = new Blob([fullContent], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${safeTitle}.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   // PureWriter Typewriter scrolling: center active line on selection change
@@ -214,7 +287,7 @@ export const Editor: React.FC<EditorProps> = ({
         className={`flex items-center justify-between px-6 py-2 border-b ${subBarBorder} bg-inherit select-none text-xs`}
       >
         <div className="flex items-center gap-2 text-neutral-400 text-[11px]">
-          <span className="opacity-75">Live Preview</span>
+          <span className="opacity-75">{rawMarkdownMode ? 'Markdown Source' : 'Live Preview'}</span>
           {note.tags.length > 0 && (
             <div className="flex items-center gap-1.5 ml-2">
               {note.tags.map((t) => (
@@ -229,20 +302,33 @@ export const Editor: React.FC<EditorProps> = ({
           )}
         </div>
 
-        <button
-          onClick={toggleMarkdownMode}
-          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] transition text-neutral-400 ${btnHover} ${
-            rawMarkdownMode
-              ? isLightMode
-                ? 'bg-black/[0.08] text-[#111]'
-                : 'bg-white/[0.08] text-[#f2efe9]'
-              : ''
-          }`}
-          title="Toggle Raw Markdown Split View"
-        >
-          <Code className="h-3 w-3" />
-          <span>Markdown Source</span>
-        </button>
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={handleDownloadMarkdown}
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] transition text-neutral-400 ${btnHover}`}
+            title="Download note as a Markdown (.md) file"
+          >
+            <Download className="h-3 w-3" />
+            <span>Download .md</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={toggleMarkdownMode}
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] transition ${
+              rawMarkdownMode
+                ? isLightMode
+                  ? 'bg-black/[0.08] text-[#111] font-medium'
+                  : 'bg-white/[0.08] text-[#f2efe9] font-medium'
+                : `text-neutral-400 ${btnHover}`
+            }`}
+            title={rawMarkdownMode ? 'Switch to Formatted Live Preview' : 'Switch to Raw Markdown Source'}
+          >
+            {rawMarkdownMode ? <Eye className="h-3 w-3" /> : <Code className="h-3 w-3" />}
+            <span>{rawMarkdownMode ? 'Live Preview' : 'Markdown Source'}</span>
+          </button>
+        </div>
       </div>
 
       {/* Editor Scroll Container */}
@@ -271,44 +357,17 @@ export const Editor: React.FC<EditorProps> = ({
           />
 
           {rawMarkdownMode ? (
-            <div
-              className={`grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t ${subBarBorder} text-sm`}
-            >
-              <div className="space-y-2">
-                <div className="text-[10px] uppercase tracking-wider opacity-60">
-                  Raw Markdown
-                </div>
-                <textarea
-                  value={markdownContent}
-                  onChange={(e) => {
-                    setMarkdownContent(e.target.value);
-                    const html = e.target.value
-                      .split('\n\n')
-                      .map((p) => `<p>${p}</p>`)
-                      .join('');
-                    if (editor) editor.commands.setContent(html);
-                  }}
-                  className={`w-full h-[60vh] rounded-lg p-4 text-xs font-sans resize-none focus:outline-none border ${
-                    isLightMode
-                      ? 'bg-black/[0.02] border-black/[0.08] text-[#2c2a27]'
-                      : 'bg-white/[0.02] border-white/[0.08] text-[#dedad4]'
-                  }`}
-                />
-              </div>
-              <div className="space-y-2">
-                <div className="text-[10px] uppercase tracking-wider opacity-60">
-                  Formatted
-                </div>
-                <div
-                  className={`${fontClass} p-4 rounded-lg border h-[60vh] overflow-y-auto ${
-                    isLightMode
-                      ? 'bg-black/[0.01] border-black/[0.06]'
-                      : 'bg-white/[0.02] border-white/[0.06]'
-                  }`}
-                >
-                  <EditorContent editor={editor} />
-                </div>
-              </div>
+            <div className="space-y-2 pt-2">
+              <textarea
+                value={markdownContent}
+                onChange={handleMarkdownChange}
+                placeholder="Type markdown directly (# Header, **bold**, *italic*, > quote)..."
+                className={`w-full min-h-[60vh] rounded-lg p-5 text-sm font-sans leading-relaxed resize-y focus:outline-none border transition-colors ${
+                  isLightMode
+                    ? 'bg-black/[0.02] border-black/[0.08] text-[#2c2a27] focus:border-black/20'
+                    : 'bg-white/[0.02] border-white/[0.08] text-[#dedad4] focus:border-white/20'
+                }`}
+              />
             </div>
           ) : (
             <div className={fontClass}>
