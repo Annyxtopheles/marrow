@@ -5,6 +5,7 @@ const STORAGE_KEY_NOTES = 'marrow_notes_v1';
 const STORAGE_KEY_FOLDERS = 'marrow_folders_v1';
 const STORAGE_KEY_HISTORY = 'marrow_history_v1';
 const STORAGE_KEY_SETTINGS = 'marrow_settings_v1';
+const STORAGE_KEY_TRASH = 'marrow_trash_v1';
 
 export const DEFAULT_SETTINGS: EditorSettings = {
   theme: 'charcoal',
@@ -208,6 +209,38 @@ export const StorageService = {
     } catch (e) {
       console.error('Failed to save settings', e);
     }
+  },
+
+  getTrash(): Note[] {
+    try {
+      const data = localStorage.getItem(STORAGE_KEY_TRASH);
+      if (!data) return [];
+      return JSON.parse(data);
+    } catch {
+      return [];
+    }
+  },
+
+  saveTrash(trash: Note[]): void {
+    try {
+      localStorage.setItem(STORAGE_KEY_TRASH, JSON.stringify(trash.slice(0, 100)));
+    } catch (e) {
+      console.error('Failed to save trash', e);
+    }
+  },
+
+  moveToTrash(note: Note): void {
+    const trash = this.getTrash().filter((n) => n.id !== note.id);
+    this.saveTrash([note, ...trash]);
+  },
+
+  restoreFromTrash(noteId: string): Note | null {
+    const trash = this.getTrash();
+    const note = trash.find((n) => n.id === noteId) || null;
+    if (note) {
+      this.saveTrash(trash.filter((n) => n.id !== noteId));
+    }
+    return note;
   },
 
   getHistory(noteId: string): HistoryRecord[] {

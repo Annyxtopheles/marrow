@@ -65,3 +65,41 @@ export interface WritingSprint {
   startWordCount: number;
   targetWords: number;
 }
+
+export type VaultAction =
+  | {
+      type: 'DELETE_NOTE';
+      note: Note;
+      index: number;
+      previousActiveNoteId: string | null;
+    }
+  | {
+      type: 'CREATE_NOTE';
+      noteId: string;
+      note: Note;
+      previousActiveNoteId: string | null;
+    }
+  | {
+      type: 'TOGGLE_PIN';
+      noteId: string;
+      noteTitle: string;
+      previousPinned: boolean;
+    }
+  | {
+      type: 'CREATE_FOLDER';
+      folder: Folder;
+    }
+  | {
+      type: 'DELETE_FOLDER';
+      folder: Folder;
+      affectedNotes: { noteId: string; previousFolderId: string | null }[];
+    };
+
+export interface ToastNotification {
+  id: string;
+  message: string;
+  actionLabel?: string;
+  onAction?: () => void;
+  undoHint?: boolean;
+}
+

@@ -1,5 +1,5 @@
-import { useState, useRef } from 'react';
-import type { Note, Folder, EditorSettings, HistoryRecord } from './types';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import type { Note, Folder, EditorSettings, HistoryRecord, VaultAction, ToastNotification } from './types';
 import { StorageService } from './services/storage';
 import { Sidebar } from './components/Sidebar';
 import { Editor } from './components/Editor';
@@ -8,7 +8,7 @@ import { BacklinksPanel } from './components/BacklinksPanel';
 import { StatsBar } from './components/StatsBar';
 import { SettingsModal } from './components/SettingsModal';
 import { SyncModal } from './components/SyncModal';
-import { PanelLeftClose, PanelLeft, Clock, Link2, Plus, Cloud } from 'lucide-react';
+import { PanelLeftClose, PanelLeft, Clock, Link2, Plus, Cloud, RotateCcw, X } from 'lucide-react';
 
 export function App() {
   const [notes, setNotes] = useState<Note[]>(() => StorageService.getNotes());
@@ -26,6 +26,29 @@ export function App() {
   const [isBacklinksOpen, setIsBacklinksOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isSyncOpen, setIsSyncOpen] = useState(false);
+
+  // Vault Undo/Redo & Toast System
+  const [undoStack, setUndoStack] = useState<VaultAction[]>([]);
+  const [redoStack, setRedoStack] = useState<VaultAction[]>([]);
+  const [toast, setToast] = useState<ToastNotification | null>(null);
+  const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const showToast = (notification: ToastNotification, duration = 6500) => {
+    if (toastTimeoutRef.current) {
+      clearTimeout(toastTimeoutRef.current);
+    }
+    setToast(notification);
+    toastTimeoutRef.current = setTimeout(() => {
+      setToast(null);
+    }, duration);
+  };
+
+  const dismissToast = () => {
+    if (toastTimeoutRef.current) {
+      clearTimeout(toastTimeoutRef.current);
+    }
+    setToast(null);
+  };
 
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastSnapshotRef = useRef<number>(0);
@@ -81,7 +104,227 @@ export function App() {
     }, settings.autoSaveDelayMs);
   };
 
+  const handleUndo = useCallback(() => {
+    if (undoStack.length === 0) return;
+    const [action, ...restUndo] = undoStack;
+
+    if (action.type === 'DELETE_NOTE') {
+      const restoredNotes = [...notes];
+      const targetIndex = Math.min(Math.max(0, action.index), restoredNotes.length);
+      restoredNotes.splice(targetIndex, 0, action.note);
+
+      setNotes(restoredNotes);
+      StorageService.saveNotes(restoredNotes);
+      StorageService.restoreFromTrash(action.note.id);
+      setActiveNoteId(action.note.id);
+
+      setUndoStack(restUndo);
+      setRedoStack((prev) => [action, ...prev]);
+
+      showToast({
+        id: `toast-${Date.now()}`,
+        message: `Restored "${action.note.title || 'Untitled Document'}"`,
+      });
+    } else if (action.type === 'CREATE_NOTE') {
+      const nextNotes = notes.filter((n) => n.id !== action.noteId);
+      setNotes(nextNotes);
+      StorageService.saveNotes(nextNotes);
+
+      if (action.previousActiveNoteId) {
+        setActiveNoteId(action.previousActiveNoteId);
+      } else if (nextNotes.length > 0) {
+        setActiveNoteId(nextNotes[0].id);
+      }
+
+      setUndoStack(restUndo);
+      setRedoStack((prev) => [action, ...prev]);
+
+      showToast({
+        id: `toast-${Date.now()}`,
+        message: 'Removed created document',
+      });
+    } else if (action.type === 'TOGGLE_PIN') {
+      const nextNotes = notes.map((n) =>
+        n.id === action.noteId ? { ...n, pinned: action.previousPinned } : n
+      );
+      setNotes(nextNotes);
+      StorageService.saveNotes(nextNotes);
+
+      setUndoStack(restUndo);
+      setRedoStack((prev) => [action, ...prev]);
+
+      showToast({
+        id: `toast-${Date.now()}`,
+        message: `${action.previousPinned ? 'Pinned' : 'Unpinned'} "${action.noteTitle}"`,
+      });
+    } else if (action.type === 'CREATE_FOLDER') {
+      const nextFolders = folders.filter((f) => f.id !== action.folder.id);
+      setFolders(nextFolders);
+      StorageService.saveFolders(nextFolders);
+
+      const nextNotes = notes.map((n) =>
+        n.folderId === action.folder.id ? { ...n, folderId: null } : n
+      );
+      setNotes(nextNotes);
+      StorageService.saveNotes(nextNotes);
+
+      setUndoStack(restUndo);
+      setRedoStack((prev) => [action, ...prev]);
+
+      showToast({
+        id: `toast-${Date.now()}`,
+        message: `Removed folder "${action.folder.name}"`,
+      });
+    } else if (action.type === 'DELETE_FOLDER') {
+      const nextFolders = [...folders, action.folder];
+      setFolders(nextFolders);
+      StorageService.saveFolders(nextFolders);
+
+      const nextNotes = notes.map((n) => {
+        const match = action.affectedNotes.find((an) => an.noteId === n.id);
+        return match ? { ...n, folderId: action.folder.id } : n;
+      });
+      setNotes(nextNotes);
+      StorageService.saveNotes(nextNotes);
+
+      setUndoStack(restUndo);
+      setRedoStack((prev) => [action, ...prev]);
+
+      showToast({
+        id: `toast-${Date.now()}`,
+        message: `Restored folder "${action.folder.name}"`,
+      });
+    }
+  }, [undoStack, notes, folders]);
+
+  const handleRedo = useCallback(() => {
+    if (redoStack.length === 0) return;
+    const [action, ...restRedo] = redoStack;
+
+    if (action.type === 'DELETE_NOTE') {
+      const nextNotes = notes.filter((n) => n.id !== action.note.id);
+      setNotes(nextNotes);
+      StorageService.saveNotes(nextNotes);
+      StorageService.moveToTrash(action.note);
+
+      if (activeNoteId === action.note.id) {
+        setActiveNoteId(nextNotes.length > 0 ? nextNotes[0].id : null);
+      }
+
+      setRedoStack(restRedo);
+      setUndoStack((prev) => [action, ...prev]);
+
+      showToast({
+        id: `toast-${Date.now()}`,
+        message: `Deleted "${action.note.title || 'Untitled Document'}"`,
+        actionLabel: 'Undo',
+        undoHint: true,
+        onAction: handleUndo,
+      });
+    } else if (action.type === 'CREATE_NOTE') {
+      const nextNotes = [action.note, ...notes];
+      setNotes(nextNotes);
+      StorageService.saveNotes(nextNotes);
+      setActiveNoteId(action.note.id);
+
+      setRedoStack(restRedo);
+      setUndoStack((prev) => [action, ...prev]);
+
+      showToast({
+        id: `toast-${Date.now()}`,
+        message: `Recreated "${action.note.title || 'Untitled Document'}"`,
+      });
+    } else if (action.type === 'TOGGLE_PIN') {
+      const nextNotes = notes.map((n) =>
+        n.id === action.noteId ? { ...n, pinned: !action.previousPinned } : n
+      );
+      setNotes(nextNotes);
+      StorageService.saveNotes(nextNotes);
+
+      setRedoStack(restRedo);
+      setUndoStack((prev) => [action, ...prev]);
+
+      showToast({
+        id: `toast-${Date.now()}`,
+        message: `${!action.previousPinned ? 'Pinned' : 'Unpinned'} "${action.noteTitle}"`,
+      });
+    } else if (action.type === 'CREATE_FOLDER') {
+      const nextFolders = [...folders, action.folder];
+      setFolders(nextFolders);
+      StorageService.saveFolders(nextFolders);
+
+      setRedoStack(restRedo);
+      setUndoStack((prev) => [action, ...prev]);
+
+      showToast({
+        id: `toast-${Date.now()}`,
+        message: `Recreated folder "${action.folder.name}"`,
+      });
+    } else if (action.type === 'DELETE_FOLDER') {
+      const nextFolders = folders.filter((f) => f.id !== action.folder.id);
+      setFolders(nextFolders);
+      StorageService.saveFolders(nextFolders);
+
+      const nextNotes = notes.map((n) =>
+        n.folderId === action.folder.id ? { ...n, folderId: null } : n
+      );
+      setNotes(nextNotes);
+      StorageService.saveNotes(nextNotes);
+
+      setRedoStack(restRedo);
+      setUndoStack((prev) => [action, ...prev]);
+
+      showToast({
+        id: `toast-${Date.now()}`,
+        message: `Deleted folder "${action.folder.name}"`,
+      });
+    }
+  }, [redoStack, notes, folders, activeNoteId, handleUndo]);
+
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      const isMod = e.ctrlKey || e.metaKey;
+      if (!isMod) return;
+
+      const key = e.key.toLowerCase();
+      const isZ = key === 'z';
+      const isY = key === 'y';
+
+      if (!isZ && !isY) return;
+
+      const isUndo = isZ && !e.shiftKey;
+      const isRedo = isY || (isZ && e.shiftKey);
+
+      const activeEl = document.activeElement;
+      const isInput =
+        activeEl instanceof HTMLInputElement ||
+        activeEl instanceof HTMLTextAreaElement;
+
+      // When focused inside native input/textarea, let the browser handle native text undo
+      if (isInput) return;
+
+      // If inside ProseMirror and default was prevented, ProseMirror already handled text undo
+      if (e.defaultPrevented) return;
+
+      if (isUndo) {
+        if (undoStack.length > 0) {
+          e.preventDefault();
+          handleUndo();
+        }
+      } else if (isRedo) {
+        if (redoStack.length > 0) {
+          e.preventDefault();
+          handleRedo();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, [undoStack.length, redoStack.length, handleUndo, handleRedo]);
+
   const handleCreateNote = (folderId: string | null = null) => {
+    const prevActiveId = activeNoteId;
     const newNote: Note = {
       id: `note-${Date.now()}`,
       title: 'Untitled Document',
@@ -109,6 +352,15 @@ export function App() {
     setNotes(nextNotes);
     StorageService.saveNotes(nextNotes);
     setActiveNoteId(newNote.id);
+
+    const action: VaultAction = {
+      type: 'CREATE_NOTE',
+      noteId: newNote.id,
+      note: newNote,
+      previousActiveNoteId: prevActiveId,
+    };
+    setUndoStack((prev) => [action, ...prev.slice(0, 49)]);
+    setRedoStack([]);
   };
 
   const handleCreateFolder = (name: string, parentId: string | null = null) => {
@@ -121,21 +373,106 @@ export function App() {
     const nextFolders = [...folders, newFolder];
     setFolders(nextFolders);
     StorageService.saveFolders(nextFolders);
+
+    const action: VaultAction = {
+      type: 'CREATE_FOLDER',
+      folder: newFolder,
+    };
+    setUndoStack((prev) => [action, ...prev.slice(0, 49)]);
+    setRedoStack([]);
+  };
+
+  const handleDeleteFolder = (folderId: string) => {
+    const folderToDelete = folders.find((f) => f.id === folderId);
+    if (!folderToDelete) return;
+
+    const nextFolders = folders.filter((f) => f.id !== folderId);
+    setFolders(nextFolders);
+    StorageService.saveFolders(nextFolders);
+
+    const affectedNotes: { noteId: string; previousFolderId: string | null }[] = [];
+    const nextNotes = notes.map((n) => {
+      if (n.folderId === folderId) {
+        affectedNotes.push({ noteId: n.id, previousFolderId: folderId });
+        return { ...n, folderId: null };
+      }
+      return n;
+    });
+    setNotes(nextNotes);
+    StorageService.saveNotes(nextNotes);
+
+    const action: VaultAction = {
+      type: 'DELETE_FOLDER',
+      folder: folderToDelete,
+      affectedNotes,
+    };
+    setUndoStack((prev) => [action, ...prev.slice(0, 49)]);
+    setRedoStack([]);
+
+    showToast({
+      id: `toast-${Date.now()}`,
+      message: `Deleted folder "${folderToDelete.name}"`,
+      actionLabel: 'Undo',
+      undoHint: true,
+      onAction: handleUndo,
+    });
   };
 
   const handleDeleteNote = (noteId: string) => {
+    const noteToDelete = notes.find((n) => n.id === noteId);
+    if (!noteToDelete) return;
+
+    const noteIndex = notes.findIndex((n) => n.id === noteId);
+    const prevActiveId = activeNoteId;
+
     const nextNotes = notes.filter((n) => n.id !== noteId);
     setNotes(nextNotes);
     StorageService.saveNotes(nextNotes);
+    StorageService.moveToTrash(noteToDelete);
+
     if (activeNoteId === noteId) {
-      setActiveNoteId(nextNotes.length > 0 ? nextNotes[0].id : null);
+      const fallbackId =
+        nextNotes.length > 0
+          ? (nextNotes[Math.min(noteIndex, nextNotes.length - 1)]?.id || nextNotes[0].id)
+          : null;
+      setActiveNoteId(fallbackId);
     }
+
+    const action: VaultAction = {
+      type: 'DELETE_NOTE',
+      note: { ...noteToDelete },
+      index: noteIndex,
+      previousActiveNoteId: prevActiveId,
+    };
+
+    setUndoStack((prev) => [action, ...prev.slice(0, 49)]);
+    setRedoStack([]);
+
+    showToast({
+      id: `toast-${Date.now()}`,
+      message: `Deleted "${noteToDelete.title || 'Untitled Document'}"`,
+      actionLabel: 'Undo',
+      undoHint: true,
+      onAction: handleUndo,
+    });
   };
 
   const handleTogglePin = (noteId: string) => {
+    const target = notes.find((n) => n.id === noteId);
+    if (!target) return;
+
     const nextNotes = notes.map((n) => (n.id === noteId ? { ...n, pinned: !n.pinned } : n));
     setNotes(nextNotes);
     StorageService.saveNotes(nextNotes);
+
+    const action: VaultAction = {
+      type: 'TOGGLE_PIN',
+      noteId,
+      noteTitle: target.title || 'Untitled Document',
+      previousPinned: target.pinned,
+    };
+    setUndoStack((prev) => [action, ...prev.slice(0, 49)]);
+    setRedoStack([]);
   };
 
   const handleNavigateToTitle = (title: string) => {
@@ -174,7 +511,7 @@ export function App() {
 
   const handleExportVault = () => {
     const vaultData = {
-      app: 'PureJot',
+      app: 'Marrow',
       exportedAt: new Date().toISOString(),
       folders,
       notes,
@@ -183,7 +520,7 @@ export function App() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `purejot-vault-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = `marrow-vault-backup-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -285,6 +622,7 @@ export function App() {
             onCreateNote={handleCreateNote}
             onCreateFolder={handleCreateFolder}
             onDeleteNote={handleDeleteNote}
+            onDeleteFolder={handleDeleteFolder}
             onTogglePin={handleTogglePin}
             onOpenSettings={() => setIsSettingsOpen(true)}
             onToggleTimeJot={() => setIsTimeJotOpen(!isTimeJotOpen)}
@@ -382,6 +720,46 @@ export function App() {
           onClose={() => setIsSyncOpen(false)}
           isLightMode={isLightMode}
         />
+      )}
+
+      {/* Vault Action / Undo Notification Toast */}
+      {toast && (
+        <div
+          role="status"
+          aria-live="polite"
+          className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-4 py-2.5 rounded-lg border shadow-xl backdrop-blur-md text-xs transition-all duration-200 animate-in fade-in slide-in-from-bottom-2 select-none ${
+            isLightMode
+              ? 'bg-[#ffffff]/95 text-[#2c2a27] border-black/[0.1] shadow-black/10'
+              : 'bg-[#1a1b1e]/95 text-[#dedad4] border-white/[0.1] shadow-black/40'
+          }`}
+        >
+          <span className="font-medium truncate max-w-xs">{toast.message}</span>
+          {toast.onAction && toast.actionLabel && (
+            <button
+              type="button"
+              onClick={toast.onAction}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded font-medium text-xs transition ${
+                isLightMode
+                  ? 'bg-black text-white hover:bg-neutral-800'
+                  : 'bg-white text-black hover:bg-neutral-200'
+              }`}
+            >
+              <RotateCcw className="h-3 w-3" />
+              <span>{toast.actionLabel}</span>
+              {toast.undoHint && (
+                <span className="text-[10px] opacity-70 font-normal ml-0.5">Ctrl+Z</span>
+              )}
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={dismissToast}
+            className="opacity-40 hover:opacity-100 p-0.5 rounded transition ml-1"
+            title="Dismiss"
+          >
+            <X className="h-3 w-3" />
+          </button>
+        </div>
       )}
     </div>
   );

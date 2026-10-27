@@ -24,6 +24,7 @@ interface SidebarProps {
   onCreateNote: (folderId?: string | null) => void;
   onCreateFolder: (name: string, parentId?: string | null) => void;
   onDeleteNote: (noteId: string) => void;
+  onDeleteFolder?: (folderId: string) => void;
   onTogglePin: (noteId: string) => void;
   onOpenSettings: () => void;
   onToggleTimeJot: () => void;
@@ -41,6 +42,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onCreateNote,
   onCreateFolder,
   onDeleteNote,
+  onDeleteFolder,
   onTogglePin,
   onOpenSettings,
   onToggleTimeJot,
@@ -188,7 +190,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   <FolderIcon className="h-3.5 w-3.5 opacity-60" />
                   <span className="truncate">{folder.name}</span>
                 </div>
-                <span className="text-[10px] opacity-50">{folderNotes.length}</span>
+                <div className="flex items-center gap-1">
+                  <span className="text-[10px] opacity-50 group-hover:opacity-0 transition">{folderNotes.length}</span>
+                  {onDeleteFolder && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDeleteFolder(folder.id);
+                      }}
+                      className="p-1 opacity-0 group-hover:opacity-100 hover:text-rose-400 transition"
+                      title="Delete folder"
+                    >
+                      <Trash2 className="h-2.5 w-2.5" />
+                    </button>
+                  )}
+                </div>
               </div>
 
               {!isCollapsed && (

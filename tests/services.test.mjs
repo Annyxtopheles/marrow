@@ -128,3 +128,90 @@ test('Wikilink Regex and Boundary Matching', async () => {
   const inAnyLink = matches.some(match => clickPosOutside >= match.start && clickPosOutside <= match.end);
   assert.equal(inAnyLink, false);
 });
+
+test('Vault Action History: Delete Note and Undo/Redo Restoration', async () => {
+  let notes = [
+    { id: 'note-1', title: 'Chapter 1: The Echoes of Solitude', folderId: 'f-novel' },
+    { id: 'note-2', title: 'Elena Vane', folderId: 'f-characters' },
+    { id: 'note-3', title: 'The Iron Concord', folderId: 'f-world' },
+  ];
+
+  let undoStack = [];
+  let redoStack = [];
+
+  // Simulate user deleting "note-1"
+  const targetId = 'note-1';
+  const targetNote = notes.find((n) => n.id === targetId);
+  const targetIndex = notes.findIndex((n) => n.id === targetId);
+
+  // Perform delete
+  notes = notes.filter((n) => n.id !== targetId);
+  assert.equal(notes.length, 2);
+  assert.equal(notes.some((n) => n.id === targetId), false);
+
+  const action = {
+    type: 'DELETE_NOTE',
+    note: { ...targetNote },
+    index: targetIndex,
+    previousActiveNoteId: targetId,
+  };
+  undoStack.push(action);
+
+  // Simulate Ctrl+Z: Undo Delete
+  assert.equal(undoStack.length, 1);
+  const undoAction = undoStack.pop();
+  assert.equal(undoAction.type, 'DELETE_NOTE');
+
+  // Restore at original index
+  notes.splice(undoAction.index, 0, undoAction.note);
+  redoStack.push(undoAction);
+
+  assert.equal(notes.length, 3);
+  assert.equal(notes[0].id, 'note-1');
+  assert.equal(notes[0].folderId, 'f-novel'); // verify folder intact!
+  assert.equal(notes[0].title, 'Chapter 1: The Echoes of Solitude');
+
+  // Simulate Ctrl+Y: Redo Delete
+  assert.equal(redoStack.length, 1);
+  const redoAction = redoStack.pop();
+  notes = notes.filter((n) => n.id !== redoAction.note.id);
+  undoStack.push(redoAction);
+
+  assert.equal(notes.length, 2);
+  assert.equal(notes.some((n) => n.id === 'note-1'), false);
+});
+
+test('StorageService: Trash Soft-Delete and Recovery', async () => {
+  const noteToDelete = {
+    id: 'note-trash-1',
+    title: 'Obsidian Spire Lore',
+    content: '<p>Secret lore</p>',
+    tags: ['lore'],
+  };
+
+  const STORAGE_KEY_TRASH = 'marrow_trash_v1';
+  let trash = [];
+
+  const moveToTrash = (note) => {
+    trash = [note, ...trash.filter((n) => n.id !== note.id)];
+    localStorage.setItem(STORAGE_KEY_TRASH, JSON.stringify(trash));
+  };
+
+  const restoreFromTrash = (noteId) => {
+    const found = trash.find((n) => n.id === noteId);
+    if (found) {
+      trash = trash.filter((n) => n.id !== noteId);
+      localStorage.setItem(STORAGE_KEY_TRASH, JSON.stringify(trash));
+    }
+    return found || null;
+  };
+
+  moveToTrash(noteToDelete);
+  assert.equal(trash.length, 1);
+  assert.equal(trash[0].id, 'note-trash-1');
+
+  const restored = restoreFromTrash('note-trash-1');
+  assert.ok(restored);
+  assert.equal(restored.title, 'Obsidian Spire Lore');
+  assert.equal(trash.length, 0);
+});
