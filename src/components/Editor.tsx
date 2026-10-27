@@ -572,22 +572,30 @@ export const Editor: React.FC<EditorProps> = ({
               type="button"
               onClick={toggleDictation}
               className={`rounded-md p-1.5 transition ${
-                isListening ? 'bg-rose-500/15 text-rose-400 border border-rose-500/30' : btnHover
+                isListening
+                  ? isLightMode
+                    ? 'bg-[#151618] text-[#f4f1ea] shadow-sm'
+                    : 'bg-[#f4f1ea] text-[#151618] shadow-sm'
+                  : btnHover
               }`}
               title={isListening ? 'Stop Voice Dictation' : 'Dictate (Voice-to-Text)'}
             >
-              <Mic className={`h-3.5 w-3.5 ${isListening ? 'animate-pulse text-rose-400' : ''}`} />
+              <Mic className={`h-3.5 w-3.5 ${isListening ? 'animate-pulse' : ''}`} />
             </button>
 
             <button
               type="button"
               onClick={toggleReadAloud}
               className={`rounded-md p-1.5 transition ${
-                isSpeaking ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30' : btnHover
+                isSpeaking
+                  ? isLightMode
+                    ? 'bg-[#151618] text-[#f4f1ea] shadow-sm'
+                    : 'bg-[#f4f1ea] text-[#151618] shadow-sm'
+                  : btnHover
               }`}
               title={isSpeaking ? 'Stop Reading' : 'Listen / Read Aloud (Text-to-Speech)'}
             >
-              <Volume2 className={`h-3.5 w-3.5 ${isSpeaking ? 'animate-pulse text-amber-300' : ''}`} />
+              <Volume2 className={`h-3.5 w-3.5 ${isSpeaking ? 'animate-pulse' : ''}`} />
             </button>
 
             <button

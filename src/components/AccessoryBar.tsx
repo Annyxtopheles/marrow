@@ -90,15 +90,15 @@ export const AccessoryBar: React.FC<AccessoryBarProps> = ({
           className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border text-[11px] font-medium transition cursor-pointer ${
             isGoalReached
               ? isLightMode
-                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-800 hover:bg-emerald-500/20'
-                : 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/25'
+                ? 'bg-black/[0.08] border-black/25 text-[#151618] font-semibold hover:bg-black/12'
+                : 'bg-white/[0.12] border-white/30 text-[#f4f1ea] font-semibold hover:bg-white/16'
               : isLightMode
               ? 'bg-black/[0.03] border-black/[0.08] hover:bg-black/[0.06] text-[#444]'
               : 'bg-white/[0.04] border-white/[0.08] hover:bg-white/[0.07] text-[#dedad4]'
           }`}
           title="Click to view and configure Word Count Goals"
         >
-          <Target className={`h-3 w-3 ${isGoalReached ? 'text-emerald-500' : 'text-amber-500/90'}`} />
+          <Target className={`h-3 w-3 ${isGoalReached ? 'opacity-90' : 'opacity-60'}`} />
           <span>
             {activeGoalView === 'chapter'
               ? chapterGoal > 0
@@ -120,7 +120,7 @@ export const AccessoryBar: React.FC<AccessoryBarProps> = ({
         <span className="opacity-40">•</span>
 
         <span className="flex items-center gap-1.5" title="Fail-Safe Continuous Protection">
-          <ShieldCheck className="h-3.5 w-3.5 text-emerald-500/80" />
+          <ShieldCheck className="h-3.5 w-3.5 opacity-75" />
           <span className="text-[10px] uppercase tracking-wider opacity-75">
             {saveStatus === 'saved' ? 'Protected' : 'Syncing'}
           </span>

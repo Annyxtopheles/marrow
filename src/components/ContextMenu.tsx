@@ -118,7 +118,9 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
                 }}
                 className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-md transition text-left cursor-pointer ${
                   item.danger
-                    ? 'text-rose-500 hover:bg-rose-500/10'
+                    ? isLightMode
+                      ? 'text-[#a12020] hover:bg-black/[0.05]'
+                      : 'text-[#e06c75] hover:bg-white/[0.06]'
                     : item.disabled
                     ? 'opacity-40 cursor-not-allowed'
                     : hoverBg

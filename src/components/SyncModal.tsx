@@ -132,15 +132,15 @@ export const SyncModal: React.FC<SyncModalProps> = ({
           {statusMessage && (
             <div
               className={`p-3 rounded-lg border flex items-center gap-2.5 ${
-                statusMessage.type === 'success'
-                  ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-300'
-                  : 'bg-rose-500/10 border-rose-500/20 text-rose-300'
+                isLightMode
+                  ? 'bg-black/[0.04] border-black/20 text-[#151618]'
+                  : 'bg-white/[0.06] border-white/20 text-[#f4f1ea]'
               }`}
             >
               {statusMessage.type === 'success' ? (
-                <CheckCircle2 className="h-4 w-4 shrink-0" />
+                <CheckCircle2 className="h-4 w-4 shrink-0 opacity-80" />
               ) : (
-                <AlertCircle className="h-4 w-4 shrink-0" />
+                <AlertCircle className="h-4 w-4 shrink-0 opacity-80" />
               )}
               <span className="leading-snug">{statusMessage.text}</span>
             </div>
@@ -150,7 +150,7 @@ export const SyncModal: React.FC<SyncModalProps> = ({
           <div className={`p-4 rounded-lg border ${cardBg} space-y-3.5`}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Cloud className="h-4 w-4 text-emerald-400 opacity-90" />
+                <Cloud className="h-4 w-4 opacity-80" />
                 <span className="font-medium text-inherit">Google Drive Sync</span>
               </div>
               <span className="text-[10px] opacity-50">

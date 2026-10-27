@@ -421,7 +421,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         e.stopPropagation();
                         onDeleteFolder(folder.id);
                       }}
-                      className="p-1 opacity-0 group-hover:opacity-100 hover:text-rose-400 transition"
+                      className={`p-1 opacity-0 group-hover:opacity-100 ${
+                        isLightMode ? 'hover:text-[#111]' : 'hover:text-white'
+                      } transition`}
                       title="Delete folder"
                     >
                       <Trash2 className="h-2.5 w-2.5" />
@@ -494,7 +496,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
                               e.stopPropagation();
                               onDeleteNote(note.id);
                             }}
-                            className="p-1.5 rounded-md opacity-0 group-hover:opacity-60 hover:!opacity-100 hover:text-rose-400 transition"
+                            className={`p-1.5 rounded-md opacity-0 group-hover:opacity-60 hover:!opacity-100 ${
+                              isLightMode ? 'hover:text-[#111]' : 'hover:text-white'
+                            } transition`}
                             title="Delete note"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
@@ -576,7 +580,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       e.stopPropagation();
                       onDeleteNote(note.id);
                     }}
-                    className="p-1.5 rounded-md opacity-0 group-hover:opacity-60 hover:!opacity-100 hover:text-rose-400 transition"
+                    className={`p-1.5 rounded-md opacity-0 group-hover:opacity-60 hover:!opacity-100 ${
+                      isLightMode ? 'hover:text-[#111]' : 'hover:text-white'
+                    } transition`}
                     title="Delete note"
                   >
                     <Trash2 className="h-3.5 w-3.5" />

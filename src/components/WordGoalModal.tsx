@@ -96,7 +96,13 @@ export const WordGoalModal: React.FC<WordGoalModalProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between pb-4 border-b border-inherit/10">
           <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-500">
+            <div
+              className={`p-1.5 rounded-lg border ${
+                isLightMode
+                  ? 'border-black/10 bg-black/[0.04] text-[#151618]'
+                  : 'border-white/10 bg-white/[0.06] text-[#f4f1ea]'
+              }`}
+            >
               <Target className="h-4 w-4" />
             </div>
             <div>
@@ -159,7 +165,7 @@ export const WordGoalModal: React.FC<WordGoalModalProps> = ({
                 >
                   <div
                     className={`h-full transition-all duration-300 rounded-full ${
-                      chapterPercent >= 100 ? 'bg-emerald-500' : 'bg-amber-500'
+                      isLightMode ? 'bg-[#151618]' : 'bg-[#f4f1ea]'
                     }`}
                     style={{ width: `${chapterPercent}%` }}
                   />
@@ -259,7 +265,7 @@ export const WordGoalModal: React.FC<WordGoalModalProps> = ({
                 >
                   <div
                     className={`h-full transition-all duration-300 rounded-full ${
-                      dailyPercent >= 100 ? 'bg-emerald-500' : 'bg-amber-500'
+                      isLightMode ? 'bg-[#151618]' : 'bg-[#f4f1ea]'
                     }`}
                     style={{ width: `${dailyPercent}%` }}
                   />

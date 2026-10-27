@@ -236,7 +236,13 @@ export const HistorySliderModal: React.FC<HistorySliderModalProps> = ({
               </div>
 
               {selectedIndex === 0 && (
-                <span className="text-[10px] font-medium uppercase tracking-wider px-2 py-0.5 rounded border border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                <span
+                  className={`text-[10px] font-medium uppercase tracking-wider px-2 py-0.5 rounded border ${
+                    isLightMode
+                      ? 'border-black/20 bg-black/[0.05] text-[#151618]'
+                      : 'border-white/20 bg-white/[0.08] text-[#f4f1ea]'
+                  }`}
+                >
                   Current Document
                 </span>
               )}
@@ -266,7 +272,7 @@ export const HistorySliderModal: React.FC<HistorySliderModalProps> = ({
             onClick={handleCopy}
             className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border transition ${btnSecondary}`}
           >
-            {copied ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : null}
+            {copied ? <Check className="h-3.5 w-3.5 opacity-80" /> : null}
             <span>{copied ? 'Copied Content' : 'Copy Text'}</span>
           </button>
 

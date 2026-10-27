@@ -54,7 +54,7 @@ export const StatsBar: React.FC<StatsBarProps> = ({ note, saveStatus, isLightMod
         )}
 
         <span className="flex items-center gap-1.5" title="Fail-Safe Continuous Protection">
-          <ShieldCheck className="h-3 w-3 text-emerald-500/80" />
+          <ShieldCheck className="h-3 w-3 opacity-75" />
           <span className="text-[10px] uppercase tracking-wider opacity-60">
             {saveStatus === 'saved' ? 'Protected' : 'Syncing'}
           </span>

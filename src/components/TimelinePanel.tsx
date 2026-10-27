@@ -168,7 +168,7 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
             <div className={`p-3 rounded-lg border ${cardBg} space-y-2.5`}>
               <div className="flex items-center justify-between">
                 <span className={`font-semibold flex items-center gap-1.5 ${headerText}`}>
-                  <Zap className={`h-3.5 w-3.5 ${isLightMode ? 'text-stone-800' : 'text-amber-300'}`} />
+                  <Zap className="h-3.5 w-3.5 opacity-80" />
                   Writing Sprint
                 </span>
                 <span className={`font-mono text-xs tabular-nums ${labelText}`}>{formatTimer(sprintSeconds)}</span>
@@ -184,7 +184,9 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
                   </div>
                   <div className={`h-1.5 w-full rounded-full overflow-hidden ${isLightMode ? 'bg-black/10' : 'bg-white/10'}`}>
                     <div
-                      className="h-full bg-amber-500/80 transition-all duration-300"
+                      className={`h-full transition-all duration-300 ${
+                        isLightMode ? 'bg-[#151618]' : 'bg-[#f4f1ea]'
+                      }`}
                       style={{ width: `${sprintProgress}%` }}
                     />
                   </div>
@@ -315,7 +317,9 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
                       <span
                         className={`absolute -left-[18px] top-1.5 h-2 w-2 rounded-full ${
                           isCurrent
-                            ? 'bg-amber-400 ring-2 ring-amber-400/40'
+                            ? isLightMode
+                              ? 'bg-[#151618] ring-2 ring-black/20'
+                              : 'bg-[#f4f1ea] ring-2 ring-white/30'
                             : isLightMode
                             ? 'bg-stone-400'
                             : 'bg-stone-500'
