@@ -6,6 +6,7 @@ const STORAGE_KEY_FOLDERS = 'marrow_folders_v1';
 const STORAGE_KEY_HISTORY = 'marrow_history_v1';
 const STORAGE_KEY_SETTINGS = 'marrow_settings_v1';
 const STORAGE_KEY_TRASH = 'marrow_trash_v1';
+const STORAGE_KEY_DAILY_PROGRESS = 'marrow_daily_progress_v1';
 
 export const DEFAULT_SETTINGS: EditorSettings = {
   theme: 'charcoal',
@@ -20,6 +21,8 @@ export const DEFAULT_SETTINGS: EditorSettings = {
   showLineNumbers: false,
   focusMode: false,
   dualModePreview: false,
+  dailyWordGoal: 1000,
+  activeGoalView: 'chapter',
 };
 
 const SEED_FOLDERS: Folder[] = [
@@ -111,7 +114,7 @@ const SEED_NOTES: Note[] = [
     id: 'note-journal',
     title: 'TimeLog & Writing Rituals',
     folderId: 'f-journal',
-    tags: ['habits', 'timejot', 'reflection'],
+    tags: ['habits', 'timeline', 'reflection'],
     createdAt: Date.now() - 86400000 * 2,
     updatedAt: Date.now() - 1800000,
     lastOpenedAt: Date.now() - 1800000,
@@ -292,5 +295,55 @@ export const StorageService = {
     if (days === 1) return 'yesterday';
     if (days < 30) return `${days}d ago`;
     return `${Math.floor(days / 30)}mo ago`;
+  },
+
+  getDailyDateKey(): string {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  },
+
+  getDailyProgress(): { date: string; wordsWritten: number } {
+    const today = this.getDailyDateKey();
+    try {
+      const data = localStorage.getItem(STORAGE_KEY_DAILY_PROGRESS);
+      if (data) {
+        const parsed = JSON.parse(data);
+        if (parsed && parsed.date === today && typeof parsed.wordsWritten === 'number') {
+          return parsed;
+        }
+      }
+    } catch {
+      // ignore
+    }
+    return { date: today, wordsWritten: 0 };
+  },
+
+  recordWordsWritten(deltaWords: number): { date: string; wordsWritten: number } {
+    if (deltaWords <= 0) return this.getDailyProgress();
+    const current = this.getDailyProgress();
+    const updated = {
+      date: current.date,
+      wordsWritten: Math.max(0, current.wordsWritten + deltaWords),
+    };
+    try {
+      localStorage.setItem(STORAGE_KEY_DAILY_PROGRESS, JSON.stringify(updated));
+    } catch (e) {
+      console.error('Failed to save daily progress', e);
+    }
+    return updated;
+  },
+
+  setDailyWordsWritten(wordsCount: number): { date: string; wordsWritten: number } {
+    const today = this.getDailyDateKey();
+    const updated = {
+      date: today,
+      wordsWritten: Math.max(0, wordsCount),
+    };
+    try {
+      localStorage.setItem(STORAGE_KEY_DAILY_PROGRESS, JSON.stringify(updated));
+    } catch (e) {
+      console.error('Failed to set daily words written', e);
+    }
+    return updated;
   },
 };

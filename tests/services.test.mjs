@@ -372,3 +372,61 @@ test('Vault Actions: Comprehensive Undo and Redo for Tags, Rename, Move, and Pin
   note = { ...note, pinned: undoPinAction.previousPinned };
   assert.equal(note.pinned, false);
 });
+
+test('Word Count Goals: Daily Progress Tracking and Chapter Target Computation', async () => {
+  const STORAGE_KEY_DAILY_PROGRESS = 'marrow_daily_progress_v1';
+  const getDailyDateKey = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  };
+
+  const getDailyProgress = () => {
+    const today = getDailyDateKey();
+    const data = localStorage.getItem(STORAGE_KEY_DAILY_PROGRESS);
+    if (data) {
+      const parsed = JSON.parse(data);
+      if (parsed && parsed.date === today && typeof parsed.wordsWritten === 'number') {
+        return parsed;
+      }
+    }
+    return { date: today, wordsWritten: 0 };
+  };
+
+  const recordWordsWritten = (delta) => {
+    if (delta <= 0) return getDailyProgress();
+    const cur = getDailyProgress();
+    const updated = { date: cur.date, wordsWritten: cur.wordsWritten + delta };
+    localStorage.setItem(STORAGE_KEY_DAILY_PROGRESS, JSON.stringify(updated));
+    return updated;
+  };
+
+  // Test initialization
+  const initial = getDailyProgress();
+  assert.equal(initial.wordsWritten, 0);
+
+  // Test recording words
+  const step1 = recordWordsWritten(350);
+  assert.equal(step1.wordsWritten, 350);
+
+  const step2 = recordWordsWritten(150);
+  assert.equal(step2.wordsWritten, 500);
+
+  // Test Chapter goal progress percentage calculation
+  const note = {
+    id: 'n-chapter',
+    title: 'Chapter 3: The Ascent',
+    wordCount: 1250,
+    targetWordCount: 2000,
+  };
+
+  const chapterPercent = Math.min(100, Math.round((note.wordCount / note.targetWordCount) * 100));
+  assert.equal(chapterPercent, 63);
+
+  const wordsRemaining = Math.max(0, note.targetWordCount - note.wordCount);
+  assert.equal(wordsRemaining, 750);
+
+  // Daily goal completion check
+  const dailyGoal = 1000;
+  const dailyPercent = Math.min(100, Math.round((step2.wordsWritten / dailyGoal) * 100));
+  assert.equal(dailyPercent, 50);
+});

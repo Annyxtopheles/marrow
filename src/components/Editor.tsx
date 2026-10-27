@@ -70,6 +70,9 @@ interface EditorProps {
   note: Note;
   settings: EditorSettings;
   onUpdateNote: (updated: Note) => void;
+  onUpdateSettings?: (newSettings: EditorSettings) => void;
+  dailyWordsWritten?: number;
+  onResetDailyWords?: () => void;
   onUpdateTags?: (noteId: string, newTags: string[]) => void;
   onNavigateToTitle: (title: string) => void;
   saveStatus: 'saved' | 'saving';
@@ -82,6 +85,9 @@ export const Editor: React.FC<EditorProps> = ({
   note,
   settings,
   onUpdateNote,
+  onUpdateSettings,
+  dailyWordsWritten = 0,
+  onResetDailyWords,
   onUpdateTags,
   onNavigateToTitle,
   saveStatus,
@@ -631,6 +637,11 @@ export const Editor: React.FC<EditorProps> = ({
       <AccessoryBar
         editor={editor}
         note={note}
+        settings={settings}
+        dailyWordsWritten={dailyWordsWritten}
+        onUpdateNote={onUpdateNote}
+        onUpdateSettings={onUpdateSettings || (() => {})}
+        onResetDailyWords={onResetDailyWords || (() => {})}
         onOpenHistory={() => setShowHistoryModal(true)}
         typewriterMode={settings.typewriterMode}
         onToggleTypewriter={onToggleTypewriter}

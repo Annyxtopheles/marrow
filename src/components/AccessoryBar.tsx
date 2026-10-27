@@ -10,14 +10,21 @@ import {
   Mic,
   Volume2,
   ShieldCheck,
+  Target,
 } from 'lucide-react';
 import { Editor } from '@tiptap/react';
-import type { Note } from '../types';
+import type { Note, EditorSettings } from '../types';
 import { DictationService, ReadAloudService, isSpeechRecognitionSupported, isSpeechSynthesisSupported } from '../services/speech';
+import { WordGoalModal } from './WordGoalModal';
 
 interface AccessoryBarProps {
   editor: Editor | null;
   note: Note;
+  settings: EditorSettings;
+  dailyWordsWritten: number;
+  onUpdateNote: (updated: Note) => void;
+  onUpdateSettings: (settings: EditorSettings) => void;
+  onResetDailyWords: () => void;
   onOpenHistory: () => void;
   typewriterMode: boolean;
   onToggleTypewriter: () => void;
@@ -31,6 +38,11 @@ interface AccessoryBarProps {
 export const AccessoryBar: React.FC<AccessoryBarProps> = ({
   editor,
   note,
+  settings,
+  dailyWordsWritten,
+  onUpdateNote,
+  onUpdateSettings,
+  onResetDailyWords,
   onOpenHistory,
   typewriterMode,
   onToggleTypewriter,
@@ -40,6 +52,7 @@ export const AccessoryBar: React.FC<AccessoryBarProps> = ({
   saveStatus,
   isLightMode,
 }) => {
+  const [showGoalModal, setShowGoalModal] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const dictationRef = useRef<DictationService | null>(null);
@@ -120,6 +133,20 @@ export const AccessoryBar: React.FC<AccessoryBarProps> = ({
   const words = note.wordCount || 0;
   const chars = note.characterCount || 0;
   const readingMinutes = Math.max(1, Math.ceil(words / 200));
+
+  const chapterGoal = note.targetWordCount || 0;
+  const dailyGoal = settings.dailyWordGoal || 1000;
+  const activeGoalView = settings.activeGoalView || 'chapter';
+
+  const chapterPercent =
+    chapterGoal > 0 ? Math.min(100, Math.round((words / chapterGoal) * 100)) : 0;
+  const dailyPercent =
+    dailyGoal > 0 ? Math.min(100, Math.round((dailyWordsWritten / dailyGoal) * 100)) : 0;
+
+  const isGoalReached =
+    activeGoalView === 'chapter'
+      ? chapterGoal > 0 && words >= chapterGoal
+      : dailyWordsWritten >= dailyGoal;
 
   return (
     <div
@@ -216,17 +243,43 @@ export const AccessoryBar: React.FC<AccessoryBarProps> = ({
         </button>
       </div>
 
-      {/* Live Document Statistics & Protection Status */}
-      <div className="flex items-center gap-3 pl-3 shrink-0 text-[11px] opacity-80">
-        <span className="flex items-center gap-1.5">
+      {/* Live Document Statistics, Goal Status & Protection Status */}
+      <div className="flex items-center gap-2.5 pl-3 shrink-0 text-[11px] text-inherit">
+        <span className="flex items-center gap-1.5 font-medium">
           <span>{words.toLocaleString()} words</span>
         </span>
+
+        {/* Word Count Goal Pill */}
+        <button
+          type="button"
+          onClick={() => setShowGoalModal(true)}
+          className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border text-[11px] font-medium transition cursor-pointer ${
+            isGoalReached
+              ? isLightMode
+                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-800 hover:bg-emerald-500/20'
+                : 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/25'
+              : isLightMode
+              ? 'bg-black/[0.03] border-black/[0.08] hover:bg-black/[0.06] text-[#444]'
+              : 'bg-white/[0.04] border-white/[0.08] hover:bg-white/[0.07] text-[#dedad4]'
+          }`}
+          title="Click to view and configure Word Count Goals"
+        >
+          <Target className={`h-3 w-3 ${isGoalReached ? 'text-emerald-500' : 'text-amber-500/90'}`} />
+          <span>
+            {activeGoalView === 'chapter'
+              ? chapterGoal > 0
+                ? `${words.toLocaleString()} / ${chapterGoal.toLocaleString()} (${chapterPercent}%)`
+                : 'Set Goal'
+              : `${dailyWordsWritten.toLocaleString()} / ${dailyGoal.toLocaleString()} today (${dailyPercent}%)`}
+          </span>
+        </button>
+
         <span className="hidden md:inline-block opacity-40">•</span>
-        <span className="hidden md:inline">
+        <span className="hidden md:inline opacity-75">
           <span>{chars.toLocaleString()} chars</span>
         </span>
         <span className="hidden lg:inline-block opacity-40">•</span>
-        <span className="hidden lg:inline">
+        <span className="hidden lg:inline opacity-75">
           <span>~{readingMinutes} min read</span>
         </span>
 
@@ -239,6 +292,19 @@ export const AccessoryBar: React.FC<AccessoryBarProps> = ({
           </span>
         </span>
       </div>
+
+      {showGoalModal && (
+        <WordGoalModal
+          note={note}
+          settings={settings}
+          dailyWordsWritten={dailyWordsWritten}
+          onUpdateNote={onUpdateNote}
+          onUpdateSettings={onUpdateSettings}
+          onResetDailyWords={onResetDailyWords}
+          onClose={() => setShowGoalModal(false)}
+          isLightMode={isLightMode}
+        />
+      )}
     </div>
   );
 };

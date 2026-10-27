@@ -28,6 +28,7 @@ export interface Note {
   characterCount: number;
   pinned: boolean;
   favorite: boolean;
+  targetWordCount?: number;
   inUniverseDate?: string;
   timelineLog: TimelineEntry[];
 }
@@ -56,6 +57,8 @@ export interface EditorSettings {
   showLineNumbers: boolean;
   focusMode: boolean;
   dualModePreview: boolean;
+  dailyWordGoal?: number; // default 1000
+  activeGoalView?: 'chapter' | 'daily'; // default 'chapter'
 }
 
 export interface WritingSprint {

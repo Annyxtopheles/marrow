@@ -3,7 +3,7 @@ import type { Note, Folder, EditorSettings, HistoryRecord, VaultAction, ToastNot
 import { StorageService } from './services/storage';
 import { Sidebar } from './components/Sidebar';
 import { Editor } from './components/Editor';
-import { TimeJotPanel } from './components/TimeJotPanel';
+import { TimelinePanel } from './components/TimelinePanel';
 import { BacklinksPanel } from './components/BacklinksPanel';
 import { SettingsModal } from './components/SettingsModal';
 import { SyncModal } from './components/SyncModal';
@@ -18,10 +18,13 @@ export function App() {
   });
   const [settings, setSettings] = useState<EditorSettings>(() => StorageService.getSettings());
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving'>('saved');
+  const [dailyProgress, setDailyProgress] = useState<{ date: string; wordsWritten: number }>(() =>
+    StorageService.getDailyProgress()
+  );
 
   // UI Panels
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [isTimeJotOpen, setIsTimeJotOpen] = useState(true);
+  const [isTimelineOpen, setIsTimelineOpen] = useState(true);
   const [isBacklinksOpen, setIsBacklinksOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isSyncOpen, setIsSyncOpen] = useState(false);
@@ -71,10 +74,21 @@ export function App() {
     StorageService.saveSettings(newSettings);
   };
 
+  const handleResetDailyWords = () => {
+    const reset = StorageService.setDailyWordsWritten(0);
+    setDailyProgress(reset);
+  };
+
   const handleUpdateNote = (updatedNote: Note) => {
     setSaveStatus('saving');
 
     setNotes((prevNotes) => {
+      const prev = prevNotes.find((n) => n.id === updatedNote.id);
+      if (prev && updatedNote.wordCount > prev.wordCount) {
+        const delta = updatedNote.wordCount - prev.wordCount;
+        const nextDaily = StorageService.recordWordsWritten(delta);
+        setDailyProgress(nextDaily);
+      }
       return prevNotes.map((n) => (n.id === updatedNote.id ? updatedNote : n));
     });
 
@@ -930,14 +944,14 @@ export function App() {
 
           <div className="flex items-center gap-1.5">
             <button
-              onClick={() => setIsTimeJotOpen(!isTimeJotOpen)}
+              onClick={() => setIsTimelineOpen(!isTimelineOpen)}
               className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] transition ${
-                isTimeJotOpen ? activeBtn : `${buttonHover} text-neutral-400`
+                isTimelineOpen ? activeBtn : `${buttonHover} text-neutral-400`
               }`}
-              title="TimeJot Timeline & Sprints"
+              title="Timeline, Cadence & Sprints"
             >
               <Clock className="h-3 w-3" />
-              <span>TimeJot</span>
+              <span>Timeline</span>
             </button>
 
             <button
@@ -994,6 +1008,9 @@ export function App() {
             note={activeNote}
             settings={settings}
             onUpdateNote={handleUpdateNote}
+            onUpdateSettings={handleUpdateSettings}
+            dailyWordsWritten={dailyProgress.wordsWritten}
+            onResetDailyWords={handleResetDailyWords}
             onUpdateTags={handleUpdateTags}
             onNavigateToTitle={handleNavigateToTitle}
             saveStatus={saveStatus}
@@ -1027,9 +1044,9 @@ export function App() {
           </div>
         )}
 
-        {/* TimeJot Panel */}
-        {!settings.focusMode && isTimeJotOpen && (
-          <TimeJotPanel
+        {/* Timeline & Cadence Panel */}
+        {!settings.focusMode && isTimelineOpen && (
+          <TimelinePanel
             activeNote={activeNote}
             allNotes={notes}
             onSelectNote={(n) => setActiveNoteId(n.id)}
