@@ -20,7 +20,13 @@ import {
   Tag,
   Plus,
   X,
+  Mic,
+  Volume2,
+  Clock,
+  Crosshair,
+  History,
 } from 'lucide-react';
+import { DictationService, ReadAloudService, isSpeechRecognitionSupported, isSpeechSynthesisSupported } from '../services/speech';
 
 const htmlToMarkdown = (html: string): string => {
   return html
@@ -100,8 +106,76 @@ export const Editor: React.FC<EditorProps> = ({
   const [markdownContent, setMarkdownContent] = useState('');
   const [isAddingTag, setIsAddingTag] = useState(false);
   const [newTagInput, setNewTagInput] = useState('');
+  const [isListening, setIsListening] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const dictationRef = useRef<DictationService | null>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
   const editorContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    return () => {
+      dictationRef.current?.stop();
+      ReadAloudService.stop();
+    };
+  }, []);
+
+  const toggleDictation = () => {
+    if (isListening) {
+      dictationRef.current?.stop();
+      setIsListening(false);
+    } else {
+      if (!isSpeechRecognitionSupported()) {
+        alert('Speech recognition is not supported in this browser. Try Chrome, Edge, or Safari.');
+        return;
+      }
+      dictationRef.current = new DictationService({
+        onResult: (transcript, isFinal) => {
+          if (isFinal && editor) {
+            editor.chain().focus().insertContent(`${transcript} `).run();
+          }
+        },
+        onError: (err) => {
+          console.error('Dictation error:', err);
+          setIsListening(false);
+        },
+        onEnd: () => {
+          setIsListening(false);
+        },
+      });
+      dictationRef.current.start();
+      setIsListening(true);
+    }
+  };
+
+  const toggleReadAloud = () => {
+    if (isSpeaking) {
+      ReadAloudService.stop();
+      setIsSpeaking(false);
+    } else {
+      if (!isSpeechSynthesisSupported()) {
+        alert('Text-to-speech is not supported in this browser.');
+        return;
+      }
+      const selected = editor
+        ? editor.state.doc.textBetween(
+            editor.state.selection.from,
+            editor.state.selection.to,
+            ' '
+          )
+        : '';
+      const textToSpeak = selected.trim()
+        ? selected
+        : (editor ? editor.getText() : note.content.replace(/<[^>]+>/g, ' '));
+      if (!textToSpeak.trim()) return;
+
+      setIsSpeaking(true);
+      ReadAloudService.speak(
+        textToSpeak,
+        undefined,
+        () => setIsSpeaking(false)
+      );
+    }
+  };
 
   const editor = useEditor({
     extensions: [
@@ -490,6 +564,60 @@ export const Editor: React.FC<EditorProps> = ({
             >
               <Link2 className="h-3.5 w-3.5" />
             </button>
+
+            <div className={`mx-1.5 h-3.5 w-px ${divider}`} />
+
+            {/* Writing Action Tools */}
+            <button
+              type="button"
+              onClick={toggleDictation}
+              className={`rounded-md p-1.5 transition ${
+                isListening ? 'bg-rose-500/15 text-rose-400 border border-rose-500/30' : btnHover
+              }`}
+              title={isListening ? 'Stop Voice Dictation' : 'Dictate (Voice-to-Text)'}
+            >
+              <Mic className={`h-3.5 w-3.5 ${isListening ? 'animate-pulse text-rose-400' : ''}`} />
+            </button>
+
+            <button
+              type="button"
+              onClick={toggleReadAloud}
+              className={`rounded-md p-1.5 transition ${
+                isSpeaking ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30' : btnHover
+              }`}
+              title={isSpeaking ? 'Stop Reading' : 'Listen / Read Aloud (Text-to-Speech)'}
+            >
+              <Volume2 className={`h-3.5 w-3.5 ${isSpeaking ? 'animate-pulse text-amber-300' : ''}`} />
+            </button>
+
+            <button
+              type="button"
+              onClick={handleInsertTimestamp}
+              className={`rounded-md p-1.5 transition ${btnHover}`}
+              title="Insert Timestamp"
+            >
+              <Clock className="h-3.5 w-3.5" />
+            </button>
+
+            <button
+              type="button"
+              onClick={onToggleTypewriter}
+              className={`rounded-md p-1.5 transition ${
+                settings.typewriterMode ? activeBtn : btnHover
+              }`}
+              title="Typewriter Mode (keep active line centered)"
+            >
+              <Crosshair className="h-3.5 w-3.5" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShowHistoryModal(true)}
+              className={`rounded-md p-1.5 transition ${btnHover}`}
+              title="Version History Machine"
+            >
+              <History className="h-3.5 w-3.5" />
+            </button>
           </div>
         ) : (
           <div className="flex items-center gap-2 text-neutral-400 text-[11px]">
@@ -635,19 +763,14 @@ export const Editor: React.FC<EditorProps> = ({
 
       {/* Unified Bottom Accessory & Status Bar */}
       <AccessoryBar
-        editor={editor}
         note={note}
         settings={settings}
         dailyWordsWritten={dailyWordsWritten}
         onUpdateNote={onUpdateNote}
         onUpdateSettings={onUpdateSettings || (() => {})}
         onResetDailyWords={onResetDailyWords || (() => {})}
-        onOpenHistory={() => setShowHistoryModal(true)}
-        typewriterMode={settings.typewriterMode}
-        onToggleTypewriter={onToggleTypewriter}
         focusMode={settings.focusMode}
         onToggleFocus={onToggleFocus}
-        onInsertTimestamp={handleInsertTimestamp}
         saveStatus={saveStatus}
         isLightMode={isLightMode}
       />
@@ -659,6 +782,7 @@ export const Editor: React.FC<EditorProps> = ({
           noteTitle={note.title}
           onRestore={handleRestoreSnapshot}
           onClose={() => setShowHistoryModal(false)}
+          isLightMode={isLightMode}
         />
       )}
     </div>
