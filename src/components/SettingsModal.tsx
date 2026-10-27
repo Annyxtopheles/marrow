@@ -220,7 +220,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             <div className="flex items-center justify-between">
               <label className="text-[11px] uppercase tracking-wider opacity-60 flex items-center gap-1.5 font-medium">
                 <Sparkles className="h-3 w-3" style={{ color: currentTheme.tokens.accentColor }} />
-                <span>AI Editorial Assistant (Google Gemini)</span>
+                <span>Lumen Editorial Partner (Google Gemini)</span>
               </label>
               <span className="text-[10px] opacity-60">BYOK / Local-first</span>
             </div>
@@ -290,7 +290,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     }`}
                   >
                     <option value="editor">Editorial Partner (Pacing &amp; Structure)</option>
-                    <option value="muse">Creative Muse (Sensory &amp; Imagery)</option>
+                    <option value="muse">Sensory Visionary (Imagery &amp; Texture)</option>
                     <option value="critic">Sharp Critic (Plot &amp; Stakes)</option>
                   </select>
                 </div>

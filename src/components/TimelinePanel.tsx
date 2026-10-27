@@ -43,13 +43,13 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
   onOpenSettings,
 }) => {
   const currentTheme = THEMES[theme || 'charcoal'] || THEMES.charcoal;
-  const [activeTab, setActiveTab] = useState<'intervals' | 'story' | 'beats' | 'logs' | 'muse'>('intervals');
+  const [activeTab, setActiveTab] = useState<'intervals' | 'story' | 'beats' | 'logs' | 'lumen'>('intervals');
 
   const [newLogNote, setNewLogNote] = useState('');
   const [newLogType, setNewLogType] = useState<TimelineEntry['type']>('revision');
   const [newBeatText, setNewBeatText] = useState('');
 
-  // Muse / AI State
+  // Lumen / AI State
   const [aiInput, setAiInput] = useState('');
   const [isAILoading, setIsAILoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
@@ -113,7 +113,7 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
     if (!activeNote || !promptText.trim()) return;
     const apiKey = settings?.geminiApiKey || '';
     if (!apiKey.trim()) {
-      setAiError('Please enter a Google Gemini API Key in Settings to consult your Muse.');
+      setAiError('Please enter a Google Gemini API Key in Settings to consult Lumen.');
       return;
     }
 
@@ -337,10 +337,10 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
     >
       <div className={`flex items-center justify-between border-b ${border} px-3 py-2.5 ${headerText}`}>
         <div className="flex items-center gap-1.5 font-semibold">
-          {activeTab === 'muse' ? (
+          {activeTab === 'lumen' ? (
             <>
               <Sparkles className="h-4 w-4" style={{ color: currentTheme.tokens.accentColor }} />
-              <span>Muse Editorial Partner</span>
+              <span>Lumen Editorial Partner</span>
             </>
           ) : (
             <>
@@ -389,14 +389,14 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
           Logs
         </button>
         <button
-          onClick={() => setActiveTab('muse')}
+          onClick={() => setActiveTab('lumen')}
           className={`py-2 text-center transition border-b-2 truncate flex items-center justify-center gap-1 ${
-            activeTab === 'muse' ? activeTabClass : inactiveTabClass
+            activeTab === 'lumen' ? activeTabClass : inactiveTabClass
           }`}
-          title="AI Editorial Partner & Muse"
+          title="AI Editorial Partner & Sounding Board (Lumen)"
         >
           <Sparkles className="h-3 w-3 shrink-0" style={{ color: currentTheme.tokens.accentColor }} />
-          <span>Muse</span>
+          <span>Lumen</span>
         </button>
       </div>
 
@@ -792,17 +792,17 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
           </div>
         )}
 
-        {activeTab === 'muse' && (
+        {activeTab === 'lumen' && (
           <div className="flex flex-col h-full space-y-3">
             {/* If no API key is configured */}
             {!settings?.geminiApiKey ? (
               <div className={`p-4 rounded-lg border ${cardBg} space-y-3`}>
                 <div className="flex items-center gap-2">
                   <Sparkles className="h-4 w-4" style={{ color: currentTheme.tokens.accentColor }} />
-                  <span className={`font-semibold ${headerText}`}>Connect Gemini AI</span>
+                  <span className={`font-semibold ${headerText}`}>Connect Gemini AI (Lumen)</span>
                 </div>
                 <p className={`text-xs leading-relaxed ${labelText}`}>
-                  Marrow uses Google Gemini to provide a quiet, craft-focused editorial sounding board without stealing your voice.
+                  Lumen uses Google Gemini to provide a quiet, craft-focused editorial sounding board without stealing your voice.
                 </p>
                 <form onSubmit={handleSaveDirectKey} className="space-y-2">
                   <input
@@ -876,7 +876,7 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
                               : 'border-white/[0.08] hover:bg-white/[0.05] text-[#aaa]'
                           }`}
                         >
-                          {p === 'editor' ? 'Editor' : p === 'muse' ? 'Muse' : 'Critic'}
+                          {p === 'editor' ? 'Editor' : p === 'muse' ? 'Visionary' : 'Critic'}
                         </button>
                       );
                     })}
@@ -1102,7 +1102,7 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
                           className="text-[10px] opacity-40 hover:opacity-100 transition flex items-center gap-1"
                         >
                           <Trash2 className="h-2.5 w-2.5" />
-                          <span>Clear Muse Conversation</span>
+                          <span>Clear Lumen Conversation</span>
                         </button>
                       </div>
                     )}
