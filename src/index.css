@@ -75,12 +75,24 @@
 .ProseMirror {
   outline: none;
   min-height: 100%;
+  hanging-punctuation: first allow-end;
 }
 
 .ProseMirror p {
   text-wrap: pretty;
   margin-bottom: 1.15em;
   color: inherit;
+  hanging-punctuation: first allow-end;
+}
+
+.ProseMirror blockquote {
+  border-left: 2px solid currentColor;
+  padding-left: 1.15rem;
+  margin-top: 1.25em;
+  margin-bottom: 1.25em;
+  opacity: 0.88;
+  font-style: italic;
+  hanging-punctuation: first allow-end;
 }
 
 .ProseMirror h1,
@@ -93,6 +105,7 @@
   margin-top: 1.5em;
   margin-bottom: 0.6em;
   color: inherit;
+  hanging-punctuation: first allow-end;
 }
 
 .ProseMirror h1 {

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
@@ -178,10 +178,43 @@ export const Editor: React.FC<EditorProps> = ({
   const titleHeadingRef = useRef<HTMLHeadingElement>(null);
   const editorContainerRef = useRef<HTMLDivElement>(null);
 
+  const [isTyping, setIsTyping] = useState(false);
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastMouseMoveRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+
+  const handleUserTyping = useCallback(() => {
+    if (!(settings.activeTypingFade ?? true)) return;
+    setIsTyping(true);
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+    typingTimeoutRef.current = setTimeout(() => {
+      setIsTyping(false);
+    }, 1400);
+  }, [settings.activeTypingFade]);
+
+  const handleEditorMouseMove = (e: React.MouseEvent) => {
+    if (
+      Math.abs(e.clientX - lastMouseMoveRef.current.x) > 6 ||
+      Math.abs(e.clientY - lastMouseMoveRef.current.y) > 6
+    ) {
+      lastMouseMoveRef.current = { x: e.clientX, y: e.clientY };
+      if (isTyping) {
+        setIsTyping(false);
+        if (typingTimeoutRef.current) {
+          clearTimeout(typingTimeoutRef.current);
+        }
+      }
+    }
+  };
+
   useEffect(() => {
     return () => {
       dictationRef.current?.stop();
       ReadAloudService.stop();
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
     };
   }, []);
 
@@ -288,6 +321,7 @@ export const Editor: React.FC<EditorProps> = ({
       },
     },
     onUpdate: ({ editor }) => {
+      handleUserTyping();
       const html = editor.getHTML();
       const text = editor.getText();
       const words = text.trim() ? text.trim().split(/\s+/).length : 0;
@@ -330,6 +364,7 @@ export const Editor: React.FC<EditorProps> = ({
   };
 
   const handleMarkdownChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    handleUserTyping();
     const val = e.target.value;
     setMarkdownContent(val);
     const html = markdownToHtml(val);
@@ -467,6 +502,7 @@ export const Editor: React.FC<EditorProps> = ({
   }, [note.id, note.title]);
 
   const handleTitleInput = (e: React.FormEvent<HTMLHeadingElement>) => {
+    handleUserTyping();
     const rawText = e.currentTarget.innerText || '';
     const cleanTitle = rawText.replace(/\r?\n/g, ' ');
     onUpdateNote({
@@ -574,9 +610,13 @@ export const Editor: React.FC<EditorProps> = ({
   const fontClass =
     settings.fontFamily === 'serif'
       ? 'font-serif'
+      : settings.fontFamily === 'mono'
+      ? 'font-mono'
       : settings.fontFamily === 'brutalist'
       ? 'font-brutalist'
       : 'font-sans';
+
+  const shouldFadeChrome = isTyping && (settings.activeTypingFade ?? true);
 
   const subBarBorder = isLightMode
     ? settings.theme === 'sakura'
@@ -615,7 +655,13 @@ export const Editor: React.FC<EditorProps> = ({
     <div className="flex-1 flex flex-col h-full bg-transparent relative overflow-hidden">
       {/* Top Formatting & View Mode Sub-Bar */}
       <div
-        className={`flex items-center justify-between px-4 md:px-6 py-1.5 border-b ${subBarBorder} ${settings.theme === 'dreamscape' ? 'bg-white/40 backdrop-blur-xl' : 'bg-inherit'} select-none text-xs`}
+        className={`flex items-center justify-between px-4 md:px-6 py-1.5 border-b ${subBarBorder} ${
+          settings.theme === 'dreamscape' ? 'bg-white/40 backdrop-blur-xl' : 'bg-inherit'
+        } select-none text-xs transition-all duration-300 ease-in-out ${
+          shouldFadeChrome
+            ? 'opacity-0 pointer-events-none -translate-y-1.5'
+            : 'opacity-100 translate-y-0'
+        }`}
       >
         {/* Left Side: Formatting Toolbar in Live Preview, or Clean Label in Raw Mode */}
         {!rawMarkdownMode ? (
@@ -878,7 +924,11 @@ export const Editor: React.FC<EditorProps> = ({
         <div
           className={`px-4 md:px-6 py-2.5 border-b ${subBarBorder} ${
             isLightMode ? 'bg-black/[0.015]' : 'bg-white/[0.015]'
-          } text-xs select-none animate-in fade-in duration-150`}
+          } text-xs select-none transition-all duration-300 ease-in-out ${
+            shouldFadeChrome
+              ? 'opacity-0 pointer-events-none -translate-y-1.5'
+              : 'opacity-100 translate-y-0 animate-in fade-in duration-150'
+          }`}
         >
           <div className="max-w-[72ch] mx-auto flex flex-col gap-2.5">
             <div className="flex flex-wrap items-center justify-between gap-3">
@@ -986,6 +1036,7 @@ export const Editor: React.FC<EditorProps> = ({
       <div
         ref={editorContainerRef}
         onClick={handleContainerClick}
+        onMouseMove={handleEditorMouseMove}
         className={`flex-1 overflow-y-auto px-6 md:px-16 lg:px-24 py-10 transition-all cursor-text ${
           settings.typewriterMode ? 'typewriter-mode' : ''
         }`}
@@ -1009,6 +1060,8 @@ export const Editor: React.FC<EditorProps> = ({
               className={`w-full bg-transparent font-medium tracking-tight focus:outline-none transition-all cursor-text min-h-[1.25em] ${
                 settings.fontFamily === 'serif'
                   ? 'font-serif text-3xl md:text-4xl'
+                  : settings.fontFamily === 'mono'
+                  ? 'font-mono text-2xl md:text-3xl tracking-tight'
                   : settings.fontFamily === 'brutalist'
                   ? 'font-brutalist text-3xl md:text-4xl tracking-tight'
                   : 'font-sans text-2xl md:text-3xl'
@@ -1020,6 +1073,8 @@ export const Editor: React.FC<EditorProps> = ({
                 className={`absolute left-0 top-0 pointer-events-none opacity-40 select-none font-medium tracking-tight ${
                   settings.fontFamily === 'serif'
                     ? 'font-serif text-3xl md:text-4xl'
+                    : settings.fontFamily === 'mono'
+                    ? 'font-mono text-2xl md:text-3xl tracking-tight'
                     : settings.fontFamily === 'brutalist'
                     ? 'font-brutalist text-3xl md:text-4xl tracking-tight'
                     : 'font-sans text-2xl md:text-3xl'
@@ -1120,6 +1175,7 @@ export const Editor: React.FC<EditorProps> = ({
         focusMode={settings.focusMode}
         onToggleFocus={onToggleFocus}
         saveStatus={saveStatus}
+        isTyping={isTyping}
         isLightMode={isLightMode}
       />
 

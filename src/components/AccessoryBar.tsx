@@ -18,6 +18,7 @@ interface AccessoryBarProps {
   focusMode: boolean;
   onToggleFocus: () => void;
   saveStatus: 'saved' | 'saving';
+  isTyping?: boolean;
   isLightMode: boolean;
 }
 
@@ -31,6 +32,7 @@ export const AccessoryBar: React.FC<AccessoryBarProps> = ({
   focusMode,
   onToggleFocus,
   saveStatus,
+  isTyping = false,
   isLightMode,
 }) => {
   const [showGoalModal, setShowGoalModal] = useState(false);
@@ -73,9 +75,15 @@ export const AccessoryBar: React.FC<AccessoryBarProps> = ({
       ? chapterGoal > 0 && words >= chapterGoal
       : dailyWordsWritten >= dailyGoal;
 
+  const shouldFade = isTyping && (settings.activeTypingFade ?? true);
+
   return (
     <div
-      className={`sticky bottom-0 left-0 right-0 z-30 flex items-center justify-between border-t ${barBg} backdrop-blur-md px-4 py-1.5 text-xs select-none transition-colors duration-200`}
+      className={`sticky bottom-0 left-0 right-0 z-30 flex items-center justify-between border-t ${barBg} backdrop-blur-md px-4 py-1.5 text-xs select-none transition-all duration-300 ease-in-out ${
+        shouldFade
+          ? 'opacity-0 pointer-events-none translate-y-1.5'
+          : 'opacity-100 translate-y-0'
+      }`}
     >
       {/* Left side: Zen Focus Mode Toggle */}
       <div className="flex items-center gap-1.5">

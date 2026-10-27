@@ -82,6 +82,7 @@ export interface EditorSettings {
   showLineNumbers: boolean;
   focusMode: boolean;
   dualModePreview: boolean;
+  activeTypingFade?: boolean;
   dailyWordGoal?: number; // default 1000
   activeGoalView?: 'chapter' | 'daily'; // default 'chapter'
   geminiApiKey?: string;

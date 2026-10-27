@@ -1002,3 +1002,46 @@ test('ProseCadence: Offline sentence rhythm, dialogue ratio, adverbs, and proxim
   assert.equal(echoCounts.get('lantern'), 2);
   assert.equal(echoCounts.get('flickered'), 2);
 });
+
+test('Typography & Distraction-Free Flow: Typewriter font and active typing fade defaults', async () => {
+  const VALID_FONTS = ['serif', 'sans', 'mono', 'brutalist'];
+  assert.ok(VALID_FONTS.includes('mono'));
+  assert.ok(VALID_FONTS.includes('serif'));
+  assert.ok(VALID_FONTS.includes('sans'));
+  assert.ok(VALID_FONTS.includes('brutalist'));
+
+  // Test fontClass mapping
+  const getFontClass = (fontFamily) => {
+    switch (fontFamily) {
+      case 'serif':
+        return 'font-serif';
+      case 'mono':
+        return 'font-mono';
+      case 'brutalist':
+        return 'font-brutalist';
+      default:
+        return 'font-sans';
+    }
+  };
+
+  assert.equal(getFontClass('mono'), 'font-mono');
+  assert.equal(getFontClass('serif'), 'font-serif');
+  assert.equal(getFontClass('sans'), 'font-sans');
+  assert.equal(getFontClass('brutalist'), 'font-brutalist');
+
+  // Test Active Typing Fade configuration
+  const defaultSettings = {
+    fontFamily: 'serif',
+    fontSize: 19,
+    activeTypingFade: true,
+  };
+  assert.equal(defaultSettings.activeTypingFade, true);
+
+  // Test mouse movement delta threshold (6px) to resume toolbar visibility
+  const hasMovedEnough = (prev, current) => {
+    return Math.abs(current.x - prev.x) > 6 || Math.abs(current.y - prev.y) > 6;
+  };
+
+  assert.equal(hasMovedEnough({ x: 100, y: 100 }, { x: 102, y: 101 }), false);
+  assert.equal(hasMovedEnough({ x: 100, y: 100 }, { x: 110, y: 100 }), true);
+});

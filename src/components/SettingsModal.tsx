@@ -111,7 +111,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             <label className="text-[11px] uppercase tracking-wider opacity-60 block">
               Editorial Typeface
             </label>
-            <div className="grid grid-cols-3 gap-2.5">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
               {[
                 {
                   id: 'serif',
@@ -124,6 +124,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   name: 'Jakarta Sans',
                   sub: 'Contemporary',
                   font: 'var(--font-sans)',
+                },
+                {
+                  id: 'mono',
+                  name: 'Typewriter',
+                  sub: 'Serene Cadence',
+                  font: 'var(--font-mono)',
                 },
                 {
                   id: 'brutalist',
@@ -215,6 +221,21 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   type="checkbox"
                   checked={settings.typewriterMode}
                   onChange={(e) => update('typewriterMode', e.target.checked)}
+                  className="accent-stone-400 h-4 w-4 cursor-pointer"
+                />
+              </label>
+
+              <label className={`flex items-center justify-between p-2.5 rounded-lg border ${cardBg} cursor-pointer transition ${itemHover}`}>
+                <div>
+                  <div className="font-medium">Active Typing Fade</div>
+                  <div className="text-[11px] opacity-60">
+                    Gently fades toolbars into zero-clutter flow while drafting.
+                  </div>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={settings.activeTypingFade ?? true}
+                  onChange={(e) => update('activeTypingFade', e.target.checked)}
                   className="accent-stone-400 h-4 w-4 cursor-pointer"
                 />
               </label>
