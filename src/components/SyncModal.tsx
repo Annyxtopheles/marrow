@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import type { Note, Folder, EditorSettings } from '../types';
+import type { Note, Folder, EditorSettings, ThemeMode } from '../types';
 import { GoogleDriveService } from '../services/googleDrive';
+import { THEMES } from '../services/themes';
 import { X, Cloud, CloudUpload, CloudDownload, HardDrive, CheckCircle2, AlertCircle } from 'lucide-react';
 
 interface SyncModalProps {
@@ -10,6 +11,7 @@ interface SyncModalProps {
   onRestoreVault: (notes: Note[], folders: Folder[]) => void;
   onClose: () => void;
   isLightMode: boolean;
+  theme?: ThemeMode;
 }
 
 export const SyncModal: React.FC<SyncModalProps> = ({
@@ -19,7 +21,9 @@ export const SyncModal: React.FC<SyncModalProps> = ({
   onRestoreVault,
   onClose,
   isLightMode,
+  theme,
 }) => {
+  const currentTheme = THEMES[theme || settings.theme || 'charcoal'] || THEMES.charcoal;
   const [token, setToken] = useState<string>(() => GoogleDriveService.getStoredToken() || '');
   const [lastSync, setLastSync] = useState<number | null>(() => GoogleDriveService.getLastSyncTime());
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -184,7 +188,11 @@ export const SyncModal: React.FC<SyncModalProps> = ({
                 type="button"
                 disabled={loading}
                 onClick={handlePushToDrive}
-                className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-md bg-stone-700 hover:bg-stone-600 disabled:opacity-50 text-stone-100 font-medium text-xs transition"
+                className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-md font-semibold text-xs transition shadow-sm hover:opacity-90 active:scale-95 disabled:opacity-50"
+                style={{
+                  backgroundColor: currentTheme.tokens.accentColor,
+                  color: currentTheme.tokens.accentContrast,
+                }}
               >
                 <CloudUpload className="h-3.5 w-3.5" />
                 <span>{loading ? 'Syncing...' : 'Backup to Drive'}</span>
@@ -240,8 +248,13 @@ export const SyncModal: React.FC<SyncModalProps> = ({
         {/* Footer */}
         <div className={`border-t ${border} px-6 py-3.5 flex justify-end`}>
           <button
+            type="button"
             onClick={onClose}
-            className="px-4 py-1.5 rounded-md bg-stone-700 hover:bg-stone-600 text-stone-100 font-medium text-xs transition"
+            className="px-5 py-1.5 rounded-lg font-semibold text-xs transition shadow-sm hover:opacity-90 active:scale-95"
+            style={{
+              backgroundColor: currentTheme.tokens.accentColor,
+              color: currentTheme.tokens.accentContrast,
+            }}
           >
             Done
           </button>

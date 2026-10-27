@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { Note, TimelineEntry, ThemeMode } from '../types';
 import { StorageService } from '../services/storage';
+import { THEMES } from '../services/themes';
 import {
   Clock,
   Zap,
@@ -26,6 +27,7 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
   isLightMode,
   theme,
 }) => {
+  const currentTheme = THEMES[theme || 'charcoal'] || THEMES.charcoal;
   const [activeTab, setActiveTab] = useState<'intervals' | 'story' | 'logs'>('intervals');
 
   const [newLogNote, setNewLogNote] = useState('');
@@ -191,7 +193,7 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
             <div className={`p-3 rounded-lg border ${cardBg} space-y-2.5`}>
               <div className="flex items-center justify-between">
                 <span className={`font-semibold flex items-center gap-1.5 ${headerText}`}>
-                  <Zap className="h-3.5 w-3.5 opacity-80" />
+                  <Zap className="h-3.5 w-3.5" style={{ color: currentTheme.tokens.accentColor }} />
                   Writing Sprint
                 </span>
                 <span className={`font-mono text-xs tabular-nums ${labelText}`}>{formatTimer(sprintSeconds)}</span>
@@ -207,19 +209,21 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
                   </div>
                   <div className={`h-1.5 w-full rounded-full overflow-hidden ${isLightMode ? 'bg-black/10' : 'bg-white/10'}`}>
                     <div
-                      className={`h-full transition-all duration-300 ${
-                        isLightMode ? 'bg-[#151618]' : 'bg-[#f4f1ea]'
-                      }`}
-                      style={{ width: `${sprintProgress}%` }}
+                      className="h-full transition-all duration-300 rounded-full"
+                      style={{
+                        width: `${sprintProgress}%`,
+                        backgroundColor: currentTheme.tokens.accentColor,
+                      }}
                     />
                   </div>
                   <button
+                    type="button"
                     onClick={handleStopSprint}
-                    className={`w-full flex items-center justify-center gap-1.5 py-1.5 rounded-md border text-xs font-medium transition ${
-                      isLightMode
-                        ? 'border-black/15 bg-black/[0.05] hover:bg-black/[0.09] text-[#1c1a17]'
-                        : 'border-white/15 bg-white/[0.05] hover:bg-white/[0.09] text-[#f0ece4]'
-                    }`}
+                    className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs font-semibold shadow-sm transition hover:opacity-90 active:scale-95"
+                    style={{
+                      backgroundColor: currentTheme.tokens.accentColor,
+                      color: currentTheme.tokens.accentContrast,
+                    }}
                   >
                     <Square className="h-3 w-3 fill-current" />
                     Finish &amp; Log Sprint
@@ -242,8 +246,13 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
                     <span className={`text-[11px] ${labelText}`}>words</span>
                   </div>
                   <button
+                    type="button"
                     onClick={handleStartSprint}
-                    className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-md bg-stone-700 hover:bg-stone-600 text-stone-100 font-medium text-xs transition"
+                    className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs font-semibold shadow-sm transition hover:opacity-90 active:scale-95"
+                    style={{
+                      backgroundColor: currentTheme.tokens.accentColor,
+                      color: currentTheme.tokens.accentContrast,
+                    }}
                   >
                     <Play className="h-3 w-3 fill-current" />
                     Start Sprint
@@ -338,15 +347,15 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
                       className="relative cursor-pointer group pl-2 transition"
                     >
                       <span
-                        className={`absolute -left-[18px] top-1.5 h-2 w-2 rounded-full ${
-                          isCurrent
-                            ? isLightMode
-                              ? 'bg-[#151618] ring-2 ring-black/20'
-                              : 'bg-[#f4f1ea] ring-2 ring-white/30'
+                        className="absolute -left-[18px] top-1.5 h-2 w-2 rounded-full transition-all"
+                        style={{
+                          backgroundColor: isCurrent
+                            ? currentTheme.tokens.accentColor
                             : isLightMode
-                            ? 'bg-stone-400'
-                            : 'bg-stone-500'
-                        }`}
+                            ? '#a8a29e'
+                            : '#78716c',
+                          boxShadow: isCurrent ? `0 0 0 2.5px ${currentTheme.tokens.accentBg}` : undefined,
+                        }}
                       />
 
                       <div className={`text-[10px] font-mono ${labelText}`}>
@@ -397,7 +406,11 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
                 </select>
                 <button
                   type="submit"
-                  className="flex items-center gap-1 px-3 py-1 bg-stone-700 hover:bg-stone-600 text-stone-100 rounded-md text-[11px] font-medium transition"
+                  className="flex items-center gap-1 px-3 py-1 rounded-md text-[11px] font-semibold transition hover:opacity-90 active:scale-95 shadow-sm"
+                  style={{
+                    backgroundColor: currentTheme.tokens.accentColor,
+                    color: currentTheme.tokens.accentContrast,
+                  }}
                 >
                   <Plus className="h-3 w-3" />
                   Add

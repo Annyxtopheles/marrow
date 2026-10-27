@@ -1017,17 +1017,12 @@ export function App() {
               <button
                 type="button"
                 onClick={() => setIsThemeMenuOpen(!isThemeMenuOpen)}
-                className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] transition ${
+                className={`p-1.5 rounded-md transition ${
                   isThemeMenuOpen ? activeBtn : `${buttonHover} text-neutral-400`
                 }`}
-                title={`Current Theme: ${currentTheme.name}`}
+                title={`Atmosphere Theme: ${currentTheme.name}`}
               >
-                <Palette className="h-3 w-3" />
-                <span className="hidden md:inline">{currentTheme.name}</span>
-                <span
-                  className="h-1.5 w-1.5 rounded-full shrink-0"
-                  style={{ backgroundColor: currentTheme.accentColor }}
-                />
+                <Palette className="h-3.5 w-3.5" />
               </button>
 
               {isThemeMenuOpen && (
@@ -1139,7 +1134,11 @@ export function App() {
             </p>
             <button
               onClick={() => handleCreateNote(null)}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 bg-neutral-200 text-neutral-900 font-medium text-xs rounded-lg hover:bg-white transition"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 font-semibold text-xs rounded-lg transition shadow-sm hover:opacity-90 active:scale-95"
+              style={{
+                backgroundColor: currentTheme.tokens.accentColor,
+                color: currentTheme.tokens.accentContrast,
+              }}
             >
               <Plus className="h-3.5 w-3.5" />
               New Draft
@@ -1191,6 +1190,7 @@ export function App() {
           onRestoreVault={handleRestoreVault}
           onClose={() => setIsSyncOpen(false)}
           isLightMode={isLightMode}
+          theme={settings.theme}
         />
       )}
 

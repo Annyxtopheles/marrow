@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Target, X, CheckCircle2, Calendar, BookOpen, RotateCcw } from 'lucide-react';
 import type { Note, EditorSettings } from '../types';
+import { THEMES } from '../services/themes';
 
 interface WordGoalModalProps {
   note: Note;
@@ -23,6 +24,7 @@ export const WordGoalModal: React.FC<WordGoalModalProps> = ({
   onClose,
   isLightMode,
 }) => {
+  const currentTheme = THEMES[settings.theme || 'charcoal'] || THEMES.charcoal;
   const [activeTab, setActiveTab] = useState<'chapter' | 'daily'>(
     settings.activeGoalView || 'chapter'
   );
@@ -164,10 +166,11 @@ export const WordGoalModal: React.FC<WordGoalModalProps> = ({
                   }`}
                 >
                   <div
-                    className={`h-full transition-all duration-300 rounded-full ${
-                      isLightMode ? 'bg-[#151618]' : 'bg-[#f4f1ea]'
-                    }`}
-                    style={{ width: `${chapterPercent}%` }}
+                    className="h-full transition-all duration-300 rounded-full"
+                    style={{
+                      width: `${chapterPercent}%`,
+                      backgroundColor: currentTheme.tokens.accentColor,
+                    }}
                   />
                 </div>
                 <div className="flex justify-between text-[11px] opacity-70">
@@ -264,10 +267,11 @@ export const WordGoalModal: React.FC<WordGoalModalProps> = ({
                   }`}
                 >
                   <div
-                    className={`h-full transition-all duration-300 rounded-full ${
-                      isLightMode ? 'bg-[#151618]' : 'bg-[#f4f1ea]'
-                    }`}
-                    style={{ width: `${dailyPercent}%` }}
+                    className="h-full transition-all duration-300 rounded-full"
+                    style={{
+                      width: `${dailyPercent}%`,
+                      backgroundColor: currentTheme.tokens.accentColor,
+                    }}
                   />
                 </div>
                 <div className="flex justify-between text-[11px] opacity-70">
@@ -370,7 +374,11 @@ export const WordGoalModal: React.FC<WordGoalModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-medium transition ${btnActive}`}
+            className="flex items-center gap-1.5 px-5 py-1.5 rounded-lg text-xs font-semibold transition shadow-sm hover:opacity-90 active:scale-95"
+            style={{
+              backgroundColor: currentTheme.tokens.accentColor,
+              color: currentTheme.tokens.accentContrast,
+            }}
           >
             <CheckCircle2 className="h-3.5 w-3.5" />
             <span>Done</span>

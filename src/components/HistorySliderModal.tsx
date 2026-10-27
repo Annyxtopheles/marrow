@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import type { HistoryRecord } from '../types';
+import type { HistoryRecord, ThemeMode } from '../types';
 import { StorageService } from '../services/storage';
+import { THEMES } from '../services/themes';
 import { X, RotateCcw, Calendar, FileText, Check, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
 
 interface HistorySliderModalProps {
@@ -9,6 +10,7 @@ interface HistorySliderModalProps {
   onRestore: (content: string, title: string) => void;
   onClose: () => void;
   isLightMode: boolean;
+  theme?: ThemeMode;
 }
 
 export const HistorySliderModal: React.FC<HistorySliderModalProps> = ({
@@ -17,7 +19,9 @@ export const HistorySliderModal: React.FC<HistorySliderModalProps> = ({
   onRestore,
   onClose,
   isLightMode,
+  theme,
 }) => {
+  const currentTheme = THEMES[theme || 'charcoal'] || THEMES.charcoal;
   const [initialTimestamp] = useState(() => Date.now());
   const history = StorageService.getHistory(noteId);
   const [selectedIndex, setSelectedIndex] = useState<number>(0);
@@ -84,10 +88,6 @@ export const HistorySliderModal: React.FC<HistorySliderModalProps> = ({
   const btnSecondary = isLightMode
     ? 'border-black/10 bg-black/[0.03] hover:bg-black/[0.07] text-[#333]'
     : 'border-white/10 bg-white/[0.04] hover:bg-white/[0.08] text-neutral-300';
-
-  const btnPrimary = isLightMode
-    ? 'bg-black text-white hover:bg-neutral-800'
-    : 'bg-white text-black hover:bg-neutral-200';
 
   return (
     <div
@@ -287,7 +287,11 @@ export const HistorySliderModal: React.FC<HistorySliderModalProps> = ({
             <button
               type="button"
               onClick={handleRestore}
-              className={`flex items-center gap-1.5 text-xs font-semibold px-4 py-1.5 rounded-lg transition shadow-sm ${btnPrimary}`}
+              className="flex items-center gap-1.5 text-xs font-semibold px-4 py-1.5 rounded-lg transition shadow-sm hover:opacity-90 active:scale-95"
+              style={{
+                backgroundColor: currentTheme.tokens.accentColor,
+                color: currentTheme.tokens.accentContrast,
+              }}
             >
               <RotateCcw className="h-3.5 w-3.5" />
               <span>Restore This Snapshot</span>

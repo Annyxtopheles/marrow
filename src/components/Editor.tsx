@@ -811,6 +811,7 @@ export const Editor: React.FC<EditorProps> = ({
           onRestore={handleRestoreSnapshot}
           onClose={() => setShowHistoryModal(false)}
           isLightMode={isLightMode}
+          theme={settings.theme}
         />
       )}
     </div>

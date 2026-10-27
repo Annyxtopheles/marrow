@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import type { Note, Folder, ThemeMode } from '../types';
+import { THEMES } from '../services/themes';
 import {
   Folder as FolderIcon,
   FolderPlus,
@@ -83,6 +84,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   isLightMode,
   theme,
 }) => {
+  const currentTheme = THEMES[theme || 'charcoal'] || THEMES.charcoal;
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [collapsedFolders, setCollapsedFolders] = useState<Record<string, boolean>>({});
@@ -727,11 +729,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 </button>
                 <button
                   type="submit"
-                  className={`px-3 py-1.5 text-xs rounded-md font-medium transition ${
-                    isLightMode
-                      ? 'bg-black text-white hover:bg-neutral-800'
-                      : 'bg-white text-black hover:bg-neutral-200'
-                  }`}
+                  className="px-3.5 py-1.5 text-xs rounded-md font-semibold transition shadow-sm hover:opacity-90 active:scale-95"
+                  style={{
+                    backgroundColor: currentTheme.tokens.accentColor,
+                    color: currentTheme.tokens.accentContrast,
+                  }}
                 >
                   Create
                 </button>

@@ -18,6 +18,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onExportVault,
   isLightMode,
 }) => {
+  const currentTheme = THEMES[settings.theme] || THEMES.charcoal;
   const update = <K extends keyof EditorSettings>(key: K, value: EditorSettings[K]) => {
     onUpdateSettings({ ...settings, [key]: value });
   };
@@ -66,14 +67,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         <div className="p-6 space-y-6 overflow-y-auto max-h-[75vh] text-xs">
           {/* Low-Contrast Color Schemes */}
           <div className="space-y-2.5">
-            <div className="flex items-center justify-between">
-              <label className="text-[11px] uppercase tracking-wider opacity-60 block">
-                Editorial Atmosphere & Theme
-              </label>
-              <span className="text-[10px] opacity-40 font-mono">
-                {THEMES[settings.theme]?.name || 'Theme'}
-              </span>
-            </div>
+            <label className="text-[11px] uppercase tracking-wider opacity-60 block">
+              Editorial Atmosphere & Theme
+            </label>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
               {VALID_THEMES.map((themeId) => {
                 const th = THEMES[themeId];
@@ -234,8 +230,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         {/* Footer */}
         <div className={`border-t ${border} px-6 py-3.5 flex justify-end`}>
           <button
+            type="button"
             onClick={onClose}
-            className="px-4 py-1.5 rounded-md bg-stone-700 hover:bg-stone-600 text-stone-100 font-medium text-xs transition"
+            className="px-5 py-1.5 rounded-lg font-semibold text-xs transition shadow-sm hover:opacity-90 active:scale-95"
+            style={{
+              backgroundColor: currentTheme.tokens.accentColor,
+              color: currentTheme.tokens.accentContrast,
+            }}
           >
             Done
           </button>
