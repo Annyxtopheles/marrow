@@ -432,6 +432,8 @@ export const Editor: React.FC<EditorProps> = ({
       ? 'border-[#e5e7eb]'
       : settings.theme === 'sepia'
       ? 'border-[#e7ddce]'
+      : settings.theme === 'dreamscape'
+      ? 'border-[#e8ddf0]'
       : 'border-[#e4e0d7]'
     : settings.theme === 'nordic'
     ? 'border-sky-500/15'
@@ -445,6 +447,8 @@ export const Editor: React.FC<EditorProps> = ({
       ? 'bg-[#e5e7eb]'
       : settings.theme === 'sepia'
       ? 'bg-[#e7ddce]'
+      : settings.theme === 'dreamscape'
+      ? 'bg-[#e8ddf0]'
       : 'bg-[#e4e0d7]'
     : settings.theme === 'nordic'
     ? 'bg-sky-500/20'
@@ -453,10 +457,10 @@ export const Editor: React.FC<EditorProps> = ({
     : 'bg-white/[0.07]';
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-inherit relative overflow-hidden">
+    <div className={`flex-1 flex flex-col h-full bg-inherit relative overflow-hidden ${settings.theme === 'dreamscape' ? 'dreamy-canvas' : ''}`}>
       {/* Top Formatting & View Mode Sub-Bar */}
       <div
-        className={`flex items-center justify-between px-4 md:px-6 py-1.5 border-b ${subBarBorder} bg-inherit select-none text-xs`}
+        className={`flex items-center justify-between px-4 md:px-6 py-1.5 border-b ${subBarBorder} ${settings.theme === 'dreamscape' ? 'bg-[#f5f0f9]/60 backdrop-blur-md' : 'bg-inherit'} select-none text-xs`}
       >
         {/* Left Side: Formatting Toolbar in Live Preview, or Clean Label in Raw Mode */}
         {!rawMarkdownMode ? (
@@ -775,7 +779,9 @@ export const Editor: React.FC<EditorProps> = ({
                 onChange={handleMarkdownChange}
                 placeholder="Type markdown directly (# Header, **bold**, *italic*, > quote)..."
                 className={`w-full min-h-[60vh] rounded-lg p-5 text-sm font-sans leading-relaxed resize-y focus:outline-none border transition-colors ${
-                  isLightMode
+                  settings.theme === 'dreamscape'
+                    ? 'bg-white/50 backdrop-blur-sm border-[#e8ddf0] text-[#1e1b4b] focus:border-[#d946ef]/40'
+                    : isLightMode
                     ? 'bg-black/[0.02] border-black/[0.08] text-[#2c2a27] focus:border-black/20'
                     : 'bg-white/[0.02] border-white/[0.08] text-[#dedad4] focus:border-white/20'
                 }`}

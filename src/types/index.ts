@@ -55,7 +55,8 @@ export type ThemeMode =
   | 'nordic'
   | 'sakura'
   | 'sepia'
-  | 'evergreen';
+  | 'evergreen'
+  | 'dreamscape';
 export type FontFamily = 'serif' | 'sans' | 'mono';
 
 export interface EditorSettings {

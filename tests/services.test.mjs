@@ -489,10 +489,10 @@ test('Double-Click Quick Rename Logic for Notes and Folders', async () => {
 });
 
 test('Theme System: Multiple Modern & Editorial Themes with Blue and Pink Accents', async () => {
-  const VALID_THEMES = ['charcoal', 'canvas', 'nordic', 'sakura', 'sepia', 'evergreen'];
+  const VALID_THEMES = ['charcoal', 'canvas', 'nordic', 'sakura', 'sepia', 'evergreen', 'dreamscape'];
 
   // Test light/dark categorization
-  const isLightMode = (theme) => ['canvas', 'sakura', 'sepia'].includes(theme);
+  const isLightMode = (theme) => ['canvas', 'sakura', 'sepia', 'dreamscape'].includes(theme);
 
   assert.equal(isLightMode('charcoal'), false); // Warm Dark
   assert.equal(isLightMode('canvas'), true);    // Warm Light
@@ -500,12 +500,15 @@ test('Theme System: Multiple Modern & Editorial Themes with Blue and Pink Accent
   assert.equal(isLightMode('sakura'), true);    // Pure White Light with Pink
   assert.equal(isLightMode('sepia'), true);     // Sepia Light with Amber
   assert.equal(isLightMode('evergreen'), false);// Deep Pine Forest Dark with Sage
+  assert.equal(isLightMode('dreamscape'), true);// Dreamy Dynamic Gradient Light with Orchid
 
   // Test that requested themes are properly represented
   // 1. Clean modern one with blue accent color
   assert.equal(VALID_THEMES.includes('nordic'), true);
   // 2. Bright white one with pink accent color
   assert.equal(VALID_THEMES.includes('sakura'), true);
+  // 3. Dreamy dynamic gradients on canvas
+  assert.equal(VALID_THEMES.includes('dreamscape'), true);
 
   // Test storage theme parser validation
   const parseTheme = (input) => VALID_THEMES.includes(input) ? input : 'charcoal';
@@ -513,6 +516,7 @@ test('Theme System: Multiple Modern & Editorial Themes with Blue and Pink Accent
   assert.equal(parseTheme('sakura'), 'sakura');
   assert.equal(parseTheme('sepia'), 'sepia');
   assert.equal(parseTheme('evergreen'), 'evergreen');
+  assert.equal(parseTheme('dreamscape'), 'dreamscape');
   assert.equal(parseTheme('invalid-theme'), 'charcoal');
 });
 

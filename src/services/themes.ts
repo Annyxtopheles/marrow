@@ -37,6 +37,7 @@ export const VALID_THEMES: ThemeMode[] = [
   'sakura',
   'sepia',
   'evergreen',
+  'dreamscape',
 ];
 
 export const THEMES: Record<ThemeMode, ThemeDefinition> = {
@@ -200,6 +201,33 @@ export const THEMES: Record<ThemeMode, ThemeDefinition> = {
       itemHoverBg: 'rgba(52, 211, 153, 0.06)',
       caretColor: '#34d399',
       selectionBg: 'rgba(52, 211, 153, 0.22)',
+    },
+  },
+  dreamscape: {
+    id: 'dreamscape',
+    name: 'Dreamscape',
+    sub: 'Pastel Aurora Canvas',
+    category: 'light',
+    accentName: 'Orchid Fuchsia',
+    accentColor: '#d946ef',
+    swatchBg: 'bg-gradient-to-tr from-pink-200 via-purple-200 to-sky-200',
+    swatchText: 'text-[#1e1b4b]',
+    tokens: {
+      appBg: '#faf7fc',
+      editorBg: '#ffffff',
+      sidebarBg: '#f5f0f9',
+      headerBg: '#f5f0f9',
+      borderColor: '#e8ddf0',
+      textColor: '#1e1b4b',
+      textMuted: '#645f78',
+      accentColor: '#d946ef',
+      accentContrast: '#ffffff',
+      accentHover: '#c026d3',
+      accentBg: 'rgba(217, 70, 239, 0.1)',
+      activeItemBg: 'rgba(217, 70, 239, 0.1)',
+      itemHoverBg: 'rgba(0, 0, 0, 0.03)',
+      caretColor: '#d946ef',
+      selectionBg: 'rgba(217, 70, 239, 0.22)',
     },
   },
 };

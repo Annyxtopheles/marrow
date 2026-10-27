@@ -139,3 +139,27 @@
   padding-top: 38vh !important;
   padding-bottom: 45vh !important;
 }
+
+/* Dreamscape Dynamic Canvas Gradient */
+@keyframes dreamyGradientFlow {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.dreamy-canvas {
+  background: 
+    radial-gradient(ellipse at 15% 15%, rgba(253, 164, 175, 0.45) 0%, transparent 60%),
+    radial-gradient(ellipse at 85% 12%, rgba(196, 181, 253, 0.5) 0%, transparent 60%),
+    radial-gradient(ellipse at 85% 85%, rgba(165, 243, 252, 0.45) 0%, transparent 60%),
+    radial-gradient(ellipse at 15% 85%, rgba(254, 215, 170, 0.4) 0%, transparent 60%),
+    linear-gradient(-45deg, #fce7f3, #f5d0fe, #ede9fe, #e0e7ff, #e0f2fe, #ffedd5, #ffe4e6);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 350% 350%;
+  animation: dreamyGradientFlow 22s ease-in-out infinite;
+}
