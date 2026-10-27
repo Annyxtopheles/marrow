@@ -41,7 +41,7 @@ export const AccessoryBar: React.FC<AccessoryBarProps> = ({
       : settings.theme === 'sepia'
       ? 'border-[#e7ddce] bg-[#f5eedd]/95 text-[#635141]'
       : settings.theme === 'dreamscape'
-      ? 'border-[#e8ddf0] bg-[#f5f0f9]/95 text-[#645f78]'
+      ? 'border-black/[0.06] bg-white/50 backdrop-blur-xl text-[#524e68]'
       : 'border-[#e4e0d7] bg-[#f7f5f0]/90 text-[#6c6760]'
     : settings.theme === 'nordic'
     ? 'border-sky-500/15 bg-[#111722]/95 text-[#94a3b8]'

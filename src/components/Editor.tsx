@@ -433,7 +433,7 @@ export const Editor: React.FC<EditorProps> = ({
       : settings.theme === 'sepia'
       ? 'border-[#e7ddce]'
       : settings.theme === 'dreamscape'
-      ? 'border-[#e8ddf0]'
+      ? 'border-black/[0.06]'
       : 'border-[#e4e0d7]'
     : settings.theme === 'nordic'
     ? 'border-sky-500/15'
@@ -448,7 +448,7 @@ export const Editor: React.FC<EditorProps> = ({
       : settings.theme === 'sepia'
       ? 'bg-[#e7ddce]'
       : settings.theme === 'dreamscape'
-      ? 'bg-[#e8ddf0]'
+      ? 'bg-black/[0.08]'
       : 'bg-[#e4e0d7]'
     : settings.theme === 'nordic'
     ? 'bg-sky-500/20'
@@ -457,10 +457,10 @@ export const Editor: React.FC<EditorProps> = ({
     : 'bg-white/[0.07]';
 
   return (
-    <div className={`flex-1 flex flex-col h-full bg-inherit relative overflow-hidden ${settings.theme === 'dreamscape' ? 'dreamy-canvas' : ''}`}>
+    <div className="flex-1 flex flex-col h-full bg-transparent relative overflow-hidden">
       {/* Top Formatting & View Mode Sub-Bar */}
       <div
-        className={`flex items-center justify-between px-4 md:px-6 py-1.5 border-b ${subBarBorder} ${settings.theme === 'dreamscape' ? 'bg-[#f5f0f9]/60 backdrop-blur-md' : 'bg-inherit'} select-none text-xs`}
+        className={`flex items-center justify-between px-4 md:px-6 py-1.5 border-b ${subBarBorder} ${settings.theme === 'dreamscape' ? 'bg-white/40 backdrop-blur-xl' : 'bg-inherit'} select-none text-xs`}
       >
         {/* Left Side: Formatting Toolbar in Live Preview, or Clean Label in Raw Mode */}
         {!rawMarkdownMode ? (

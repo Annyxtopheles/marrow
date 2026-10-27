@@ -3,6 +3,7 @@ import type { Note, TimelineEntry, ThemeMode, SceneBeat, EditorSettings, AIMessa
 import { StorageService } from '../services/storage';
 import { THEMES } from '../services/themes';
 import { AIService, parseBeatsFromResponse, type AIPersona } from '../services/ai';
+import { EditorialMarkdown } from './EditorialMarkdown';
 import {
   Clock,
   Zap,
@@ -296,7 +297,7 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
     : theme === 'sepia'
     ? 'border-[#e7ddce]'
     : theme === 'dreamscape'
-    ? 'border-[#e8ddf0]'
+    ? 'border-black/[0.06]'
     : theme === 'nordic'
     ? 'border-sky-500/15'
     : theme === 'evergreen'
@@ -310,7 +311,7 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
     : theme === 'sepia'
     ? 'bg-[#f5eedd]'
     : theme === 'dreamscape'
-    ? 'bg-[#f5f0f9]'
+    ? 'bg-white/45 backdrop-blur-xl'
     : theme === 'nordic'
     ? 'bg-[#111722]'
     : theme === 'evergreen'
@@ -318,7 +319,9 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
     : isLightMode
     ? 'bg-[#f4f1ea]'
     : 'bg-[#131416]';
-  const cardBg = isLightMode
+  const cardBg = theme === 'dreamscape'
+    ? 'bg-white/40 border-black/[0.06] backdrop-blur-sm'
+    : isLightMode
     ? 'bg-black/[0.02] border-black/[0.08]'
     : 'bg-white/[0.03] border-white/[0.08]';
   const activeTabClass = isLightMode
@@ -900,7 +903,7 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
                       }
                       className={`p-2 rounded-lg border text-left transition flex items-start gap-1.5 ${cardBg} hover:opacity-90 active:scale-98`}
                     >
-                      <Zap className="h-3.5 w-3.5 shrink-0 mt-0.5" style={{ color: currentTheme.tokens.accentColor }} />
+                      <Zap className="h-3.5 w-3.5 shrink-0 mt-0.5 text-rose-500/70 dark:text-rose-400/60" />
                       <div>
                         <div className="font-medium leading-none">Critique Scene</div>
                         <div className="text-[10px] opacity-60 mt-1 leading-tight">Pacing &amp; tension</div>
@@ -918,7 +921,7 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
                       }
                       className={`p-2 rounded-lg border text-left transition flex items-start gap-1.5 ${cardBg} hover:opacity-90 active:scale-98`}
                     >
-                      <Lightbulb className="h-3.5 w-3.5 shrink-0 mt-0.5 text-amber-500" />
+                      <Lightbulb className="h-3.5 w-3.5 shrink-0 mt-0.5 text-amber-600/70 dark:text-amber-400/60" />
                       <div>
                         <div className="font-medium leading-none">Sensory Details</div>
                         <div className="text-[10px] opacity-60 mt-1 leading-tight">Sight, sound, smell</div>
@@ -936,7 +939,7 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
                       }
                       className={`p-2 rounded-lg border text-left transition flex items-start gap-1.5 ${cardBg} hover:opacity-90 active:scale-98`}
                     >
-                      <Sparkles className="h-3.5 w-3.5 shrink-0 mt-0.5 text-sky-400" />
+                      <Sparkles className="h-3.5 w-3.5 shrink-0 mt-0.5 text-sky-600/70 dark:text-sky-400/60" />
                       <div>
                         <div className="font-medium leading-none">Brainstorm Move</div>
                         <div className="text-[10px] opacity-60 mt-1 leading-tight">Obstacles &amp; twists</div>
@@ -954,7 +957,7 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
                       }
                       className={`p-2 rounded-lg border text-left transition flex items-start gap-1.5 ${cardBg} hover:opacity-90 active:scale-98`}
                     >
-                      <ListTodo className="h-3.5 w-3.5 shrink-0 mt-0.5 text-emerald-400" />
+                      <ListTodo className="h-3.5 w-3.5 shrink-0 mt-0.5 text-emerald-600/70 dark:text-emerald-400/60" />
                       <div>
                         <div className="font-medium leading-none">Suggest Beats</div>
                         <div className="text-[10px] opacity-60 mt-1 leading-tight">Outline checklist</div>
@@ -1022,9 +1025,13 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
                           </div>
                         </div>
 
-                        <div className={`whitespace-pre-wrap text-left ${isLightMode ? 'text-[#1c1a17]' : 'text-[#e5e1d8]'}`}>
-                          {msg.content}
-                        </div>
+                        {msg.role === 'assistant' ? (
+                          <EditorialMarkdown content={msg.content} isLightMode={isLightMode} />
+                        ) : (
+                          <div className={`whitespace-pre-wrap text-left ${isLightMode ? 'text-[#1c1a17]' : 'text-[#e5e1d8]'}`}>
+                            {msg.content}
+                          </div>
+                        )}
 
                         {/* If beats action, show 1-click import button */}
                         {msg.role === 'assistant' && msg.actionType === 'beats' && (
@@ -1061,6 +1068,7 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
                 {/* Input Bar */}
                 <div className="pt-2 sticky bottom-0">
                   <form
+                    autoComplete="off"
                     onSubmit={(e) => {
                       e.preventDefault();
                       handleSendAIMessage(aiInput, 'chat');
@@ -1069,7 +1077,20 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
                   >
                     <div className="relative">
                       <input
-                        type="text"
+                        type="search"
+                        name="lumen_chat_query_field"
+                        id="lumen_chat_query_field"
+                        autoComplete="off"
+                        autoCorrect="off"
+                        autoCapitalize="sentences"
+                        spellCheck={false}
+                        data-form-type="other"
+                        data-lpignore="true"
+                        data-1p-ignore="true"
+                        data-zoho-ignore="true"
+                        data-bwignore="true"
+                        data-dashlane-ignore="true"
+                        data-browser-autofill="disabled"
                         placeholder="Ask about this scene, dialogue, pacing..."
                         value={aiInput}
                         onChange={(e) => setAiInput(e.target.value)}

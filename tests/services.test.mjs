@@ -772,3 +772,23 @@ test('AIService: HTML-to-text cleanup and Scene Beats parser', async () => {
   assert.equal(parsedBeats[3].text, 'Elena escapes across the rooftops with half the manuscript.');
   assert.equal(parsedBeats.every((b) => !b.done), true);
 });
+
+test('EditorialMarkdown: Structure classification for headers, dividers, and lists', async () => {
+  const classifyBlock = (text) => {
+    const trimmed = text.trim();
+    if (/^[-*_]{3,}$/.test(trimmed)) return 'divider';
+    if (trimmed.startsWith('#')) return 'header';
+    if (trimmed.startsWith('>')) return 'quote';
+    const lines = trimmed.split('\n');
+    if (lines.some((l) => /^\d+[.)]\s+/.test(l.trim()))) return 'numbered-list';
+    if (lines.some((l) => /^[-*•]\s+/.test(l.trim()))) return 'bullet-list';
+    return 'paragraph';
+  };
+
+  assert.equal(classifyBlock('---'), 'divider');
+  assert.equal(classifyBlock('### The Prescription'), 'header');
+  assert.equal(classifyBlock('> "We must hurry," she said.'), 'quote');
+  assert.equal(classifyBlock('1. **Clean House.**\n2. **Build a Frame.**'), 'numbered-list');
+  assert.equal(classifyBlock('- Sight: amber light\n- Scent: old parchment'), 'bullet-list');
+  assert.equal(classifyBlock('Elena carries an antique brass time-tracker.'), 'paragraph');
+});

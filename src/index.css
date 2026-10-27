@@ -140,7 +140,7 @@
   padding-bottom: 45vh !important;
 }
 
-/* Dreamscape Dynamic Canvas Gradient */
+/* Dreamscape Dynamic Canvas Gradient with Fine-Grain Noise Texture */
 @keyframes dreamyGradientFlow {
   0% {
     background-position: 0% 50%;
@@ -154,12 +154,26 @@
 }
 
 .dreamy-canvas {
-  background: 
+  position: relative;
+  background-color: #faf7fc;
+  background-image: 
     radial-gradient(ellipse at 15% 15%, rgba(253, 164, 175, 0.45) 0%, transparent 60%),
     radial-gradient(ellipse at 85% 12%, rgba(196, 181, 253, 0.5) 0%, transparent 60%),
     radial-gradient(ellipse at 85% 85%, rgba(165, 243, 252, 0.45) 0%, transparent 60%),
     radial-gradient(ellipse at 15% 85%, rgba(254, 215, 170, 0.4) 0%, transparent 60%),
     linear-gradient(-45deg, #fce7f3, #f5d0fe, #ede9fe, #e0e7ff, #e0f2fe, #ffedd5, #ffe4e6);
   background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 350% 350%;
-  animation: dreamyGradientFlow 22s ease-in-out infinite;
+  animation: dreamyGradientFlow 24s ease-in-out infinite;
+}
+
+/* Subtle organic paper/noise grain overlay for Dreamscape */
+.dreamy-canvas::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.038;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
 }
