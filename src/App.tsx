@@ -33,6 +33,18 @@ export function App() {
   const [isCompileOpen, setIsCompileOpen] = useState(false);
   const [compileFolderId, setCompileFolderId] = useState<string | null>(null);
   const [isThemeMenuOpen, setIsThemeMenuOpen] = useState(false);
+  const themeMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isThemeMenuOpen) return;
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (themeMenuRef.current && !themeMenuRef.current.contains(e.target as Node)) {
+        setIsThemeMenuOpen(false);
+      }
+    };
+    window.addEventListener('mousedown', handleOutsideClick);
+    return () => window.removeEventListener('mousedown', handleOutsideClick);
+  }, [isThemeMenuOpen]);
 
   useEffect(() => {
     applyThemeToDocument(settings.theme);
@@ -959,7 +971,7 @@ export function App() {
       {/* Refined Minimalist App Bar */}
       {!settings.focusMode && (
         <header
-          className={`h-11 border-b ${headerBorder} ${headerBg} backdrop-blur-md px-3.5 flex items-center justify-between text-xs select-none`}
+          className={`relative z-40 h-11 border-b ${headerBorder} ${headerBg} backdrop-blur-md px-3.5 flex items-center justify-between text-xs select-none`}
         >
           <div className="flex items-center gap-2.5">
             <button
@@ -1036,7 +1048,7 @@ export function App() {
             </button>
 
             {/* Quick Theme Switcher */}
-            <div className="relative">
+            <div ref={themeMenuRef} className="relative">
               <button
                 type="button"
                 onClick={() => setIsThemeMenuOpen(!isThemeMenuOpen)}
@@ -1050,10 +1062,10 @@ export function App() {
 
               {isThemeMenuOpen && (
                 <div
-                  className={`absolute right-0 mt-1.5 w-52 rounded-lg border shadow-xl p-1.5 z-50 text-xs backdrop-blur-md ${
+                  className={`absolute right-0 mt-1.5 w-56 rounded-lg border shadow-2xl p-1.5 z-50 text-xs backdrop-blur-xl ${
                     isLightMode
-                      ? 'bg-[#fffefb]/95 border-black/10 text-[#222]'
-                      : 'bg-[#18191c]/95 border-white/10 text-[#dedad4]'
+                      ? 'bg-[#ffffff]/98 border-black/10 text-[#1e1b4b] shadow-black/15'
+                      : 'bg-[#18191c]/98 border-white/10 text-[#dedad4] shadow-black/40'
                   }`}
                 >
                   <div className="px-2 py-1 text-[10px] uppercase tracking-wider opacity-50 font-medium">
