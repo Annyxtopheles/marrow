@@ -1,26 +1,23 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
-  Bold,
-  Italic,
-  Heading2,
-  Quote,
-  List,
-  Clock,
   Undo2,
   Redo2,
-  Link2,
+  Clock,
   Crosshair,
   Maximize2,
   Minimize2,
   History,
   Mic,
   Volume2,
+  ShieldCheck,
 } from 'lucide-react';
 import { Editor } from '@tiptap/react';
+import type { Note } from '../types';
 import { DictationService, ReadAloudService, isSpeechRecognitionSupported, isSpeechSynthesisSupported } from '../services/speech';
 
 interface AccessoryBarProps {
   editor: Editor | null;
+  note: Note;
   onOpenHistory: () => void;
   typewriterMode: boolean;
   onToggleTypewriter: () => void;
@@ -33,6 +30,7 @@ interface AccessoryBarProps {
 
 export const AccessoryBar: React.FC<AccessoryBarProps> = ({
   editor,
+  note,
   onOpenHistory,
   typewriterMode,
   onToggleTypewriter,
@@ -42,7 +40,6 @@ export const AccessoryBar: React.FC<AccessoryBarProps> = ({
   saveStatus,
   isLightMode,
 }) => {
-  // Native Speech-to-Text & Text-to-Speech hooks must be unconditional
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const dictationRef = useRef<DictationService | null>(null);
@@ -54,32 +51,9 @@ export const AccessoryBar: React.FC<AccessoryBarProps> = ({
     };
   }, []);
 
-  if (!editor) return null;
-
-  const insertPair = (open: string, close: string) => {
-    const { from, to } = editor.state.selection;
-    const selectedText = editor.state.doc.textBetween(from, to);
-    editor
-      .chain()
-      .focus()
-      .insertContentAt({ from, to }, `${open}${selectedText}${close}`)
-      .setTextSelection(from + open.length + selectedText.length)
-      .run();
-  };
-
-  const insertWikilink = () => {
-    const { from, to } = editor.state.selection;
-    const selectedText = editor.state.doc.textBetween(from, to) || 'Note Title';
-    editor
-      .chain()
-      .focus()
-      .insertContentAt({ from, to }, `[[${selectedText}]]`)
-      .run();
-  };
-
   const barBg = isLightMode
-    ? 'border-[#e4e0d7] bg-[#f7f5f0]/85 text-[#6c6760]'
-    : 'border-white/[0.06] bg-[#16171a]/85 text-[#9a968f]';
+    ? 'border-[#e4e0d7] bg-[#f7f5f0]/90 text-[#6c6760]'
+    : 'border-white/[0.06] bg-[#16171a]/90 text-[#9a968f]';
 
   const btnHover = isLightMode ? 'hover:bg-black/[0.05] hover:text-[#222]' : 'hover:bg-white/[0.06] hover:text-[#eee]';
   const activeBtn = isLightMode ? 'bg-black/[0.08] text-[#111]' : 'bg-white/[0.08] text-[#f2efe9]';
@@ -100,7 +74,8 @@ export const AccessoryBar: React.FC<AccessoryBarProps> = ({
             editor.chain().focus().insertContent(`${transcript} `).run();
           }
         },
-        onError: () => {
+        onError: (err) => {
+          console.error('Dictation error:', err);
           setIsListening(false);
         },
         onEnd: () => {
@@ -121,12 +96,16 @@ export const AccessoryBar: React.FC<AccessoryBarProps> = ({
         alert('Text-to-speech is not supported in this browser.');
         return;
       }
-      const selected = editor.state.doc.textBetween(
-        editor.state.selection.from,
-        editor.state.selection.to,
-        ' '
-      );
-      const textToSpeak = selected.trim() ? selected : editor.getText();
+      const selected = editor
+        ? editor.state.doc.textBetween(
+            editor.state.selection.from,
+            editor.state.selection.to,
+            ' '
+          )
+        : '';
+      const textToSpeak = selected.trim()
+        ? selected
+        : (editor ? editor.getText() : note.content.replace(/<[^>]+>/g, ' '));
       if (!textToSpeak.trim()) return;
 
       setIsSpeaking(true);
@@ -138,133 +117,20 @@ export const AccessoryBar: React.FC<AccessoryBarProps> = ({
     }
   };
 
+  const words = note.wordCount || 0;
+  const chars = note.characterCount || 0;
+  const readingMinutes = Math.max(1, Math.ceil(words / 200));
+
   return (
     <div
-      className={`sticky bottom-0 left-0 right-0 z-30 flex items-center justify-between border-t ${barBg} backdrop-blur-md px-3.5 py-1.5 text-xs select-none transition-colors duration-200`}
+      className={`sticky bottom-0 left-0 right-0 z-30 flex items-center justify-between border-t ${barBg} backdrop-blur-md px-4 py-1.5 text-xs select-none transition-colors duration-200`}
     >
-      {/* Punctuation & Quick Formatting */}
-      <div className="flex items-center gap-1 overflow-x-auto scrollbar-none py-0.5">
+      {/* Workflow Controls: Undo/Redo, Speech, Timestamp, Focus */}
+      <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-0.5">
         <button
           type="button"
-          onClick={() => insertPair('“', '”')}
-          className={`rounded-md px-2 py-0.5 text-sm transition ${btnHover}`}
-          title="Smart double quotes"
-        >
-          “”
-        </button>
-        <button
-          type="button"
-          onClick={() => insertPair('‘', '’')}
-          className={`rounded-md px-2 py-0.5 text-sm transition ${btnHover}`}
-          title="Smart single quotes"
-        >
-          ‘’
-        </button>
-        <button
-          type="button"
-          onClick={() => insertPair('(', ')')}
-          className={`rounded-md px-2 py-0.5 text-[11px] transition ${btnHover}`}
-          title="Parentheses"
-        >
-          ( )
-        </button>
-        <button
-          type="button"
-          onClick={() => insertPair('[', ']')}
-          className={`rounded-md px-2 py-0.5 text-[11px] transition ${btnHover}`}
-          title="Brackets"
-        >
-          [ ]
-        </button>
-        <button
-          type="button"
-          onClick={() => insertPair('《', '》')}
-          className={`rounded-md px-2 py-0.5 text-xs transition ${btnHover}`}
-          title="Book title brackets"
-        >
-          《》
-        </button>
-        <button
-          type="button"
-          onClick={() => insertPair('— ', ' ')}
-          className={`rounded-md px-2 py-0.5 text-xs transition ${btnHover}`}
-          title="Em dash"
-        >
-          —
-        </button>
-
-        <div className={`mx-1.5 h-3.5 w-px ${divider}`} />
-
-        <button
-          type="button"
-          onClick={() => editor.chain().focus().toggleBold().run()}
-          className={`rounded-md p-1.5 transition ${editor.isActive('bold') ? activeBtn : btnHover}`}
-          title="Bold (Ctrl+B)"
-        >
-          <Bold className="h-3.5 w-3.5" />
-        </button>
-        <button
-          type="button"
-          onClick={() => editor.chain().focus().toggleItalic().run()}
-          className={`rounded-md p-1.5 transition ${editor.isActive('italic') ? activeBtn : btnHover}`}
-          title="Italic (Ctrl+I)"
-        >
-          <Italic className="h-3.5 w-3.5" />
-        </button>
-        <button
-          type="button"
-          onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-          className={`rounded-md p-1.5 transition ${
-            editor.isActive('heading', { level: 2 }) ? activeBtn : btnHover
-          }`}
-          title="Heading"
-        >
-          <Heading2 className="h-3.5 w-3.5" />
-        </button>
-        <button
-          type="button"
-          onClick={() => editor.chain().focus().toggleBlockquote().run()}
-          className={`rounded-md p-1.5 transition ${
-            editor.isActive('blockquote') ? activeBtn : btnHover
-          }`}
-          title="Blockquote"
-        >
-          <Quote className="h-3.5 w-3.5" />
-        </button>
-        <button
-          type="button"
-          onClick={() => editor.chain().focus().toggleBulletList().run()}
-          className={`rounded-md p-1.5 transition ${
-            editor.isActive('bulletList') ? activeBtn : btnHover
-          }`}
-          title="Bullet List"
-        >
-          <List className="h-3.5 w-3.5" />
-        </button>
-        <button
-          type="button"
-          onClick={insertWikilink}
-          className={`rounded-md p-1.5 transition ${btnHover}`}
-          title="Obsidian Wikilink [[Note]]"
-        >
-          <Link2 className="h-3.5 w-3.5" />
-        </button>
-        <button
-          type="button"
-          onClick={onInsertTimestamp}
-          className={`rounded-md p-1.5 transition ${btnHover}`}
-          title="TimeJot Timestamp Stamp"
-        >
-          <Clock className="h-3.5 w-3.5" />
-        </button>
-      </div>
-
-      {/* Editor Controls & Fail-Safe Indicator */}
-      <div className="flex items-center gap-1.5 pl-2 shrink-0">
-        <button
-          type="button"
-          onClick={() => editor.chain().focus().undo().run()}
-          disabled={!editor.can().undo()}
+          onClick={() => editor?.chain().focus().undo().run()}
+          disabled={!editor?.can().undo()}
           className={`rounded-md p-1.5 disabled:opacity-30 transition ${btnHover}`}
           title="Undo (Ctrl+Z)"
         >
@@ -272,8 +138,8 @@ export const AccessoryBar: React.FC<AccessoryBarProps> = ({
         </button>
         <button
           type="button"
-          onClick={() => editor.chain().focus().redo().run()}
-          disabled={!editor.can().redo()}
+          onClick={() => editor?.chain().focus().redo().run()}
+          disabled={!editor?.can().redo()}
           className={`rounded-md p-1.5 disabled:opacity-30 transition ${btnHover}`}
           title="Redo (Ctrl+Y)"
         >
@@ -285,31 +151,43 @@ export const AccessoryBar: React.FC<AccessoryBarProps> = ({
         <button
           type="button"
           onClick={toggleDictation}
-          className={`flex items-center gap-1 rounded-md px-2 py-1 text-[11px] transition ${
+          className={`flex items-center gap-1.5 rounded-md px-2 py-1 text-[11px] transition ${
             isListening ? 'bg-rose-500/15 text-rose-400 border border-rose-500/30' : btnHover
           }`}
           title={isListening ? 'Stop Dictation' : 'Dictate (Voice-to-Text)'}
         >
           <Mic className={`h-3 w-3 ${isListening ? 'animate-pulse text-rose-400' : ''}`} />
-          <span className="hidden md:inline">{isListening ? 'Listening...' : 'Dictate'}</span>
+          <span className="hidden sm:inline">{isListening ? 'Listening...' : 'Dictate'}</span>
         </button>
 
         <button
           type="button"
           onClick={toggleReadAloud}
-          className={`flex items-center gap-1 rounded-md px-2 py-1 text-[11px] transition ${
+          className={`flex items-center gap-1.5 rounded-md px-2 py-1 text-[11px] transition ${
             isSpeaking ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30' : btnHover
           }`}
           title={isSpeaking ? 'Stop Reading' : 'Proofread Aloud (Text-to-Speech)'}
         >
           <Volume2 className={`h-3 w-3 ${isSpeaking ? 'animate-pulse text-amber-300' : ''}`} />
-          <span className="hidden md:inline">{isSpeaking ? 'Reading...' : 'Listen'}</span>
+          <span className="hidden sm:inline">{isSpeaking ? 'Reading...' : 'Listen'}</span>
         </button>
 
         <button
           type="button"
+          onClick={onInsertTimestamp}
+          className={`flex items-center gap-1.5 rounded-md px-2 py-1 text-[11px] transition ${btnHover}`}
+          title="Insert timestamp stamp"
+        >
+          <Clock className="h-3 w-3 opacity-70" />
+          <span className="hidden sm:inline">Timestamp</span>
+        </button>
+
+        <div className={`mx-1.5 h-3.5 w-px ${divider}`} />
+
+        <button
+          type="button"
           onClick={onToggleTypewriter}
-          className={`flex items-center gap-1 rounded-md px-2 py-1 text-[11px] transition ${
+          className={`flex items-center gap-1.5 rounded-md px-2 py-1 text-[11px] transition ${
             typewriterMode ? activeBtn : btnHover
           }`}
           title="Typewriter Mode (keep active line centered)"
@@ -321,8 +199,8 @@ export const AccessoryBar: React.FC<AccessoryBarProps> = ({
         <button
           type="button"
           onClick={onOpenHistory}
-          className={`flex items-center gap-1 rounded-md px-2 py-1 text-[11px] transition ${btnHover}`}
-          title="Marrow History Machine"
+          className={`flex items-center gap-1.5 rounded-md px-2 py-1 text-[11px] transition ${btnHover}`}
+          title="Marrow Revision History Scrubber"
         >
           <History className="h-3 w-3" />
           <span className="hidden sm:inline">History</span>
@@ -336,20 +214,30 @@ export const AccessoryBar: React.FC<AccessoryBarProps> = ({
         >
           {focusMode ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
         </button>
+      </div>
 
-        {/* Soft Save Status */}
-        <div className="flex items-center gap-1.5 pl-1.5">
-          <span
-            className={`h-1.5 w-1.5 rounded-full transition-all duration-300 ${
-              saveStatus === 'saved'
-                ? 'bg-emerald-500/80'
-                : 'bg-amber-400/80 animate-pulse'
-            }`}
-          />
-          <span className="text-[10px] uppercase tracking-wider opacity-60 hidden md:inline">
-            {saveStatus === 'saved' ? 'Saved' : 'Saving'}
+      {/* Live Document Statistics & Protection Status */}
+      <div className="flex items-center gap-3 pl-3 shrink-0 text-[11px] opacity-80">
+        <span className="flex items-center gap-1.5">
+          <span>{words.toLocaleString()} words</span>
+        </span>
+        <span className="hidden md:inline-block opacity-40">•</span>
+        <span className="hidden md:inline">
+          <span>{chars.toLocaleString()} chars</span>
+        </span>
+        <span className="hidden lg:inline-block opacity-40">•</span>
+        <span className="hidden lg:inline">
+          <span>~{readingMinutes} min read</span>
+        </span>
+
+        <span className="opacity-40">•</span>
+
+        <span className="flex items-center gap-1.5" title="Fail-Safe Continuous Protection">
+          <ShieldCheck className="h-3.5 w-3.5 text-emerald-500/80" />
+          <span className="text-[10px] uppercase tracking-wider opacity-75">
+            {saveStatus === 'saved' ? 'Protected' : 'Syncing'}
           </span>
-        </div>
+        </span>
       </div>
     </div>
   );

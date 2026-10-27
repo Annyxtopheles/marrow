@@ -11,8 +11,6 @@ import {
   ChevronDown,
   Trash2,
   Tag,
-  Clock,
-  Link2,
   Settings,
   BookOpen,
   Pencil,
@@ -63,10 +61,6 @@ interface SidebarProps {
   onMoveNote?: (noteId: string, targetFolderId: string | null) => void;
   onDuplicateNote?: (note: Note) => void;
   onOpenSettings: () => void;
-  onToggleTimeJot: () => void;
-  isTimeJotOpen: boolean;
-  onToggleBacklinks: () => void;
-  isBacklinksOpen: boolean;
   isLightMode: boolean;
 }
 
@@ -85,10 +79,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onMoveNote,
   onDuplicateNote,
   onOpenSettings,
-  onToggleTimeJot,
-  isTimeJotOpen,
-  onToggleBacklinks,
-  isBacklinksOpen,
   isLightMode,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -592,41 +582,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
       </div>
 
-      {/* Footer Navigation Bar */}
-      <div className={`border-t ${borderColor} p-2 flex items-center justify-between`}>
-        <div className="flex items-center gap-1">
-          <button
-            type="button"
-            onClick={onToggleTimeJot}
-            className={`p-1.5 rounded-md transition flex items-center gap-1.5 ${
-              isTimeJotOpen ? activeItem : itemHover
-            }`}
-            title="Toggle TimeJot"
-          >
-            <Clock className="h-3.5 w-3.5 opacity-70" />
-            <span className="text-[11px]">TimeJot</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={onToggleBacklinks}
-            className={`p-1.5 rounded-md transition flex items-center gap-1.5 ${
-              isBacklinksOpen ? activeItem : itemHover
-            }`}
-            title="Toggle Graph"
-          >
-            <Link2 className="h-3.5 w-3.5 opacity-70" />
-            <span className="text-[11px]">Graph</span>
-          </button>
+      {/* Footer Status Bar */}
+      <div className={`border-t ${borderColor} px-3 py-2 flex items-center justify-between text-[11px]`}>
+        <div className="flex items-center gap-1.5 opacity-60">
+          <BookOpen className="h-3.5 w-3.5" />
+          <span>{notes.length} {notes.length === 1 ? 'document' : 'documents'}</span>
         </div>
 
         <button
           type="button"
           onClick={onOpenSettings}
-          className={`p-1.5 rounded-md ${itemHover} transition`}
+          className={`p-1 rounded-md ${itemHover} transition opacity-70 hover:opacity-100`}
           title="Settings"
         >
-          <Settings className="h-4 w-4 opacity-70" />
+          <Settings className="h-3.5 w-3.5" />
         </button>
       </div>
 

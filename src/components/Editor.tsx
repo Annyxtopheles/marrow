@@ -5,7 +5,22 @@ import Placeholder from '@tiptap/extension-placeholder';
 import type { Note, EditorSettings } from '../types';
 import { AccessoryBar } from './AccessoryBar';
 import { HistorySliderModal } from './HistorySliderModal';
-import { Code, Eye, Download } from 'lucide-react';
+import {
+  Code,
+  Eye,
+  Download,
+  Bold,
+  Italic,
+  Heading1,
+  Heading2,
+  Heading3,
+  Quote,
+  List,
+  Link2,
+  Tag,
+  Plus,
+  X,
+} from 'lucide-react';
 
 const htmlToMarkdown = (html: string): string => {
   return html
@@ -75,6 +90,8 @@ export const Editor: React.FC<EditorProps> = ({
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [rawMarkdownMode, setRawMarkdownMode] = useState(false);
   const [markdownContent, setMarkdownContent] = useState('');
+  const [isAddingTag, setIsAddingTag] = useState(false);
+  const [newTagInput, setNewTagInput] = useState('');
   const titleInputRef = useRef<HTMLInputElement>(null);
   const editorContainerRef = useRef<HTMLDivElement>(null);
 
@@ -190,6 +207,29 @@ export const Editor: React.FC<EditorProps> = ({
     URL.revokeObjectURL(url);
   };
 
+  const insertPair = (open: string, close: string) => {
+    if (!editor) return;
+    const { from, to } = editor.state.selection;
+    const selectedText = editor.state.doc.textBetween(from, to);
+    editor
+      .chain()
+      .focus()
+      .insertContentAt({ from, to }, `${open}${selectedText}${close}`)
+      .setTextSelection(from + open.length + selectedText.length)
+      .run();
+  };
+
+  const insertWikilink = () => {
+    if (!editor) return;
+    const { from, to } = editor.state.selection;
+    const selectedText = editor.state.doc.textBetween(from, to) || 'Note Title';
+    editor
+      .chain()
+      .focus()
+      .insertContentAt({ from, to }, `[[${selectedText}]]`)
+      .run();
+  };
+
   // PureWriter Typewriter scrolling: center active line on selection change
   useEffect(() => {
     if (!editor || !settings.typewriterMode) return;
@@ -269,49 +309,190 @@ export const Editor: React.FC<EditorProps> = ({
     editor.commands.focus('end');
   };
 
+  const handleAddTagSubmit = () => {
+    const clean = newTagInput.trim().toLowerCase().replace(/^#/, '');
+    if (clean && !note.tags.includes(clean)) {
+      onUpdateNote({
+        ...note,
+        tags: [...note.tags, clean],
+        updatedAt: Date.now(),
+      });
+    }
+    setNewTagInput('');
+    setIsAddingTag(false);
+  };
+
+  const handleRemoveTag = (tagToRemove: string) => {
+    onUpdateNote({
+      ...note,
+      tags: note.tags.filter((t) => t !== tagToRemove),
+      updatedAt: Date.now(),
+    });
+  };
+
   const fontClass =
     settings.fontFamily === 'serif'
       ? 'font-serif'
       : 'font-sans';
 
   const subBarBorder = isLightMode ? 'border-[#e4e0d7]' : 'border-white/[0.06]';
-  const tagBg = isLightMode
-    ? 'bg-black/[0.03] border-black/[0.06] text-neutral-600'
-    : 'bg-white/[0.04] border-white/[0.06] text-neutral-400';
-  const btnHover = isLightMode ? 'hover:bg-black/[0.05]' : 'hover:bg-white/[0.06]';
+  const btnHover = isLightMode ? 'hover:bg-black/[0.05] hover:text-[#111]' : 'hover:bg-white/[0.06] hover:text-[#fff]';
+  const activeBtn = isLightMode ? 'bg-black/[0.08] text-[#111]' : 'bg-white/[0.08] text-[#f2efe9]';
+  const divider = isLightMode ? 'bg-[#e4e0d7]' : 'bg-white/[0.07]';
 
   return (
     <div className="flex-1 flex flex-col h-full bg-inherit relative overflow-hidden">
-      {/* Top Details & Markdown Toggle Bar */}
+      {/* Top Formatting & View Mode Sub-Bar */}
       <div
-        className={`flex items-center justify-between px-6 py-2 border-b ${subBarBorder} bg-inherit select-none text-xs`}
+        className={`flex items-center justify-between px-4 md:px-6 py-1.5 border-b ${subBarBorder} bg-inherit select-none text-xs`}
       >
-        <div className="flex items-center gap-2 text-neutral-400 text-[11px]">
-          <span className="opacity-75">{rawMarkdownMode ? 'Markdown Source' : 'Live Preview'}</span>
-          {note.tags.length > 0 && (
-            <div className="flex items-center gap-1.5 ml-2">
-              {note.tags.map((t) => (
-                <span
-                  key={t}
-                  className={`px-1.5 py-0.5 rounded-md border text-[10px] ${tagBg}`}
-                >
-                  #{t}
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
+        {/* Left Side: Formatting Toolbar in Live Preview, or Clean Label in Raw Mode */}
+        {!rawMarkdownMode ? (
+          <div className="flex items-center gap-1 overflow-x-auto scrollbar-none py-0.5 text-neutral-400">
+            {/* Quick Punctuation */}
+            <button
+              type="button"
+              onClick={() => insertPair('“', '”')}
+              className={`rounded-md px-1.5 py-0.5 text-xs transition ${btnHover}`}
+              title="Smart double quotes"
+            >
+              “”
+            </button>
+            <button
+              type="button"
+              onClick={() => insertPair('‘', '’')}
+              className={`rounded-md px-1.5 py-0.5 text-xs transition ${btnHover}`}
+              title="Smart single quotes"
+            >
+              ‘’
+            </button>
+            <button
+              type="button"
+              onClick={() => insertPair('— ', ' ')}
+              className={`rounded-md px-1.5 py-0.5 text-xs transition ${btnHover}`}
+              title="Em dash"
+            >
+              —
+            </button>
+            <button
+              type="button"
+              onClick={() => insertPair('(', ')')}
+              className={`rounded-md px-1.5 py-0.5 text-[11px] transition ${btnHover}`}
+              title="Parentheses"
+            >
+              ( )
+            </button>
+            <button
+              type="button"
+              onClick={() => insertPair('[', ']')}
+              className={`rounded-md px-1.5 py-0.5 text-[11px] transition ${btnHover}`}
+              title="Brackets"
+            >
+              [ ]
+            </button>
 
-        <div className="flex items-center gap-1.5">
-          <button
-            type="button"
-            onClick={handleDownloadMarkdown}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] transition text-neutral-400 ${btnHover}`}
-            title="Download note as a Markdown (.md) file"
-          >
-            <Download className="h-3 w-3" />
-            <span>Download .md</span>
-          </button>
+            <div className={`mx-1.5 h-3.5 w-px ${divider}`} />
+
+            {/* Headings */}
+            <button
+              type="button"
+              onClick={() => editor?.chain().focus().toggleHeading({ level: 1 }).run()}
+              className={`rounded-md p-1.5 transition ${
+                editor?.isActive('heading', { level: 1 }) ? activeBtn : btnHover
+              }`}
+              title="Heading 1"
+            >
+              <Heading1 className="h-3.5 w-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => editor?.chain().focus().toggleHeading({ level: 2 }).run()}
+              className={`rounded-md p-1.5 transition ${
+                editor?.isActive('heading', { level: 2 }) ? activeBtn : btnHover
+              }`}
+              title="Heading 2"
+            >
+              <Heading2 className="h-3.5 w-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => editor?.chain().focus().toggleHeading({ level: 3 }).run()}
+              className={`rounded-md p-1.5 transition ${
+                editor?.isActive('heading', { level: 3 }) ? activeBtn : btnHover
+              }`}
+              title="Heading 3"
+            >
+              <Heading3 className="h-3.5 w-3.5" />
+            </button>
+
+            <div className={`mx-1.5 h-3.5 w-px ${divider}`} />
+
+            {/* Basic Styling */}
+            <button
+              type="button"
+              onClick={() => editor?.chain().focus().toggleBold().run()}
+              className={`rounded-md p-1.5 transition ${editor?.isActive('bold') ? activeBtn : btnHover}`}
+              title="Bold (Ctrl+B)"
+            >
+              <Bold className="h-3.5 w-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => editor?.chain().focus().toggleItalic().run()}
+              className={`rounded-md p-1.5 transition ${editor?.isActive('italic') ? activeBtn : btnHover}`}
+              title="Italic (Ctrl+I)"
+            >
+              <Italic className="h-3.5 w-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => editor?.chain().focus().toggleBlockquote().run()}
+              className={`rounded-md p-1.5 transition ${
+                editor?.isActive('blockquote') ? activeBtn : btnHover
+              }`}
+              title="Blockquote"
+            >
+              <Quote className="h-3.5 w-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => editor?.chain().focus().toggleBulletList().run()}
+              className={`rounded-md p-1.5 transition ${
+                editor?.isActive('bulletList') ? activeBtn : btnHover
+              }`}
+              title="Bullet List"
+            >
+              <List className="h-3.5 w-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={insertWikilink}
+              className={`rounded-md p-1.5 transition ${btnHover}`}
+              title="Wikilink [[Note]]"
+            >
+              <Link2 className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 text-neutral-400 text-[11px]">
+            <Code className="h-3.5 w-3.5 opacity-60" />
+            <span className="opacity-75 font-sans">Raw Markdown Editor</span>
+          </div>
+        )}
+
+        {/* Right Side: Download .md (Only in Raw Markdown mode) & Mode Toggle */}
+        <div className="flex items-center gap-1.5 shrink-0">
+          {rawMarkdownMode && (
+            <button
+              type="button"
+              onClick={handleDownloadMarkdown}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] transition text-neutral-400 ${btnHover}`}
+              title="Download note as a Markdown (.md) file"
+            >
+              <Download className="h-3 w-3" />
+              <span>Download .md</span>
+            </button>
+          )}
 
           <button
             type="button"
@@ -343,7 +524,7 @@ export const Editor: React.FC<EditorProps> = ({
           lineHeight: settings.lineHeight,
         }}
       >
-        <div className="max-w-[72ch] mx-auto space-y-7">
+        <div className="max-w-[72ch] mx-auto space-y-5">
           {/* Note Title */}
           <input
             ref={titleInputRef}
@@ -355,6 +536,63 @@ export const Editor: React.FC<EditorProps> = ({
               settings.fontFamily === 'serif' ? 'font-serif text-3xl md:text-4xl' : 'font-sans text-2xl md:text-3xl'
             }`}
           />
+
+          {/* Interactive Document Tags Strip */}
+          <div className="flex items-center gap-1.5 flex-wrap -mt-2 pb-2 select-none">
+            {note.tags.map((tag) => (
+              <span
+                key={tag}
+                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] border transition ${
+                  isLightMode
+                    ? 'bg-black/[0.03] border-black/[0.07] text-[#555]'
+                    : 'bg-white/[0.04] border-white/[0.07] text-[#aaa]'
+                }`}
+              >
+                <Tag className="h-2.5 w-2.5 opacity-40" />
+                <span>#{tag}</span>
+                <button
+                  type="button"
+                  onClick={() => handleRemoveTag(tag)}
+                  className="opacity-40 hover:opacity-100 p-0.5 ml-0.5 rounded transition"
+                  title={`Remove #${tag}`}
+                >
+                  <X className="h-2.5 w-2.5" />
+                </button>
+              </span>
+            ))}
+
+            {isAddingTag ? (
+              <input
+                type="text"
+                value={newTagInput}
+                onChange={(e) => setNewTagInput(e.target.value)}
+                onBlur={handleAddTagSubmit}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleAddTagSubmit();
+                  if (e.key === 'Escape') setIsAddingTag(false);
+                }}
+                placeholder="tag name..."
+                autoFocus
+                className={`rounded px-2 py-0.5 text-[11px] outline-none border ${
+                  isLightMode
+                    ? 'bg-white border-black/20 text-[#2c2a27]'
+                    : 'bg-black/40 border-white/20 text-[#dedad4]'
+                }`}
+              />
+            ) : (
+              <button
+                type="button"
+                onClick={() => setIsAddingTag(true)}
+                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] opacity-40 hover:opacity-80 transition border border-dashed ${
+                  isLightMode ? 'border-black/20' : 'border-white/20'
+                }`}
+                title="Add tag to note"
+              >
+                <Plus className="h-2.5 w-2.5" />
+                <span>Tag</span>
+              </button>
+            )}
+          </div>
 
           {rawMarkdownMode ? (
             <div className="space-y-2 pt-2">
@@ -377,9 +615,10 @@ export const Editor: React.FC<EditorProps> = ({
         </div>
       </div>
 
-      {/* Accessory Bar */}
+      {/* Unified Bottom Accessory & Status Bar */}
       <AccessoryBar
         editor={editor}
+        note={note}
         onOpenHistory={() => setShowHistoryModal(true)}
         typewriterMode={settings.typewriterMode}
         onToggleTypewriter={onToggleTypewriter}

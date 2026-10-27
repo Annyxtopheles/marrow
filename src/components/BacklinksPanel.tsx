@@ -58,7 +58,7 @@ export const BacklinksPanel: React.FC<BacklinksPanelProps> = ({
       <div className={`flex items-center justify-between border-b ${border} px-3 py-2.5`}>
         <div className="flex items-center gap-1.5 font-medium text-inherit">
           <Link2 className="h-4 w-4 opacity-70" />
-          <span>Obsidian Knowledge Graph</span>
+          <span>Knowledge Graph</span>
         </div>
       </div>
 

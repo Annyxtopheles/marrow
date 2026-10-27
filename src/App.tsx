@@ -5,7 +5,6 @@ import { Sidebar } from './components/Sidebar';
 import { Editor } from './components/Editor';
 import { TimeJotPanel } from './components/TimeJotPanel';
 import { BacklinksPanel } from './components/BacklinksPanel';
-import { StatsBar } from './components/StatsBar';
 import { SettingsModal } from './components/SettingsModal';
 import { SyncModal } from './components/SyncModal';
 import { PanelLeftClose, PanelLeft, Clock, Link2, Plus, Cloud, RotateCcw, X } from 'lucide-react';
@@ -689,10 +688,10 @@ export function App() {
               className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] transition ${
                 isBacklinksOpen ? activeBtn : `${buttonHover} text-neutral-400`
               }`}
-              title="Obsidian Knowledge Graph & Links"
+              title="Knowledge Graph & Backlinks"
             >
               <Link2 className="h-3 w-3" />
-              <span>Links</span>
+              <span>Graph</span>
             </button>
 
             <button
@@ -727,10 +726,6 @@ export function App() {
             onMoveNote={handleMoveNote}
             onDuplicateNote={handleDuplicateNote}
             onOpenSettings={() => setIsSettingsOpen(true)}
-            onToggleTimeJot={() => setIsTimeJotOpen(!isTimeJotOpen)}
-            isTimeJotOpen={isTimeJotOpen}
-            onToggleBacklinks={() => setIsBacklinksOpen(!isBacklinksOpen)}
-            isBacklinksOpen={isBacklinksOpen}
             isLightMode={isLightMode}
           />
         )}
@@ -795,11 +790,6 @@ export function App() {
           />
         )}
       </div>
-
-      {/* PureWriter Live Statistics Bar */}
-      {!settings.focusMode && (
-        <StatsBar note={activeNote} saveStatus={saveStatus} isLightMode={isLightMode} />
-      )}
 
       {/* Settings Modal */}
       {isSettingsOpen && (
