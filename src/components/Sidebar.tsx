@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import type { Note, Folder } from '../types';
+import type { Note, Folder, ThemeMode } from '../types';
 import {
   Folder as FolderIcon,
   FolderPlus,
@@ -62,6 +62,7 @@ interface SidebarProps {
   onDuplicateNote?: (note: Note) => void;
   onOpenSettings: () => void;
   isLightMode: boolean;
+  theme?: ThemeMode;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -80,6 +81,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onDuplicateNote,
   onOpenSettings,
   isLightMode,
+  theme,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
@@ -272,10 +274,40 @@ export const Sidebar: React.FC<SidebarProps> = ({
     setContextMenu({ x: e.clientX, y: e.clientY, items });
   };
 
-  const borderColor = isLightMode ? 'border-[#e4e0d7]' : 'border-white/[0.08]';
-  const sidebarBg = isLightMode ? 'bg-[#f4f1ea]' : 'bg-[#131416]';
+  const borderColor = theme === 'sakura'
+    ? 'border-[#e5e7eb]'
+    : theme === 'sepia'
+    ? 'border-[#e7ddce]'
+    : theme === 'nordic'
+    ? 'border-sky-500/15'
+    : theme === 'evergreen'
+    ? 'border-emerald-500/15'
+    : isLightMode
+    ? 'border-[#e4e0d7]'
+    : 'border-white/[0.08]';
+
+  const sidebarBg = theme === 'sakura'
+    ? 'bg-[#fafafc]'
+    : theme === 'sepia'
+    ? 'bg-[#f5eedd]'
+    : theme === 'nordic'
+    ? 'bg-[#111722]'
+    : theme === 'evergreen'
+    ? 'bg-[#0f1a14]'
+    : isLightMode
+    ? 'bg-[#f4f1ea]'
+    : 'bg-[#131416]';
+
   const itemHover = isLightMode ? 'hover:bg-black/[0.04]' : 'hover:bg-white/[0.05]';
-  const activeItem = isLightMode
+  const activeItem = theme === 'nordic'
+    ? 'bg-sky-500/15 text-sky-200 font-semibold border-l-2 border-sky-400 pl-1.5'
+    : theme === 'sakura'
+    ? 'bg-rose-500/10 text-rose-900 font-semibold border-l-2 border-rose-500 pl-1.5'
+    : theme === 'sepia'
+    ? 'bg-amber-600/15 text-amber-950 font-semibold border-l-2 border-amber-600 pl-1.5'
+    : theme === 'evergreen'
+    ? 'bg-emerald-500/15 text-emerald-200 font-semibold border-l-2 border-emerald-400 pl-1.5'
+    : isLightMode
     ? 'bg-black/[0.06] text-[#1c1a17] font-semibold'
     : 'bg-white/[0.08] text-[#f5f2eb] font-semibold';
   const baseTextColor = isLightMode ? 'text-[#383531]' : 'text-[#c5c1ba]';
@@ -380,6 +412,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <div key={folder.id} className="space-y-0.5">
               <div
                 onClick={() => toggleFolder(folder.id)}
+                onDoubleClick={(e) => {
+                  e.stopPropagation();
+                  setRenamingFolderId(folder.id);
+                  setEditingFolderName(folder.name);
+                }}
                 onContextMenu={(e) => handleFolderContextMenu(e, folder)}
                 className={`flex items-center justify-between px-2 py-1.5 rounded-md cursor-pointer group transition ${itemHover}`}
               >
@@ -400,6 +437,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         if (e.key === 'Enter') handleFinishRenameFolder(folder.id);
                         if (e.key === 'Escape') setRenamingFolderId(null);
                       }}
+                      onFocus={(e) => e.currentTarget.select()}
                       onClick={(e) => e.stopPropagation()}
                       autoFocus
                       className={`w-full rounded px-1.5 py-0.5 text-xs outline-none border ${
@@ -409,7 +447,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       }`}
                     />
                   ) : (
-                    <span className={`truncate font-medium ${folderText}`}>{folder.name}</span>
+                    <span
+                      onDoubleClick={(e) => {
+                        e.stopPropagation();
+                        setRenamingFolderId(folder.id);
+                        setEditingFolderName(folder.name);
+                      }}
+                      className={`truncate font-medium ${folderText}`}
+                      title="Double-click to rename"
+                    >
+                      {folder.name}
+                    </span>
                   )}
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
@@ -440,6 +488,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       <div
                         key={note.id}
                         onClick={() => renamingNoteId !== note.id && onSelectNote(note)}
+                        onDoubleClick={(e) => {
+                          e.stopPropagation();
+                          setRenamingNoteId(note.id);
+                          setEditingTitle(note.title || 'Untitled');
+                        }}
                         onContextMenu={(e) => handleNoteContextMenu(e, note)}
                         className={`group flex items-center justify-between px-2 py-1.5 rounded-md cursor-pointer transition ${
                           isActive ? activeItem : itemHover
@@ -456,6 +509,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                 if (e.key === 'Enter') handleFinishRenameNote(note.id);
                                 if (e.key === 'Escape') setRenamingNoteId(null);
                               }}
+                              onFocus={(e) => e.currentTarget.select()}
                               onClick={(e) => e.stopPropagation()}
                               autoFocus
                               className={`w-full rounded px-1.5 py-0.5 text-xs outline-none border ${
@@ -465,7 +519,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
                               }`}
                             />
                           ) : (
-                            <span className={`truncate ${isActive ? 'font-semibold' : inactiveNoteText}`}>{note.title || 'Untitled'}</span>
+                            <span
+                              onDoubleClick={(e) => {
+                                e.stopPropagation();
+                                setRenamingNoteId(note.id);
+                                setEditingTitle(note.title || 'Untitled');
+                              }}
+                              className={`truncate ${isActive ? 'font-semibold' : inactiveNoteText}`}
+                              title="Double-click to rename"
+                            >
+                              {note.title || 'Untitled'}
+                            </span>
                           )}
                         </div>
                         <div className="flex items-center gap-1 shrink-0">
@@ -524,6 +588,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <div
                 key={note.id}
                 onClick={() => renamingNoteId !== note.id && onSelectNote(note)}
+                onDoubleClick={(e) => {
+                  e.stopPropagation();
+                  setRenamingNoteId(note.id);
+                  setEditingTitle(note.title || 'Untitled');
+                }}
                 onContextMenu={(e) => handleNoteContextMenu(e, note)}
                 className={`group flex items-center justify-between px-2.5 py-1.5 rounded-md cursor-pointer transition ${
                   isActive ? activeItem : itemHover
@@ -540,6 +609,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         if (e.key === 'Enter') handleFinishRenameNote(note.id);
                         if (e.key === 'Escape') setRenamingNoteId(null);
                       }}
+                      onFocus={(e) => e.currentTarget.select()}
                       onClick={(e) => e.stopPropagation()}
                       autoFocus
                       className={`w-full rounded px-1.5 py-0.5 text-xs outline-none border ${
@@ -549,7 +619,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       }`}
                     />
                   ) : (
-                    <span className={`truncate ${isActive ? 'font-semibold' : inactiveNoteText}`}>{note.title || 'Untitled'}</span>
+                    <span
+                      onDoubleClick={(e) => {
+                        e.stopPropagation();
+                        setRenamingNoteId(note.id);
+                        setEditingTitle(note.title || 'Untitled');
+                      }}
+                      className={`truncate ${isActive ? 'font-semibold' : inactiveNoteText}`}
+                      title="Double-click to rename"
+                    >
+                      {note.title || 'Untitled'}
+                    </span>
                   )}
                 </div>
                 <div className="flex items-center gap-1 shrink-0">

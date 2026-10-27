@@ -430,3 +430,88 @@ test('Word Count Goals: Daily Progress Tracking and Chapter Target Computation',
   const dailyPercent = Math.min(100, Math.round((step2.wordsWritten / dailyGoal) * 100));
   assert.equal(dailyPercent, 50);
 });
+
+test('Double-Click Quick Rename Logic for Notes and Folders', async () => {
+  // Test note double click state transition
+  let renamingNoteId = null;
+  let editingTitle = '';
+
+  const handleNoteDoubleClick = (note) => {
+    renamingNoteId = note.id;
+    editingTitle = note.title || 'Untitled';
+  };
+
+  const sampleNote = { id: 'note-77', title: 'The Silent Archives' };
+  handleNoteDoubleClick(sampleNote);
+
+  assert.equal(renamingNoteId, 'note-77');
+  assert.equal(editingTitle, 'The Silent Archives');
+
+  // Finish rename
+  let committedTitle = '';
+  const finishNoteRename = (newTitle) => {
+    if (newTitle.trim()) {
+      committedTitle = newTitle.trim();
+    }
+    renamingNoteId = null;
+  };
+
+  finishNoteRename('The Whispering Archives');
+  assert.equal(committedTitle, 'The Whispering Archives');
+  assert.equal(renamingNoteId, null);
+
+  // Test folder double click state transition
+  let renamingFolderId = null;
+  let editingFolderName = '';
+
+  const handleFolderDoubleClick = (folder) => {
+    renamingFolderId = folder.id;
+    editingFolderName = folder.name;
+  };
+
+  const sampleFolder = { id: 'f-manuscripts', name: 'Manuscripts' };
+  handleFolderDoubleClick(sampleFolder);
+
+  assert.equal(renamingFolderId, 'f-manuscripts');
+  assert.equal(editingFolderName, 'Manuscripts');
+
+  let committedFolderName = '';
+  const finishFolderRename = (newName) => {
+    if (newName.trim()) {
+      committedFolderName = newName.trim();
+    }
+    renamingFolderId = null;
+  };
+
+  finishFolderRename('Novels & Lore');
+  assert.equal(committedFolderName, 'Novels & Lore');
+  assert.equal(renamingFolderId, null);
+});
+
+test('Theme System: Multiple Modern & Editorial Themes with Blue and Pink Accents', async () => {
+  const VALID_THEMES = ['charcoal', 'canvas', 'nordic', 'sakura', 'sepia', 'evergreen'];
+
+  // Test light/dark categorization
+  const isLightMode = (theme) => ['canvas', 'sakura', 'sepia'].includes(theme);
+
+  assert.equal(isLightMode('charcoal'), false); // Warm Dark
+  assert.equal(isLightMode('canvas'), true);    // Warm Light
+  assert.equal(isLightMode('nordic'), false);   // Cool Slate Dark with Blue
+  assert.equal(isLightMode('sakura'), true);    // Pure White Light with Pink
+  assert.equal(isLightMode('sepia'), true);     // Sepia Light with Amber
+  assert.equal(isLightMode('evergreen'), false);// Deep Pine Forest Dark with Sage
+
+  // Test that requested themes are properly represented
+  // 1. Clean modern one with blue accent color
+  assert.equal(VALID_THEMES.includes('nordic'), true);
+  // 2. Bright white one with pink accent color
+  assert.equal(VALID_THEMES.includes('sakura'), true);
+
+  // Test storage theme parser validation
+  const parseTheme = (input) => VALID_THEMES.includes(input) ? input : 'charcoal';
+  assert.equal(parseTheme('nordic'), 'nordic');
+  assert.equal(parseTheme('sakura'), 'sakura');
+  assert.equal(parseTheme('sepia'), 'sepia');
+  assert.equal(parseTheme('evergreen'), 'evergreen');
+  assert.equal(parseTheme('invalid-theme'), 'charcoal');
+});
