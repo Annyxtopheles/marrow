@@ -195,7 +195,7 @@ export const HistorySliderModal: React.FC<HistorySliderModalProps> = ({
                             : StorageService.formatInterval(rec.timestamp)}
                         </span>
                       </span>
-                      <span className="text-[10px] font-mono opacity-60">
+                      <span className="text-[10px] tabular-nums opacity-60">
                         {rec.wordCount} words
                       </span>
                     </div>

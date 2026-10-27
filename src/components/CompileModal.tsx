@@ -359,7 +359,7 @@ export const CompileModal: React.FC<CompileModalProps> = ({
               </div>
               <div className="flex items-center justify-between">
                 <span className="opacity-60">Total Words:</span>
-                <span className="font-semibold font-mono">{totalWords.toLocaleString()}</span>
+                <span className="font-semibold tabular-nums">{totalWords.toLocaleString()}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="opacity-60">Est. Read Time:</span>
@@ -372,7 +372,7 @@ export const CompileModal: React.FC<CompileModalProps> = ({
           <div className={`flex-1 flex flex-col overflow-hidden ${previewBg}`}>
             <div className={`px-5 py-2.5 border-b ${border} flex items-center justify-between text-xs opacity-75 shrink-0`}>
               <span className="font-medium">Live Manuscript Preview</span>
-              <span className="font-mono text-[11px] opacity-60">
+              <span className="tabular-nums text-[11px] opacity-60">
                 {selectedNotes.length} chapters • {totalWords.toLocaleString()} words
               </span>
             </div>

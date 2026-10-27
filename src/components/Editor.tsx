@@ -424,8 +424,6 @@ export const Editor: React.FC<EditorProps> = ({
   const fontClass =
     settings.fontFamily === 'serif'
       ? 'font-serif'
-      : settings.fontFamily === 'mono'
-      ? 'font-mono'
       : settings.fontFamily === 'brutalist'
       ? 'font-brutalist'
       : 'font-sans';
@@ -752,8 +750,6 @@ export const Editor: React.FC<EditorProps> = ({
                 ? 'font-serif text-3xl md:text-4xl'
                 : settings.fontFamily === 'brutalist'
                 ? 'font-brutalist text-3xl md:text-4xl tracking-tight'
-                : settings.fontFamily === 'mono'
-                ? 'font-mono text-2xl md:text-3xl'
                 : 'font-sans text-2xl md:text-3xl'
             }`}
           />

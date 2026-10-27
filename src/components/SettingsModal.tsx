@@ -111,12 +111,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             <label className="text-[11px] uppercase tracking-wider opacity-60 block">
               Editorial Typeface
             </label>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-2.5">
               {[
                 {
                   id: 'serif',
-                  name: 'Newsreader Serif',
-                  sub: 'Modern Editorial',
+                  name: 'Newsreader',
+                  sub: 'Editorial Serif',
                   font: 'var(--font-serif)',
                 },
                 {
@@ -130,12 +130,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   name: 'Space Grotesk',
                   sub: 'Brutalist Raw',
                   font: 'var(--font-brutalist)',
-                },
-                {
-                  id: 'mono',
-                  name: 'Space Mono',
-                  sub: 'Typewriter Zine',
-                  font: 'var(--font-mono)',
                 },
               ].map((f) => (
                 <button
