@@ -108,7 +108,7 @@ export const Editor: React.FC<EditorProps> = ({
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const dictationRef = useRef<DictationService | null>(null);
-  const titleInputRef = useRef<HTMLInputElement>(null);
+  const titleHeadingRef = useRef<HTMLHeadingElement>(null);
   const editorContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -334,12 +334,33 @@ export const Editor: React.FC<EditorProps> = ({
     };
   }, [editor, settings.typewriterMode]);
 
-  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  useEffect(() => {
+    if (titleHeadingRef.current && titleHeadingRef.current.innerText !== (note.title || '')) {
+      titleHeadingRef.current.innerText = note.title || '';
+    }
+  }, [note.id, note.title]);
+
+  const handleTitleInput = (e: React.FormEvent<HTMLHeadingElement>) => {
+    const rawText = e.currentTarget.innerText || '';
+    const cleanTitle = rawText.replace(/\r?\n/g, ' ');
     onUpdateNote({
       ...note,
-      title: e.target.value,
+      title: cleanTitle,
       updatedAt: Date.now(),
     });
+  };
+
+  const handleTitleKeyDown = (e: React.KeyboardEvent<HTMLHeadingElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      editor?.commands.focus('start');
+    }
+  };
+
+  const handleTitlePaste = (e: React.ClipboardEvent<HTMLHeadingElement>) => {
+    e.preventDefault();
+    const text = e.clipboardData.getData('text/plain').replace(/\r?\n/g, ' ');
+    document.execCommand('insertText', false, text);
   };
 
   const handleInsertTimestamp = () => {
@@ -359,6 +380,9 @@ export const Editor: React.FC<EditorProps> = ({
     if (editor) {
       editor.commands.setContent(restoredContent);
     }
+    if (titleHeadingRef.current) {
+      titleHeadingRef.current.innerText = restoredTitle;
+    }
     const text = restoredContent.replace(/<[^>]+>/g, ' ');
     const words = text.trim() ? text.trim().split(/\s+/).length : 0;
     onUpdateNote({
@@ -376,8 +400,8 @@ export const Editor: React.FC<EditorProps> = ({
 
     const target = e.target as HTMLElement;
 
-    // Do nothing if clicking on inputs, textareas, or buttons
-    if (target === titleInputRef.current || target.closest('input, button, textarea')) {
+    // Do nothing if clicking on inputs, textareas, buttons, or the title heading
+    if (target === titleHeadingRef.current || target.closest('input, button, textarea, h1')) {
       return;
     }
 
@@ -725,34 +749,40 @@ export const Editor: React.FC<EditorProps> = ({
         }}
       >
         <div className="max-w-[72ch] mx-auto space-y-5">
-          {/* Note Title */}
-          <input
-            ref={titleInputRef}
-            type="text"
-            placeholder="Untitled Document..."
-            value={note.title}
-            onChange={handleTitleChange}
-            data-zoho-ignore="true"
-            data-lpignore="true"
-            data-1p-ignore="true"
-            data-bwignore="true"
-            data-form-type="other"
-            data-dashlane-ignore="true"
-            data-protonpass-ignore="true"
-            name="marrow-manuscript-title"
-            id="marrow-manuscript-title"
-            autoComplete="off"
-            autoCorrect="off"
-            autoCapitalize="words"
-            spellCheck={false}
-            className={`w-full bg-transparent font-medium tracking-tight placeholder-neutral-500/50 focus:outline-none transition-all ${
-              settings.fontFamily === 'serif'
-                ? 'font-serif text-3xl md:text-4xl'
-                : settings.fontFamily === 'brutalist'
-                ? 'font-brutalist text-3xl md:text-4xl tracking-tight'
-                : 'font-sans text-2xl md:text-3xl'
-            }`}
-          />
+          {/* Note Title (ContentEditable heading - immune to password manager injections like Zoho Vault) */}
+          <div className="relative">
+            <h1
+              ref={titleHeadingRef}
+              contentEditable
+              suppressContentEditableWarning
+              role="textbox"
+              aria-label="Document Title"
+              onInput={handleTitleInput}
+              onKeyDown={handleTitleKeyDown}
+              onPaste={handleTitlePaste}
+              className={`w-full bg-transparent font-medium tracking-tight focus:outline-none transition-all cursor-text min-h-[1.25em] ${
+                settings.fontFamily === 'serif'
+                  ? 'font-serif text-3xl md:text-4xl'
+                  : settings.fontFamily === 'brutalist'
+                  ? 'font-brutalist text-3xl md:text-4xl tracking-tight'
+                  : 'font-sans text-2xl md:text-3xl'
+              }`}
+            />
+            {(!note.title || note.title.trim() === '') && (
+              <div
+                onClick={() => titleHeadingRef.current?.focus()}
+                className={`absolute left-0 top-0 pointer-events-none opacity-40 select-none font-medium tracking-tight ${
+                  settings.fontFamily === 'serif'
+                    ? 'font-serif text-3xl md:text-4xl'
+                    : settings.fontFamily === 'brutalist'
+                    ? 'font-brutalist text-3xl md:text-4xl tracking-tight'
+                    : 'font-sans text-2xl md:text-3xl'
+                }`}
+              >
+                Untitled Document...
+              </div>
+            )}
+          </div>
 
           {/* Optional Document Metadata & Tags (Only displayed when toggled via Tag icon) */}
           {isAddingTag && (
