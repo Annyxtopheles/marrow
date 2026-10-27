@@ -70,6 +70,7 @@ interface EditorProps {
   note: Note;
   settings: EditorSettings;
   onUpdateNote: (updated: Note) => void;
+  onUpdateTags?: (noteId: string, newTags: string[]) => void;
   onNavigateToTitle: (title: string) => void;
   saveStatus: 'saved' | 'saving';
   onToggleTypewriter: () => void;
@@ -81,6 +82,7 @@ export const Editor: React.FC<EditorProps> = ({
   note,
   settings,
   onUpdateNote,
+  onUpdateTags,
   onNavigateToTitle,
   saveStatus,
   onToggleTypewriter,
@@ -312,22 +314,32 @@ export const Editor: React.FC<EditorProps> = ({
   const handleAddTagSubmit = () => {
     const clean = newTagInput.trim().toLowerCase().replace(/^#/, '');
     if (clean && !note.tags.includes(clean)) {
-      onUpdateNote({
-        ...note,
-        tags: [...note.tags, clean],
-        updatedAt: Date.now(),
-      });
+      const nextTags = [...note.tags, clean];
+      if (onUpdateTags) {
+        onUpdateTags(note.id, nextTags);
+      } else {
+        onUpdateNote({
+          ...note,
+          tags: nextTags,
+          updatedAt: Date.now(),
+        });
+      }
     }
     setNewTagInput('');
     setIsAddingTag(false);
   };
 
   const handleRemoveTag = (tagToRemove: string) => {
-    onUpdateNote({
-      ...note,
-      tags: note.tags.filter((t) => t !== tagToRemove),
-      updatedAt: Date.now(),
-    });
+    const nextTags = note.tags.filter((t) => t !== tagToRemove);
+    if (onUpdateTags) {
+      onUpdateTags(note.id, nextTags);
+    } else {
+      onUpdateNote({
+        ...note,
+        tags: nextTags,
+        updatedAt: Date.now(),
+      });
+    }
   };
 
   const fontClass =

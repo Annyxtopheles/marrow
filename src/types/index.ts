@@ -80,14 +80,46 @@ export type VaultAction =
       previousActiveNoteId: string | null;
     }
   | {
+      type: 'DUPLICATE_NOTE';
+      noteId: string;
+      note: Note;
+      previousActiveNoteId: string | null;
+    }
+  | {
       type: 'TOGGLE_PIN';
       noteId: string;
       noteTitle: string;
       previousPinned: boolean;
     }
   | {
+      type: 'RENAME_NOTE';
+      noteId: string;
+      previousTitle: string;
+      newTitle: string;
+    }
+  | {
+      type: 'MOVE_NOTE';
+      noteId: string;
+      noteTitle: string;
+      previousFolderId: string | null;
+      newFolderId: string | null;
+    }
+  | {
+      type: 'UPDATE_TAGS';
+      noteId: string;
+      noteTitle: string;
+      previousTags: string[];
+      newTags: string[];
+    }
+  | {
       type: 'CREATE_FOLDER';
       folder: Folder;
+    }
+  | {
+      type: 'RENAME_FOLDER';
+      folderId: string;
+      previousName: string;
+      newName: string;
     }
   | {
       type: 'DELETE_FOLDER';

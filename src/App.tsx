@@ -29,6 +29,8 @@ export function App() {
   // Vault Undo/Redo & Toast System
   const [undoStack, setUndoStack] = useState<VaultAction[]>([]);
   const [redoStack, setRedoStack] = useState<VaultAction[]>([]);
+  const undoRef = useRef<() => void>(() => {});
+  const redoRef = useRef<() => void>(() => {});
   const [toast, setToast] = useState<ToastNotification | null>(null);
   const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -123,8 +125,10 @@ export function App() {
       showToast({
         id: `toast-${Date.now()}`,
         message: `Restored "${action.note.title || 'Untitled Document'}"`,
+        actionLabel: 'Redo',
+        onAction: () => redoRef.current(),
       });
-    } else if (action.type === 'CREATE_NOTE') {
+    } else if (action.type === 'CREATE_NOTE' || action.type === 'DUPLICATE_NOTE') {
       const nextNotes = notes.filter((n) => n.id !== action.noteId);
       setNotes(nextNotes);
       StorageService.saveNotes(nextNotes);
@@ -140,7 +144,12 @@ export function App() {
 
       showToast({
         id: `toast-${Date.now()}`,
-        message: 'Removed created document',
+        message:
+          action.type === 'DUPLICATE_NOTE'
+            ? `Removed duplicate "${action.note.title}"`
+            : 'Removed created document',
+        actionLabel: 'Redo',
+        onAction: () => redoRef.current(),
       });
     } else if (action.type === 'TOGGLE_PIN') {
       const nextNotes = notes.map((n) =>
@@ -155,6 +164,58 @@ export function App() {
       showToast({
         id: `toast-${Date.now()}`,
         message: `${action.previousPinned ? 'Pinned' : 'Unpinned'} "${action.noteTitle}"`,
+        actionLabel: 'Redo',
+        onAction: () => redoRef.current(),
+      });
+    } else if (action.type === 'RENAME_NOTE') {
+      const nextNotes = notes.map((n) =>
+        n.id === action.noteId ? { ...n, title: action.previousTitle, updatedAt: Date.now() } : n
+      );
+      setNotes(nextNotes);
+      StorageService.saveNotes(nextNotes);
+
+      setUndoStack(restUndo);
+      setRedoStack((prev) => [action, ...prev]);
+
+      showToast({
+        id: `toast-${Date.now()}`,
+        message: `Reverted note title to "${action.previousTitle}"`,
+        actionLabel: 'Redo',
+        onAction: () => redoRef.current(),
+      });
+    } else if (action.type === 'MOVE_NOTE') {
+      const nextNotes = notes.map((n) =>
+        n.id === action.noteId ? { ...n, folderId: action.previousFolderId, updatedAt: Date.now() } : n
+      );
+      setNotes(nextNotes);
+      StorageService.saveNotes(nextNotes);
+
+      setUndoStack(restUndo);
+      setRedoStack((prev) => [action, ...prev]);
+
+      const prevFolder = folders.find((f) => f.id === action.previousFolderId);
+      const folderName = prevFolder ? prevFolder.name : 'General';
+      showToast({
+        id: `toast-${Date.now()}`,
+        message: `Moved "${action.noteTitle}" back to ${folderName}`,
+        actionLabel: 'Redo',
+        onAction: () => redoRef.current(),
+      });
+    } else if (action.type === 'UPDATE_TAGS') {
+      const nextNotes = notes.map((n) =>
+        n.id === action.noteId ? { ...n, tags: action.previousTags, updatedAt: Date.now() } : n
+      );
+      setNotes(nextNotes);
+      StorageService.saveNotes(nextNotes);
+
+      setUndoStack(restUndo);
+      setRedoStack((prev) => [action, ...prev]);
+
+      showToast({
+        id: `toast-${Date.now()}`,
+        message: `Reverted tags for "${action.noteTitle}"`,
+        actionLabel: 'Redo',
+        onAction: () => redoRef.current(),
       });
     } else if (action.type === 'CREATE_FOLDER') {
       const nextFolders = folders.filter((f) => f.id !== action.folder.id);
@@ -173,6 +234,24 @@ export function App() {
       showToast({
         id: `toast-${Date.now()}`,
         message: `Removed folder "${action.folder.name}"`,
+        actionLabel: 'Redo',
+        onAction: () => redoRef.current(),
+      });
+    } else if (action.type === 'RENAME_FOLDER') {
+      const nextFolders = folders.map((f) =>
+        f.id === action.folderId ? { ...f, name: action.previousName } : f
+      );
+      setFolders(nextFolders);
+      StorageService.saveFolders(nextFolders);
+
+      setUndoStack(restUndo);
+      setRedoStack((prev) => [action, ...prev]);
+
+      showToast({
+        id: `toast-${Date.now()}`,
+        message: `Reverted folder name to "${action.previousName}"`,
+        actionLabel: 'Redo',
+        onAction: () => redoRef.current(),
       });
     } else if (action.type === 'DELETE_FOLDER') {
       const nextFolders = [...folders, action.folder];
@@ -192,6 +271,8 @@ export function App() {
       showToast({
         id: `toast-${Date.now()}`,
         message: `Restored folder "${action.folder.name}"`,
+        actionLabel: 'Redo',
+        onAction: () => redoRef.current(),
       });
     }
   }, [undoStack, notes, folders]);
@@ -218,10 +299,10 @@ export function App() {
         message: `Deleted "${action.note.title || 'Untitled Document'}"`,
         actionLabel: 'Undo',
         undoHint: true,
-        onAction: handleUndo,
+        onAction: () => undoRef.current(),
       });
-    } else if (action.type === 'CREATE_NOTE') {
-      const nextNotes = [action.note, ...notes];
+    } else if (action.type === 'CREATE_NOTE' || action.type === 'DUPLICATE_NOTE') {
+      const nextNotes = [action.note, ...notes.filter((n) => n.id !== action.note.id)];
       setNotes(nextNotes);
       StorageService.saveNotes(nextNotes);
       setActiveNoteId(action.note.id);
@@ -231,7 +312,13 @@ export function App() {
 
       showToast({
         id: `toast-${Date.now()}`,
-        message: `Recreated "${action.note.title || 'Untitled Document'}"`,
+        message:
+          action.type === 'DUPLICATE_NOTE'
+            ? `Re-duplicated "${action.note.title}"`
+            : `Recreated "${action.note.title || 'Untitled Document'}"`,
+        actionLabel: 'Undo',
+        undoHint: true,
+        onAction: () => undoRef.current(),
       });
     } else if (action.type === 'TOGGLE_PIN') {
       const nextNotes = notes.map((n) =>
@@ -246,9 +333,65 @@ export function App() {
       showToast({
         id: `toast-${Date.now()}`,
         message: `${!action.previousPinned ? 'Pinned' : 'Unpinned'} "${action.noteTitle}"`,
+        actionLabel: 'Undo',
+        undoHint: true,
+        onAction: () => undoRef.current(),
+      });
+    } else if (action.type === 'RENAME_NOTE') {
+      const nextNotes = notes.map((n) =>
+        n.id === action.noteId ? { ...n, title: action.newTitle, updatedAt: Date.now() } : n
+      );
+      setNotes(nextNotes);
+      StorageService.saveNotes(nextNotes);
+
+      setRedoStack(restRedo);
+      setUndoStack((prev) => [action, ...prev]);
+
+      showToast({
+        id: `toast-${Date.now()}`,
+        message: `Renamed to "${action.newTitle}"`,
+        actionLabel: 'Undo',
+        undoHint: true,
+        onAction: () => undoRef.current(),
+      });
+    } else if (action.type === 'MOVE_NOTE') {
+      const nextNotes = notes.map((n) =>
+        n.id === action.noteId ? { ...n, folderId: action.newFolderId, updatedAt: Date.now() } : n
+      );
+      setNotes(nextNotes);
+      StorageService.saveNotes(nextNotes);
+
+      setRedoStack(restRedo);
+      setUndoStack((prev) => [action, ...prev]);
+
+      const targetFolder = folders.find((f) => f.id === action.newFolderId);
+      const folderName = targetFolder ? targetFolder.name : 'General';
+      showToast({
+        id: `toast-${Date.now()}`,
+        message: `Moved "${action.noteTitle}" to ${folderName}`,
+        actionLabel: 'Undo',
+        undoHint: true,
+        onAction: () => undoRef.current(),
+      });
+    } else if (action.type === 'UPDATE_TAGS') {
+      const nextNotes = notes.map((n) =>
+        n.id === action.noteId ? { ...n, tags: action.newTags, updatedAt: Date.now() } : n
+      );
+      setNotes(nextNotes);
+      StorageService.saveNotes(nextNotes);
+
+      setRedoStack(restRedo);
+      setUndoStack((prev) => [action, ...prev]);
+
+      showToast({
+        id: `toast-${Date.now()}`,
+        message: `Updated tags for "${action.noteTitle}"`,
+        actionLabel: 'Undo',
+        undoHint: true,
+        onAction: () => undoRef.current(),
       });
     } else if (action.type === 'CREATE_FOLDER') {
-      const nextFolders = [...folders, action.folder];
+      const nextFolders = [...folders.filter((f) => f.id !== action.folder.id), action.folder];
       setFolders(nextFolders);
       StorageService.saveFolders(nextFolders);
 
@@ -258,6 +401,26 @@ export function App() {
       showToast({
         id: `toast-${Date.now()}`,
         message: `Recreated folder "${action.folder.name}"`,
+        actionLabel: 'Undo',
+        undoHint: true,
+        onAction: () => undoRef.current(),
+      });
+    } else if (action.type === 'RENAME_FOLDER') {
+      const nextFolders = folders.map((f) =>
+        f.id === action.folderId ? { ...f, name: action.newName } : f
+      );
+      setFolders(nextFolders);
+      StorageService.saveFolders(nextFolders);
+
+      setRedoStack(restRedo);
+      setUndoStack((prev) => [action, ...prev]);
+
+      showToast({
+        id: `toast-${Date.now()}`,
+        message: `Renamed folder to "${action.newName}"`,
+        actionLabel: 'Undo',
+        undoHint: true,
+        onAction: () => undoRef.current(),
       });
     } else if (action.type === 'DELETE_FOLDER') {
       const nextFolders = folders.filter((f) => f.id !== action.folder.id);
@@ -276,9 +439,17 @@ export function App() {
       showToast({
         id: `toast-${Date.now()}`,
         message: `Deleted folder "${action.folder.name}"`,
+        actionLabel: 'Undo',
+        undoHint: true,
+        onAction: () => undoRef.current(),
       });
     }
-  }, [redoStack, notes, folders, activeNoteId, handleUndo]);
+  }, [redoStack, notes, folders, activeNoteId]);
+
+  useEffect(() => {
+    undoRef.current = handleUndo;
+    redoRef.current = handleRedo;
+  });
 
   useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
@@ -486,11 +657,32 @@ export function App() {
   const handleRenameNote = (noteId: string, newTitle: string) => {
     const trimmed = newTitle.trim();
     if (!trimmed) return;
+    const target = notes.find((n) => n.id === noteId);
+    if (!target || target.title === trimmed) return;
+
+    const prevTitle = target.title;
     const nextNotes = notes.map((n) =>
       n.id === noteId ? { ...n, title: trimmed, updatedAt: Date.now() } : n
     );
     setNotes(nextNotes);
     StorageService.saveNotes(nextNotes);
+
+    const action: VaultAction = {
+      type: 'RENAME_NOTE',
+      noteId,
+      previousTitle: prevTitle,
+      newTitle: trimmed,
+    };
+    setUndoStack((prev) => [action, ...prev.slice(0, 49)]);
+    setRedoStack([]);
+
+    showToast({
+      id: `toast-${Date.now()}`,
+      message: `Renamed to "${trimmed}"`,
+      actionLabel: 'Undo',
+      undoHint: true,
+      onAction: () => undoRef.current(),
+    });
   };
 
   const handleMoveNote = (noteId: string, targetFolderId: string | null) => {
@@ -504,6 +696,16 @@ export function App() {
     setNotes(nextNotes);
     StorageService.saveNotes(nextNotes);
 
+    const action: VaultAction = {
+      type: 'MOVE_NOTE',
+      noteId,
+      noteTitle: targetNote.title || 'Untitled',
+      previousFolderId: prevFolderId,
+      newFolderId: targetFolderId,
+    };
+    setUndoStack((prev) => [action, ...prev.slice(0, 49)]);
+    setRedoStack([]);
+
     const targetFolder = folders.find((f) => f.id === targetFolderId);
     const folderName = targetFolder ? targetFolder.name : 'General';
     showToast({
@@ -511,15 +713,46 @@ export function App() {
       message: `Moved "${targetNote.title || 'Untitled'}" to ${folderName}`,
       actionLabel: 'Undo',
       undoHint: true,
-      onAction: () => {
-        setNotes((curNotes) => {
-          const reverted = curNotes.map((n) =>
-            n.id === noteId ? { ...n, folderId: prevFolderId, updatedAt: Date.now() } : n
-          );
-          StorageService.saveNotes(reverted);
-          return reverted;
-        });
-      },
+      onAction: () => undoRef.current(),
+    });
+  };
+
+  const handleUpdateTags = (noteId: string, newTags: string[]) => {
+    const target = notes.find((n) => n.id === noteId);
+    if (!target) return;
+
+    const prevTags = target.tags;
+    const nextNotes = notes.map((n) =>
+      n.id === noteId ? { ...n, tags: newTags, updatedAt: Date.now() } : n
+    );
+    setNotes(nextNotes);
+    StorageService.saveNotes(nextNotes);
+
+    const action: VaultAction = {
+      type: 'UPDATE_TAGS',
+      noteId,
+      noteTitle: target.title || 'Untitled Document',
+      previousTags: prevTags,
+      newTags,
+    };
+    setUndoStack((prev) => [action, ...prev.slice(0, 49)]);
+    setRedoStack([]);
+
+    const added = newTags.filter((t) => !prevTags.includes(t));
+    const removed = prevTags.filter((t) => !newTags.includes(t));
+    const diffText =
+      added.length > 0
+        ? `Added tag #${added.join(', #')}`
+        : removed.length > 0
+        ? `Removed tag #${removed.join(', #')}`
+        : 'Updated tags';
+
+    showToast({
+      id: `toast-${Date.now()}`,
+      message: `${diffText} · "${target.title || 'Untitled'}"`,
+      actionLabel: 'Undo',
+      undoHint: true,
+      onAction: () => undoRef.current(),
     });
   };
 
@@ -548,7 +781,7 @@ export function App() {
     setActiveNoteId(newNote.id);
 
     const action: VaultAction = {
-      type: 'CREATE_NOTE',
+      type: 'DUPLICATE_NOTE',
       noteId: newNote.id,
       note: newNote,
       previousActiveNoteId: activeNoteId,
@@ -559,17 +792,41 @@ export function App() {
     showToast({
       id: `toast-${Date.now()}`,
       message: `Duplicated "${sourceNote.title || 'Untitled'}"`,
+      actionLabel: 'Undo',
+      undoHint: true,
+      onAction: () => undoRef.current(),
     });
   };
 
   const handleRenameFolder = (folderId: string, newName: string) => {
     const trimmed = newName.trim();
     if (!trimmed) return;
+    const target = folders.find((f) => f.id === folderId);
+    if (!target || target.name === trimmed) return;
+
+    const prevName = target.name;
     const nextFolders = folders.map((f) =>
       f.id === folderId ? { ...f, name: trimmed } : f
     );
     setFolders(nextFolders);
     StorageService.saveFolders(nextFolders);
+
+    const action: VaultAction = {
+      type: 'RENAME_FOLDER',
+      folderId,
+      previousName: prevName,
+      newName: trimmed,
+    };
+    setUndoStack((prev) => [action, ...prev.slice(0, 49)]);
+    setRedoStack([]);
+
+    showToast({
+      id: `toast-${Date.now()}`,
+      message: `Renamed folder to "${trimmed}"`,
+      actionLabel: 'Undo',
+      undoHint: true,
+      onAction: () => undoRef.current(),
+    });
   };
 
   const handleNavigateToTitle = (title: string) => {
@@ -737,6 +994,7 @@ export function App() {
             note={activeNote}
             settings={settings}
             onUpdateNote={handleUpdateNote}
+            onUpdateTags={handleUpdateTags}
             onNavigateToTitle={handleNavigateToTitle}
             saveStatus={saveStatus}
             onToggleTypewriter={() =>

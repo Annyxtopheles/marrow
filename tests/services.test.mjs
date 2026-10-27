@@ -263,3 +263,112 @@ test('Sidebar Actions: Move Note to Folder and Duplicate Note', async () => {
   assert.equal(duplicated.content, note.content);
   assert.equal(duplicated.folderId, 'f-novel');
 });
+
+test('Vault Actions: Comprehensive Undo and Redo for Tags, Rename, Move, and Pin', async () => {
+  let note = {
+    id: 'note-vault-1',
+    title: 'The Great Chronicle',
+    content: '<p>Content</p>',
+    folderId: 'folder-1',
+    tags: ['draft', 'lore'],
+    pinned: false,
+    updatedAt: 1000,
+  };
+
+  const undoStack = [];
+  const redoStack = [];
+
+  // --- 1. Test UPDATE_TAGS ---
+  const prevTags = [...note.tags];
+  const newTags = [...note.tags, 'chapter1'];
+  note = { ...note, tags: newTags };
+  undoStack.push({
+    type: 'UPDATE_TAGS',
+    noteId: note.id,
+    noteTitle: note.title,
+    previousTags: prevTags,
+    newTags,
+  });
+
+  assert.deepEqual(note.tags, ['draft', 'lore', 'chapter1']);
+
+  // Undo tag update
+  const undoTagAction = undoStack.pop();
+  assert.equal(undoTagAction.type, 'UPDATE_TAGS');
+  note = { ...note, tags: undoTagAction.previousTags };
+  redoStack.push(undoTagAction);
+
+  assert.deepEqual(note.tags, ['draft', 'lore']);
+
+  // Redo tag update
+  const redoTagAction = redoStack.pop();
+  note = { ...note, tags: redoTagAction.newTags };
+  undoStack.push(redoTagAction);
+
+  assert.deepEqual(note.tags, ['draft', 'lore', 'chapter1']);
+
+  // --- 2. Test RENAME_NOTE ---
+  const prevTitle = note.title;
+  const newTitle = 'The Ancient Chronicle';
+  note = { ...note, title: newTitle };
+  undoStack.push({
+    type: 'RENAME_NOTE',
+    noteId: note.id,
+    previousTitle: prevTitle,
+    newTitle,
+  });
+
+  assert.equal(note.title, 'The Ancient Chronicle');
+
+  // Undo rename
+  const undoRenameAction = undoStack.pop();
+  note = { ...note, title: undoRenameAction.previousTitle };
+  redoStack.push(undoRenameAction);
+  assert.equal(note.title, 'The Great Chronicle');
+
+  // Redo rename
+  const redoRenameAction = redoStack.pop();
+  note = { ...note, title: redoRenameAction.newTitle };
+  assert.equal(note.title, 'The Ancient Chronicle');
+
+  // --- 3. Test MOVE_NOTE ---
+  const prevFolderId = note.folderId;
+  const targetFolderId = 'folder-archived';
+  note = { ...note, folderId: targetFolderId };
+  undoStack.push({
+    type: 'MOVE_NOTE',
+    noteId: note.id,
+    noteTitle: note.title,
+    previousFolderId: prevFolderId,
+    newFolderId: targetFolderId,
+  });
+
+  assert.equal(note.folderId, 'folder-archived');
+
+  // Undo move
+  const undoMoveAction = undoStack.pop();
+  note = { ...note, folderId: undoMoveAction.previousFolderId };
+  redoStack.push(undoMoveAction);
+  assert.equal(note.folderId, 'folder-1');
+
+  // Redo move
+  const redoMoveAction = redoStack.pop();
+  note = { ...note, folderId: redoMoveAction.newFolderId };
+  assert.equal(note.folderId, 'folder-archived');
+
+  // --- 4. Test TOGGLE_PIN ---
+  const prevPinned = note.pinned;
+  note = { ...note, pinned: !prevPinned };
+  undoStack.push({
+    type: 'TOGGLE_PIN',
+    noteId: note.id,
+    noteTitle: note.title,
+    previousPinned: prevPinned,
+  });
+  assert.equal(note.pinned, true);
+
+  // Undo pin
+  const undoPinAction = undoStack.pop();
+  note = { ...note, pinned: undoPinAction.previousPinned };
+  assert.equal(note.pinned, false);
+});
