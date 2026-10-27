@@ -475,6 +475,95 @@ export function App() {
     setRedoStack([]);
   };
 
+  const handleRenameNote = (noteId: string, newTitle: string) => {
+    const trimmed = newTitle.trim();
+    if (!trimmed) return;
+    const nextNotes = notes.map((n) =>
+      n.id === noteId ? { ...n, title: trimmed, updatedAt: Date.now() } : n
+    );
+    setNotes(nextNotes);
+    StorageService.saveNotes(nextNotes);
+  };
+
+  const handleMoveNote = (noteId: string, targetFolderId: string | null) => {
+    const targetNote = notes.find((n) => n.id === noteId);
+    if (!targetNote || targetNote.folderId === targetFolderId) return;
+
+    const prevFolderId = targetNote.folderId;
+    const nextNotes = notes.map((n) =>
+      n.id === noteId ? { ...n, folderId: targetFolderId, updatedAt: Date.now() } : n
+    );
+    setNotes(nextNotes);
+    StorageService.saveNotes(nextNotes);
+
+    const targetFolder = folders.find((f) => f.id === targetFolderId);
+    const folderName = targetFolder ? targetFolder.name : 'General';
+    showToast({
+      id: `toast-${Date.now()}`,
+      message: `Moved "${targetNote.title || 'Untitled'}" to ${folderName}`,
+      actionLabel: 'Undo',
+      undoHint: true,
+      onAction: () => {
+        setNotes((curNotes) => {
+          const reverted = curNotes.map((n) =>
+            n.id === noteId ? { ...n, folderId: prevFolderId, updatedAt: Date.now() } : n
+          );
+          StorageService.saveNotes(reverted);
+          return reverted;
+        });
+      },
+    });
+  };
+
+  const handleDuplicateNote = (sourceNote: Note) => {
+    const newNote: Note = {
+      ...sourceNote,
+      id: `note-${Date.now()}`,
+      title: `${sourceNote.title || 'Untitled'} (Copy)`,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      lastOpenedAt: Date.now(),
+      pinned: false,
+      timelineLog: [
+        {
+          id: `init-${Date.now()}`,
+          timestamp: Date.now(),
+          note: `Duplicated from "${sourceNote.title || 'Untitled'}".`,
+          type: 'milestone',
+        },
+      ],
+    };
+
+    const nextNotes = [newNote, ...notes];
+    setNotes(nextNotes);
+    StorageService.saveNotes(nextNotes);
+    setActiveNoteId(newNote.id);
+
+    const action: VaultAction = {
+      type: 'CREATE_NOTE',
+      noteId: newNote.id,
+      note: newNote,
+      previousActiveNoteId: activeNoteId,
+    };
+    setUndoStack((prev) => [action, ...prev.slice(0, 49)]);
+    setRedoStack([]);
+
+    showToast({
+      id: `toast-${Date.now()}`,
+      message: `Duplicated "${sourceNote.title || 'Untitled'}"`,
+    });
+  };
+
+  const handleRenameFolder = (folderId: string, newName: string) => {
+    const trimmed = newName.trim();
+    if (!trimmed) return;
+    const nextFolders = folders.map((f) =>
+      f.id === folderId ? { ...f, name: trimmed } : f
+    );
+    setFolders(nextFolders);
+    StorageService.saveFolders(nextFolders);
+  };
+
   const handleNavigateToTitle = (title: string) => {
     const found = notes.find((n) => n.title.trim().toLowerCase() === title.trim().toLowerCase());
     if (found) {
@@ -621,9 +710,13 @@ export function App() {
             onSelectNote={(n) => setActiveNoteId(n.id)}
             onCreateNote={handleCreateNote}
             onCreateFolder={handleCreateFolder}
+            onRenameFolder={handleRenameFolder}
             onDeleteNote={handleDeleteNote}
             onDeleteFolder={handleDeleteFolder}
             onTogglePin={handleTogglePin}
+            onRenameNote={handleRenameNote}
+            onMoveNote={handleMoveNote}
+            onDuplicateNote={handleDuplicateNote}
             onOpenSettings={() => setIsSettingsOpen(true)}
             onToggleTimeJot={() => setIsTimeJotOpen(!isTimeJotOpen)}
             isTimeJotOpen={isTimeJotOpen}

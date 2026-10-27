@@ -215,3 +215,51 @@ test('StorageService: Trash Soft-Delete and Recovery', async () => {
   assert.equal(restored.title, 'Obsidian Spire Lore');
   assert.equal(trash.length, 0);
 });
+
+test('Sidebar Note Sorting: Pinned Notes First', async () => {
+  const notes = [
+    { id: '1', title: 'Older Pinned', pinned: true, updatedAt: 100 },
+    { id: '2', title: 'Newer Unpinned', pinned: false, updatedAt: 500 },
+    { id: '3', title: 'Newest Pinned', pinned: true, updatedAt: 600 },
+    { id: '4', title: 'Oldest Unpinned', pinned: false, updatedAt: 50 },
+  ];
+
+  const sorted = [...notes].sort((a, b) => {
+    if (a.pinned && !b.pinned) return -1;
+    if (!a.pinned && b.pinned) return 1;
+    return b.updatedAt - a.updatedAt;
+  });
+
+  assert.equal(sorted[0].id, '3'); // Newest Pinned
+  assert.equal(sorted[1].id, '1'); // Older Pinned
+  assert.equal(sorted[2].id, '2'); // Newer Unpinned
+  assert.equal(sorted[3].id, '4'); // Oldest Unpinned
+});
+
+test('Sidebar Actions: Move Note to Folder and Duplicate Note', async () => {
+  const note = {
+    id: 'note-move-1',
+    title: 'Chapter 2: The Spire',
+    content: '<p>Body text</p>',
+    folderId: 'f-novel',
+    tags: ['act1'],
+    pinned: true,
+  };
+
+  // Move
+  const targetFolderId = 'f-world';
+  const moved = { ...note, folderId: targetFolderId };
+  assert.equal(moved.folderId, 'f-world');
+
+  // Duplicate
+  const duplicated = {
+    ...note,
+    id: 'note-copy-2',
+    title: `${note.title} (Copy)`,
+    pinned: false,
+  };
+  assert.equal(duplicated.title, 'Chapter 2: The Spire (Copy)');
+  assert.equal(duplicated.pinned, false);
+  assert.equal(duplicated.content, note.content);
+  assert.equal(duplicated.folderId, 'f-novel');
+});

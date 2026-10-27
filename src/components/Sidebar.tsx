@@ -6,6 +6,7 @@ import {
   FilePlus,
   Search,
   Pin,
+  PinOff,
   ChevronRight,
   ChevronDown,
   Trash2,
@@ -14,7 +15,38 @@ import {
   Link2,
   Settings,
   BookOpen,
+  Pencil,
+  FolderInput,
+  Copy,
+  Download,
 } from 'lucide-react';
+import { ContextMenu, type ContextMenuItem, type ContextMenuSubItem } from './ContextMenu';
+
+const downloadNoteAsMarkdown = (note: Note) => {
+  const md = note.content
+    .replace(/<h1>(.*?)<\/h1>/gi, '# $1\n\n')
+    .replace(/<h2>(.*?)<\/h2>/gi, '## $1\n\n')
+    .replace(/<h3>(.*?)<\/h3>/gi, '### $1\n\n')
+    .replace(/<p>(.*?)<\/p>/gi, '$1\n\n')
+    .replace(/<blockquote>(.*?)<\/blockquote>/gi, '> $1\n\n')
+    .replace(/<em>(.*?)<\/em>/gi, '*$1*')
+    .replace(/<strong>(.*?)<\/strong>/gi, '**$1**')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/&nbsp;/g, ' ')
+    .trim();
+
+  const safeTitle = (note.title || 'Untitled').trim().replace(/[/\\?%*:|"<>]/g, '-');
+  const fullContent = `# ${note.title || 'Untitled'}\n\n${md}`;
+  const blob = new Blob([fullContent], { type: 'text/markdown;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${safeTitle}.md`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+};
 
 interface SidebarProps {
   notes: Note[];
@@ -23,9 +55,13 @@ interface SidebarProps {
   onSelectNote: (note: Note) => void;
   onCreateNote: (folderId?: string | null) => void;
   onCreateFolder: (name: string, parentId?: string | null) => void;
+  onRenameFolder?: (folderId: string, newName: string) => void;
   onDeleteNote: (noteId: string) => void;
   onDeleteFolder?: (folderId: string) => void;
   onTogglePin: (noteId: string) => void;
+  onRenameNote?: (noteId: string, newTitle: string) => void;
+  onMoveNote?: (noteId: string, targetFolderId: string | null) => void;
+  onDuplicateNote?: (note: Note) => void;
   onOpenSettings: () => void;
   onToggleTimeJot: () => void;
   isTimeJotOpen: boolean;
@@ -41,9 +77,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onSelectNote,
   onCreateNote,
   onCreateFolder,
+  onRenameFolder,
   onDeleteNote,
   onDeleteFolder,
   onTogglePin,
+  onRenameNote,
+  onMoveNote,
+  onDuplicateNote,
   onOpenSettings,
   onToggleTimeJot,
   isTimeJotOpen,
@@ -57,11 +97,48 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const [showFolderModal, setShowFolderModal] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
 
+  // Inline rename state
+  const [renamingNoteId, setRenamingNoteId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState('');
+  const [renamingFolderId, setRenamingFolderId] = useState<string | null>(null);
+  const [editingFolderName, setEditingFolderName] = useState('');
+
+  // Context menu state
+  const [contextMenu, setContextMenu] = useState<{
+    x: number;
+    y: number;
+    items: ContextMenuItem[];
+  } | null>(null);
+
   const toggleFolder = (folderId: string) => {
     setCollapsedFolders((prev) => ({
       ...prev,
       [folderId]: !prev[folderId],
     }));
+  };
+
+  const startRenameNote = (note: Note) => {
+    setRenamingNoteId(note.id);
+    setEditingTitle(note.title);
+  };
+
+  const handleFinishRenameNote = (noteId: string) => {
+    if (onRenameNote && editingTitle.trim()) {
+      onRenameNote(noteId, editingTitle.trim());
+    }
+    setRenamingNoteId(null);
+  };
+
+  const startRenameFolder = (folder: Folder) => {
+    setRenamingFolderId(folder.id);
+    setEditingFolderName(folder.name);
+  };
+
+  const handleFinishRenameFolder = (folderId: string) => {
+    if (onRenameFolder && editingFolderName.trim()) {
+      onRenameFolder(folderId, editingFolderName.trim());
+    }
+    setRenamingFolderId(null);
   };
 
   const allTags = Array.from(new Set(notes.flatMap((n) => n.tags || [])));
@@ -74,12 +151,135 @@ export const Sidebar: React.FC<SidebarProps> = ({
     return matchesSearch && matchesTag;
   });
 
+  // Sort notes with pinned first, then by updated timestamp
+  const sortNotes = (items: Note[]) => {
+    return [...items].sort((a, b) => {
+      if (a.pinned && !b.pinned) return -1;
+      if (!a.pinned && b.pinned) return 1;
+      return b.updatedAt - a.updatedAt;
+    });
+  };
+
   const handleCreateFolderSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newFolderName.trim()) return;
     onCreateFolder(newFolderName.trim());
     setNewFolderName('');
     setShowFolderModal(false);
+  };
+
+  const handleNoteContextMenu = (e: React.MouseEvent, note: Note) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    // Destination folders for moving
+    const folderSubmenu: ContextMenuSubItem[] = [
+      {
+        label: 'General (Root)',
+        icon: <FolderIcon className="h-3 w-3" />,
+        active: note.folderId === null,
+        onClick: () => onMoveNote && onMoveNote(note.id, null),
+      },
+      ...folders.map((f) => ({
+        label: f.name,
+        icon: <FolderIcon className="h-3 w-3" />,
+        active: note.folderId === f.id,
+        onClick: () => onMoveNote && onMoveNote(note.id, f.id),
+      })),
+    ];
+
+    const items: ContextMenuItem[] = [
+      {
+        label: 'Rename',
+        icon: <Pencil className="h-3 w-3" />,
+        onClick: () => startRenameNote(note),
+      },
+      {
+        label: note.pinned ? 'Unpin Note' : 'Pin Note',
+        icon: note.pinned ? <PinOff className="h-3 w-3" /> : <Pin className="h-3 w-3" />,
+        onClick: () => onTogglePin(note.id),
+      },
+      {
+        label: 'Move to Folder',
+        icon: <FolderInput className="h-3 w-3" />,
+        submenu: folderSubmenu,
+      },
+      {
+        label: 'Duplicate',
+        icon: <Copy className="h-3 w-3" />,
+        onClick: () => onDuplicateNote && onDuplicateNote(note),
+      },
+      {
+        label: 'Download .md',
+        icon: <Download className="h-3 w-3" />,
+        onClick: () => downloadNoteAsMarkdown(note),
+      },
+      {
+        label: 'sep-note',
+        separator: true,
+      },
+      {
+        label: 'Delete Note',
+        icon: <Trash2 className="h-3 w-3" />,
+        danger: true,
+        onClick: () => onDeleteNote(note.id),
+      },
+    ];
+
+    setContextMenu({ x: e.clientX, y: e.clientY, items });
+  };
+
+  const handleFolderContextMenu = (e: React.MouseEvent, folder: Folder) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const items: ContextMenuItem[] = [
+      {
+        label: 'New Note Inside',
+        icon: <FilePlus className="h-3 w-3" />,
+        onClick: () => {
+          setCollapsedFolders((prev) => ({ ...prev, [folder.id]: false }));
+          onCreateNote(folder.id);
+        },
+      },
+      {
+        label: 'Rename Folder',
+        icon: <Pencil className="h-3 w-3" />,
+        onClick: () => startRenameFolder(folder),
+      },
+      {
+        label: 'sep-folder',
+        separator: true,
+      },
+      {
+        label: 'Delete Folder',
+        icon: <Trash2 className="h-3 w-3" />,
+        danger: true,
+        onClick: () => onDeleteFolder && onDeleteFolder(folder.id),
+      },
+    ];
+
+    setContextMenu({ x: e.clientX, y: e.clientY, items });
+  };
+
+  const handleEmptySpaceContextMenu = (e: React.MouseEvent) => {
+    if ((e.target as HTMLElement).closest('.group, button, input')) return;
+    e.preventDefault();
+
+    const items: ContextMenuItem[] = [
+      {
+        label: 'New Document',
+        icon: <FilePlus className="h-3 w-3" />,
+        onClick: () => onCreateNote(null),
+      },
+      {
+        label: 'New Folder',
+        icon: <FolderPlus className="h-3 w-3" />,
+        onClick: () => setShowFolderModal(true),
+      },
+    ];
+
+    setContextMenu({ x: e.clientX, y: e.clientY, items });
   };
 
   const borderColor = isLightMode ? 'border-[#e4e0d7]' : 'border-white/[0.06]';
@@ -93,6 +293,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   return (
     <aside
       className={`w-64 h-full flex flex-col ${sidebarBg} border-r ${borderColor} select-none text-xs ${subtextColor}`}
+      onContextMenu={handleEmptySpaceContextMenu}
     >
       {/* Header */}
       <div className={`flex items-center justify-between px-3.5 py-3 border-b ${borderColor}`}>
@@ -105,6 +306,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         <div className="flex items-center gap-1">
           <button
+            type="button"
             onClick={() => onCreateNote(null)}
             className={`p-1.5 rounded-md ${itemHover} text-inherit transition`}
             title="New Document (Ctrl+N)"
@@ -112,6 +314,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <FilePlus className="h-3.5 w-3.5" />
           </button>
           <button
+            type="button"
             onClick={() => setShowFolderModal(true)}
             className={`p-1.5 rounded-md ${itemHover} text-inherit transition`}
             title="New Folder"
@@ -142,6 +345,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {allTags.length > 0 && (
           <div className="flex items-center gap-1 overflow-x-auto scrollbar-none mt-2 pt-0.5">
             <button
+              type="button"
               onClick={() => setSelectedTag(null)}
               className={`px-2 py-0.5 rounded-md text-[10px] transition shrink-0 ${
                 selectedTag === null ? activeItem : `${itemHover} opacity-70`
@@ -151,6 +355,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </button>
             {allTags.map((tag) => (
               <button
+                type="button"
                 key={tag}
                 onClick={() => setSelectedTag(selectedTag === tag ? null : tag)}
                 className={`px-2 py-0.5 rounded-md text-[10px] transition shrink-0 flex items-center gap-1 border ${
@@ -173,24 +378,45 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <div className="flex-1 overflow-y-auto p-2 space-y-1">
         {folders.map((folder) => {
           const isCollapsed = collapsedFolders[folder.id];
-          const folderNotes = filteredNotes.filter((n) => n.folderId === folder.id);
+          const folderNotes = sortNotes(filteredNotes.filter((n) => n.folderId === folder.id));
 
           return (
             <div key={folder.id} className="space-y-0.5">
               <div
                 onClick={() => toggleFolder(folder.id)}
+                onContextMenu={(e) => handleFolderContextMenu(e, folder)}
                 className={`flex items-center justify-between px-2 py-1.5 rounded-md cursor-pointer group transition ${itemHover}`}
               >
-                <div className="flex items-center gap-1.5 truncate">
+                <div className="flex items-center gap-1.5 truncate flex-1 mr-2">
                   {isCollapsed ? (
-                    <ChevronRight className="h-3 w-3 opacity-40" />
+                    <ChevronRight className="h-3 w-3 opacity-40 shrink-0" />
                   ) : (
-                    <ChevronDown className="h-3 w-3 opacity-40" />
+                    <ChevronDown className="h-3 w-3 opacity-40 shrink-0" />
                   )}
-                  <FolderIcon className="h-3.5 w-3.5 opacity-60" />
-                  <span className="truncate">{folder.name}</span>
+                  <FolderIcon className="h-3.5 w-3.5 opacity-60 shrink-0" />
+                  {renamingFolderId === folder.id ? (
+                    <input
+                      type="text"
+                      value={editingFolderName}
+                      onChange={(e) => setEditingFolderName(e.target.value)}
+                      onBlur={() => handleFinishRenameFolder(folder.id)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleFinishRenameFolder(folder.id);
+                        if (e.key === 'Escape') setRenamingFolderId(null);
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                      autoFocus
+                      className={`w-full rounded px-1.5 py-0.5 text-xs outline-none border ${
+                        isLightMode
+                          ? 'bg-white border-black/20 text-[#2c2a27]'
+                          : 'bg-black/40 border-white/20 text-[#dedad4]'
+                      }`}
+                    />
+                  ) : (
+                    <span className="truncate">{folder.name}</span>
+                  )}
                 </div>
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 shrink-0">
                   <span className="text-[10px] opacity-50 group-hover:opacity-0 transition">{folderNotes.length}</span>
                   {onDeleteFolder && (
                     <button
@@ -215,29 +441,59 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     return (
                       <div
                         key={note.id}
-                        onClick={() => onSelectNote(note)}
+                        onClick={() => renamingNoteId !== note.id && onSelectNote(note)}
+                        onContextMenu={(e) => handleNoteContextMenu(e, note)}
                         className={`group flex items-center justify-between px-2 py-1.5 rounded-md cursor-pointer transition ${
                           isActive ? activeItem : itemHover
                         }`}
                       >
-                        <span className="truncate">{note.title || 'Untitled'}</span>
-                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
+                        <div className="truncate flex-1 mr-2">
+                          {renamingNoteId === note.id ? (
+                            <input
+                              type="text"
+                              value={editingTitle}
+                              onChange={(e) => setEditingTitle(e.target.value)}
+                              onBlur={() => handleFinishRenameNote(note.id)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleFinishRenameNote(note.id);
+                                if (e.key === 'Escape') setRenamingNoteId(null);
+                              }}
+                              onClick={(e) => e.stopPropagation()}
+                              autoFocus
+                              className={`w-full rounded px-1.5 py-0.5 text-xs outline-none border ${
+                                isLightMode
+                                  ? 'bg-white border-black/20 text-[#2c2a27]'
+                                  : 'bg-black/40 border-white/20 text-[#dedad4]'
+                              }`}
+                            />
+                          ) : (
+                            <span className="truncate">{note.title || 'Untitled'}</span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-0.5 shrink-0">
+                          {/* Pin button: low opacity when idle hover, full opacity when pinned */}
                           <button
+                            type="button"
                             onClick={(e) => {
                               e.stopPropagation();
                               onTogglePin(note.id);
                             }}
-                            className={`p-1 ${note.pinned ? 'text-amber-500 opacity-100' : 'opacity-50 hover:opacity-100'}`}
-                            title="Pin note"
+                            className={`p-1 rounded transition ${
+                              note.pinned
+                                ? 'opacity-100 text-inherit'
+                                : 'opacity-0 group-hover:opacity-40 hover:!opacity-100'
+                            }`}
+                            title={note.pinned ? 'Unpin note' : 'Pin note'}
                           >
-                            <Pin className="h-2.5 w-2.5" />
+                            <Pin className={`h-2.5 w-2.5 ${note.pinned ? 'fill-current' : ''}`} />
                           </button>
                           <button
+                            type="button"
                             onClick={(e) => {
                               e.stopPropagation();
                               onDeleteNote(note.id);
                             }}
-                            className="p-1 opacity-50 hover:opacity-100 hover:text-rose-400"
+                            className="p-1 opacity-0 group-hover:opacity-60 hover:!opacity-100 hover:text-rose-400 transition"
                             title="Delete note"
                           >
                             <Trash2 className="h-2.5 w-2.5" />
@@ -257,42 +513,72 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <div className="text-[10px] uppercase tracking-wider opacity-40 px-2 pb-1">
             General
           </div>
-          {filteredNotes
-            .filter((n) => !n.folderId)
-            .map((note) => {
-              const isActive = note.id === activeNoteId;
-              return (
-                <div
-                  key={note.id}
-                  onClick={() => onSelectNote(note)}
-                  className={`group flex items-center justify-between px-2.5 py-1.5 rounded-md cursor-pointer transition ${
-                    isActive ? activeItem : itemHover
-                  }`}
-                >
-                  <span className="truncate">{note.title || 'Untitled'}</span>
-                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onTogglePin(note.id);
+          {sortNotes(filteredNotes.filter((n) => !n.folderId)).map((note) => {
+            const isActive = note.id === activeNoteId;
+            return (
+              <div
+                key={note.id}
+                onClick={() => renamingNoteId !== note.id && onSelectNote(note)}
+                onContextMenu={(e) => handleNoteContextMenu(e, note)}
+                className={`group flex items-center justify-between px-2.5 py-1.5 rounded-md cursor-pointer transition ${
+                  isActive ? activeItem : itemHover
+                }`}
+              >
+                <div className="truncate flex-1 mr-2">
+                  {renamingNoteId === note.id ? (
+                    <input
+                      type="text"
+                      value={editingTitle}
+                      onChange={(e) => setEditingTitle(e.target.value)}
+                      onBlur={() => handleFinishRenameNote(note.id)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleFinishRenameNote(note.id);
+                        if (e.key === 'Escape') setRenamingNoteId(null);
                       }}
-                      className={`p-1 ${note.pinned ? 'text-amber-500 opacity-100' : 'opacity-50 hover:opacity-100'}`}
-                    >
-                      <Pin className="h-2.5 w-2.5" />
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onDeleteNote(note.id);
-                      }}
-                      className="p-1 opacity-50 hover:opacity-100 hover:text-rose-400"
-                    >
-                      <Trash2 className="h-2.5 w-2.5" />
-                    </button>
-                  </div>
+                      onClick={(e) => e.stopPropagation()}
+                      autoFocus
+                      className={`w-full rounded px-1.5 py-0.5 text-xs outline-none border ${
+                        isLightMode
+                          ? 'bg-white border-black/20 text-[#2c2a27]'
+                          : 'bg-black/40 border-white/20 text-[#dedad4]'
+                      }`}
+                    />
+                  ) : (
+                    <span className="truncate">{note.title || 'Untitled'}</span>
+                  )}
                 </div>
-              );
-            })}
+                <div className="flex items-center gap-0.5 shrink-0">
+                  {/* Pin button: low opacity when idle hover, full opacity when pinned */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onTogglePin(note.id);
+                    }}
+                    className={`p-1 rounded transition ${
+                      note.pinned
+                        ? 'opacity-100 text-inherit'
+                        : 'opacity-0 group-hover:opacity-40 hover:!opacity-100'
+                    }`}
+                    title={note.pinned ? 'Unpin note' : 'Pin note'}
+                  >
+                    <Pin className={`h-2.5 w-2.5 ${note.pinned ? 'fill-current' : ''}`} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDeleteNote(note.id);
+                    }}
+                    className="p-1 opacity-0 group-hover:opacity-60 hover:!opacity-100 hover:text-rose-400 transition"
+                    title="Delete note"
+                  >
+                    <Trash2 className="h-2.5 w-2.5" />
+                  </button>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -300,6 +586,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <div className={`border-t ${borderColor} p-2 flex items-center justify-between`}>
         <div className="flex items-center gap-1">
           <button
+            type="button"
             onClick={onToggleTimeJot}
             className={`p-1.5 rounded-md transition flex items-center gap-1.5 ${
               isTimeJotOpen ? activeItem : itemHover
@@ -311,6 +598,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </button>
 
           <button
+            type="button"
             onClick={onToggleBacklinks}
             className={`p-1.5 rounded-md transition flex items-center gap-1.5 ${
               isBacklinksOpen ? activeItem : itemHover
@@ -323,6 +611,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         <button
+          type="button"
           onClick={onOpenSettings}
           className={`p-1.5 rounded-md ${itemHover} transition`}
           title="Settings"
@@ -367,7 +656,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 </button>
                 <button
                   type="submit"
-                  className="px-3.5 py-1.5 rounded-md bg-stone-700 hover:bg-stone-600 text-stone-100 font-medium text-xs transition"
+                  className={`px-3 py-1.5 text-xs rounded-md font-medium transition ${
+                    isLightMode
+                      ? 'bg-black text-white hover:bg-neutral-800'
+                      : 'bg-white text-black hover:bg-neutral-200'
+                  }`}
                 >
                   Create
                 </button>
@@ -375,6 +668,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </form>
           </div>
         </div>
+      )}
+
+      {/* Floating Context Menu */}
+      {contextMenu && (
+        <ContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          items={contextMenu.items}
+          onClose={() => setContextMenu(null)}
+          isLightMode={isLightMode}
+        />
       )}
     </aside>
   );
