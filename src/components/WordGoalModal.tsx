@@ -346,7 +346,7 @@ export const WordGoalModal: React.FC<WordGoalModalProps> = ({
               {/* Presets */}
               <div className="flex items-center gap-1.5 pt-1 flex-wrap">
                 <span className="text-[10px] uppercase tracking-wider opacity-50 mr-1">Presets:</span>
-                {[500, 1000, 1667, 2500].map((preset) => (
+                {[500, 1000, 1500, 2000, 2500].map((preset) => (
                   <button
                     key={preset}
                     type="button"
@@ -355,7 +355,7 @@ export const WordGoalModal: React.FC<WordGoalModalProps> = ({
                       dailyGoalNum === preset ? btnActive : btnSecondary
                     }`}
                   >
-                    {preset === 1667 ? '1,667 (NaNoWriMo)' : preset.toLocaleString()}
+                    {preset.toLocaleString()}
                   </button>
                 ))}
               </div>

@@ -1,6 +1,6 @@
 import type { AIMessage, SceneBeat } from '../types';
 
-export type AIPersona = 'editor' | 'muse' | 'critic';
+export type AIPersona = 'editor' | 'visionary' | 'critic';
 
 export const PERSONA_CONFIGS: Record<
   AIPersona,
@@ -12,7 +12,7 @@ export const PERSONA_CONFIGS: Record<
     systemInstruction:
       'You are a distinguished literary editor and fiction consultant. Your objective is to help the writer elevate their storytelling, scene pacing, subtext, and character agency. Be concise, insightful, and practical. Do not take over or ghostwrite the prose—nudge, diagnose, suggest alternative angles, and respect the author\'s unique voice.',
   },
-  muse: {
+  visionary: {
     name: 'Sensory Visionary',
     title: 'Worldbuilder & Sensory Stylist',
     systemInstruction:

@@ -1240,7 +1240,7 @@ export function App() {
           />
         )}
 
-        {/* Obsidian Backlinks & Graph Panel */}
+        {/* Knowledge Graph & Backlinks Panel */}
         {!settings.focusMode && isBacklinksOpen && (
           <BacklinksPanel
             activeNote={activeNote}

@@ -296,7 +296,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     }`}
                   >
                     <option value="editor">Editorial Partner (Pacing &amp; Structure)</option>
-                    <option value="muse">Sensory Visionary (Imagery &amp; Texture)</option>
+                    <option value="visionary">Sensory Visionary (Imagery &amp; Texture)</option>
                     <option value="critic">Sharp Critic (Plot &amp; Stakes)</option>
                   </select>
                 </div>

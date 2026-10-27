@@ -195,7 +195,7 @@ export const Editor: React.FC<EditorProps> = ({
         }`,
       },
       handleClick: (view, pos, event) => {
-        // Require Ctrl (Windows/Linux) or Cmd (Mac) to follow wikilinks like in Obsidian.
+        // Require Ctrl (Windows/Linux) or Cmd (Mac) to follow wikilinks.
         // Normal clicks in the editor are strictly for placing the cursor, selecting, and typing.
         if (!event.ctrlKey && !event.metaKey) return false;
 

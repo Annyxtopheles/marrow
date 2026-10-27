@@ -868,7 +868,7 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
                     )}
                   </div>
                   <div className="grid grid-cols-3 gap-1">
-                    {(['editor', 'muse', 'critic'] as AIPersona[]).map((p) => {
+                    {(['editor', 'visionary', 'critic'] as AIPersona[]).map((p) => {
                       const isSel = (settings.aiPersona || 'editor') === p;
                       return (
                         <button
@@ -885,7 +885,7 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
                               : 'border-white/[0.08] hover:bg-white/[0.05] text-[#aaa]'
                           }`}
                         >
-                          {p === 'editor' ? 'Editor' : p === 'muse' ? 'Visionary' : 'Critic'}
+                          {p === 'editor' ? 'Editor' : p === 'visionary' ? 'Visionary' : 'Critic'}
                         </button>
                       );
                     })}

@@ -45,7 +45,7 @@ export const THEMES: Record<ThemeMode, ThemeDefinition> = {
   charcoal: {
     id: 'charcoal',
     name: 'Marrow Charcoal',
-    sub: 'Obsidian Dark',
+    sub: 'Deep Graphite',
     category: 'dark',
     accentName: 'Bone Ivory',
     accentColor: '#f4f1ea',

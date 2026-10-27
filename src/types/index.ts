@@ -86,7 +86,7 @@ export interface EditorSettings {
   activeGoalView?: 'chapter' | 'daily'; // default 'chapter'
   geminiApiKey?: string;
   aiModel?: 'gemini-3.5-flash-lite' | 'gemini-3.8-flash';
-  aiPersona?: 'editor' | 'muse' | 'critic';
+  aiPersona?: 'editor' | 'visionary' | 'critic';
 }
 
 export interface WritingSprint {

@@ -30,7 +30,7 @@ export const DEFAULT_SETTINGS: EditorSettings = {
 };
 
 const SEED_FOLDERS: Folder[] = [
-  { id: 'f-novel', name: 'The Obsidian Spire', parentId: null, order: 1 },
+  { id: 'f-novel', name: 'The Sovereign Spire', parentId: null, order: 1 },
   { id: 'f-world', name: 'Worldbuilding & Lore', parentId: 'f-novel', order: 1 },
   { id: 'f-characters', name: 'Character Dossiers', parentId: 'f-novel', order: 2 },
   { id: 'f-journal', name: 'Daily Chrono Logs', parentId: null, order: 2 },
@@ -73,7 +73,7 @@ const SEED_NOTES: Note[] = [
         wordCountSnapshot: 382,
       },
     ],
-    content: `<p>The dawn broke over the obsidian ridge not with fire, but with a whisper of silver mist. In the quiet heights of the high tower, every keystroke felt indelible.</p><p>She watched the lantern smoke coil against the rafters, recalling what [[Elena Vane]] had whispered before departing for the borderlands: <em>"A story is not written once; it is etched into the grain of time, line by line."</em></p><p>Beyond the courtyard gates, the scouts of [[The Iron Concord]] were already preparing their march. She checked the ancient seal on the manuscript parchment. The ink had dried hours ago, but the weight of the decree remained fresh.</p><blockquote><p>"He who masters the stillness of the cursor masters the mind."</p></blockquote><p>With a slow breath, she placed both hands back upon the desk, letting the stillness of the morning guide the next chapter.</p>`,
+    content: `<p>The dawn broke over the ashen ridge not with fire, but with a whisper of silver mist. In the quiet heights of the high tower, every keystroke felt indelible.</p><p>She watched the lantern smoke coil against the rafters, recalling what [[Elena Vane]] had whispered before departing for the borderlands: <em>"A story is not written once; it is etched into the grain of time, line by line."</em></p><p>Beyond the courtyard gates, the scouts of [[The Iron Concord]] were already preparing their march. She checked the ancient seal on the manuscript parchment. The ink had dried hours ago, but the weight of the decree remained fresh.</p><blockquote><p>"He who masters the stillness of the cursor masters the mind."</p></blockquote><p>With a slow breath, she placed both hands back upon the desk, letting the stillness of the morning guide the next chapter.</p>`,
   },
   {
     id: 'note-elena',
@@ -148,7 +148,7 @@ const SEED_NOTES: Note[] = [
 export const StorageService = {
   getNotes(): Note[] {
     try {
-      const data = localStorage.getItem(STORAGE_KEY_NOTES) || localStorage.getItem('purejot_notes_v1');
+      const data = localStorage.getItem(STORAGE_KEY_NOTES);
       if (!data) {
         localStorage.setItem(STORAGE_KEY_NOTES, JSON.stringify(SEED_NOTES));
         return SEED_NOTES;
@@ -176,7 +176,7 @@ export const StorageService = {
 
   getFolders(): Folder[] {
     try {
-      const data = localStorage.getItem(STORAGE_KEY_FOLDERS) || localStorage.getItem('purejot_folders_v1');
+      const data = localStorage.getItem(STORAGE_KEY_FOLDERS);
       if (!data) {
         localStorage.setItem(STORAGE_KEY_FOLDERS, JSON.stringify(SEED_FOLDERS));
         IndexedDBService.saveAllFolders(SEED_FOLDERS);
@@ -200,7 +200,7 @@ export const StorageService = {
 
   getSettings(): EditorSettings {
     try {
-      const data = localStorage.getItem(STORAGE_KEY_SETTINGS) || localStorage.getItem('purejot_settings_v1');
+      const data = localStorage.getItem(STORAGE_KEY_SETTINGS);
       if (!data) return DEFAULT_SETTINGS;
       const parsed = JSON.parse(data);
       const validTheme = VALID_THEMES.includes(parsed.theme) ? parsed.theme : 'charcoal';
@@ -252,9 +252,7 @@ export const StorageService = {
 
   getHistory(noteId: string): HistoryRecord[] {
     try {
-      const data =
-        localStorage.getItem(`${STORAGE_KEY_HISTORY}_${noteId}`) ||
-        localStorage.getItem(`purejot_history_v1_${noteId}`);
+      const data = localStorage.getItem(`${STORAGE_KEY_HISTORY}_${noteId}`);
       if (!data) return [];
       return JSON.parse(data);
     } catch {

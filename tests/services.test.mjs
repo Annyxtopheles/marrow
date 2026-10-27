@@ -184,7 +184,7 @@ test('Vault Action History: Delete Note and Undo/Redo Restoration', async () => 
 test('StorageService: Trash Soft-Delete and Recovery', async () => {
   const noteToDelete = {
     id: 'note-trash-1',
-    title: 'Obsidian Spire Lore',
+    title: 'Sovereign Spire Lore',
     content: '<p>Secret lore</p>',
     tags: ['lore'],
   };
@@ -212,7 +212,7 @@ test('StorageService: Trash Soft-Delete and Recovery', async () => {
 
   const restored = restoreFromTrash('note-trash-1');
   assert.ok(restored);
-  assert.equal(restored.title, 'Obsidian Spire Lore');
+  assert.equal(restored.title, 'Sovereign Spire Lore');
   assert.equal(trash.length, 0);
 });
 
