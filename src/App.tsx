@@ -929,6 +929,8 @@ export function App() {
     ? 'bg-[#0c1017] text-[#e2e8f0]'
     : settings.theme === 'evergreen'
     ? 'bg-[#09110d] text-[#dff0e6]'
+    : settings.theme === 'grunge'
+    ? 'bg-[#121214] text-[#f4f4f0]'
     : 'bg-[#121315] text-[#dedad4]';
 
   const headerBorder = isLightMode
@@ -943,6 +945,8 @@ export function App() {
     ? 'border-sky-500/15'
     : settings.theme === 'evergreen'
     ? 'border-emerald-500/15'
+    : settings.theme === 'grunge'
+    ? 'border-white/[0.12]'
     : 'border-white/[0.07]';
 
   const headerBg = isLightMode
@@ -957,6 +961,8 @@ export function App() {
     ? 'bg-[#111722]/95'
     : settings.theme === 'evergreen'
     ? 'bg-[#0f1a14]/95'
+    : settings.theme === 'grunge'
+    ? 'bg-[#0d0d0f]'
     : 'bg-[#151618]/90';
 
   const buttonHover = isLightMode ? 'hover:bg-black/[0.05]' : 'hover:bg-white/[0.06]';

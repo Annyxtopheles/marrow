@@ -11,7 +11,6 @@ import {
   ChevronRight,
   ChevronDown,
   Trash2,
-  Tag,
   Settings,
   BookOpen,
   Pencil,
@@ -89,7 +88,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const currentTheme = THEMES[theme || 'charcoal'] || THEMES.charcoal;
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [collapsedFolders, setCollapsedFolders] = useState<Record<string, boolean>>({});
   const [showFolderModal, setShowFolderModal] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
@@ -143,14 +141,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
     setRenamingFolderId(null);
   };
 
-  const allTags = Array.from(new Set(notes.flatMap((n) => n.tags || [])));
-
   const filteredNotes = notes.filter((n) => {
-    const matchesSearch =
-      n.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      n.content.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesTag = selectedTag ? (n.tags || []).includes(selectedTag) : true;
-    return matchesSearch && matchesTag;
+    const q = searchQuery.toLowerCase().trim();
+    if (!q) return true;
+    const cleanTag = q.replace(/^#/, '');
+    return (
+      n.title.toLowerCase().includes(q) ||
+      n.content.toLowerCase().includes(q) ||
+      (n.tags || []).some((t) => t.toLowerCase().includes(cleanTag))
+    );
   });
 
   // Sort notes with pinned first, then by updated timestamp
@@ -304,6 +303,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     ? 'border-sky-500/15'
     : theme === 'evergreen'
     ? 'border-emerald-500/15'
+    : theme === 'grunge'
+    ? 'border-white/[0.12]'
     : isLightMode
     ? 'border-[#e4e0d7]'
     : 'border-white/[0.08]';
@@ -318,6 +319,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     ? 'bg-[#111722]'
     : theme === 'evergreen'
     ? 'bg-[#0f1a14]'
+    : theme === 'grunge'
+    ? 'bg-[#0d0d0f]'
     : isLightMode
     ? 'bg-[#f4f1ea]'
     : 'bg-[#131416]';
@@ -333,6 +336,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     ? 'bg-amber-600/15 text-amber-950 font-semibold border-l-2 border-amber-600 pl-1.5'
     : theme === 'evergreen'
     ? 'bg-emerald-500/15 text-emerald-200 font-semibold border-l-2 border-emerald-400 pl-1.5'
+    : theme === 'grunge'
+    ? 'bg-amber-400/15 text-amber-300 font-semibold border-l-2 border-amber-400 pl-1.5'
     : isLightMode
     ? 'bg-black/[0.06] text-[#1c1a17] font-semibold'
     : 'bg-white/[0.08] text-[#f5f2eb] font-semibold';
@@ -384,9 +389,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <Search className={`absolute left-2.5 h-3.5 w-3.5 ${mutedText}`} />
           <input
             type="text"
-            placeholder="Search documents..."
+            placeholder="Search documents or #tags..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            data-zoho-ignore="true"
+            data-lpignore="true"
+            data-1p-ignore="true"
+            data-bwignore="true"
+            data-form-type="other"
+            name="marrow-doc-search"
+            autoComplete="off"
+            autoCorrect="off"
+            spellCheck={false}
             className={`w-full rounded-md pl-8 pr-3 py-1.5 text-xs placeholder:text-neutral-400/70 focus:outline-none transition border ${
               isLightMode
                 ? 'bg-black/[0.02] border-black/[0.07] text-[#2c2a27]'
@@ -394,38 +408,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
             }`}
           />
         </div>
-
-        {/* Tags */}
-        {allTags.length > 0 && (
-          <div className="flex items-center gap-1 overflow-x-auto scrollbar-none mt-2 pt-0.5">
-            <button
-              type="button"
-              onClick={() => setSelectedTag(null)}
-              className={`px-2 py-0.5 rounded-md text-[10px] transition shrink-0 ${
-                selectedTag === null ? activeItem : `${itemHover} ${mutedText} hover:text-inherit`
-              }`}
-            >
-              All
-            </button>
-            {allTags.map((tag) => (
-              <button
-                type="button"
-                key={tag}
-                onClick={() => setSelectedTag(selectedTag === tag ? null : tag)}
-                className={`px-2 py-0.5 rounded-md text-[10px] transition shrink-0 flex items-center gap-1 border ${
-                  selectedTag === tag
-                    ? activeItem
-                    : isLightMode
-                    ? 'border-black/[0.08] bg-black/[0.03] text-[#555] hover:text-[#1c1a17]'
-                    : 'border-white/[0.08] bg-white/[0.04] text-neutral-300 hover:text-[#f0ece4]'
-                }`}
-              >
-                <Tag className="h-2.5 w-2.5 opacity-60" />
-                #{tag}
-              </button>
-            ))}
-          </div>
-        )}
       </div>
 
       {/* Documents & Folders Tree */}

@@ -489,7 +489,7 @@ test('Double-Click Quick Rename Logic for Notes and Folders', async () => {
 });
 
 test('Theme System: Multiple Modern & Editorial Themes with Blue and Pink Accents', async () => {
-  const VALID_THEMES = ['charcoal', 'canvas', 'nordic', 'sakura', 'sepia', 'evergreen', 'dreamscape'];
+  const VALID_THEMES = ['charcoal', 'canvas', 'nordic', 'sakura', 'sepia', 'evergreen', 'dreamscape', 'grunge'];
 
   // Test light/dark categorization
   const isLightMode = (theme) => ['canvas', 'sakura', 'sepia', 'dreamscape'].includes(theme);
@@ -501,6 +501,7 @@ test('Theme System: Multiple Modern & Editorial Themes with Blue and Pink Accent
   assert.equal(isLightMode('sepia'), true);     // Sepia Light with Amber
   assert.equal(isLightMode('evergreen'), false);// Deep Pine Forest Dark with Sage
   assert.equal(isLightMode('dreamscape'), true);// Dreamy Dynamic Gradient Light with Orchid
+  assert.equal(isLightMode('grunge'), false);   // Brutalist Grunge Solid Dark with Industrial Amber
 
   // Test that requested themes are properly represented
   // 1. Clean modern one with blue accent color
@@ -509,6 +510,8 @@ test('Theme System: Multiple Modern & Editorial Themes with Blue and Pink Accent
   assert.equal(VALID_THEMES.includes('sakura'), true);
   // 3. Dreamy dynamic gradients on canvas
   assert.equal(VALID_THEMES.includes('dreamscape'), true);
+  // 4. Brutalist grunge solid color
+  assert.equal(VALID_THEMES.includes('grunge'), true);
 
   // Test storage theme parser validation
   const parseTheme = (input) => VALID_THEMES.includes(input) ? input : 'charcoal';
@@ -517,6 +520,7 @@ test('Theme System: Multiple Modern & Editorial Themes with Blue and Pink Accent
   assert.equal(parseTheme('sepia'), 'sepia');
   assert.equal(parseTheme('evergreen'), 'evergreen');
   assert.equal(parseTheme('dreamscape'), 'dreamscape');
+  assert.equal(parseTheme('grunge'), 'grunge');
   assert.equal(parseTheme('invalid-theme'), 'charcoal');
 });
 

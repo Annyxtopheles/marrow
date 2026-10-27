@@ -38,6 +38,7 @@ export const VALID_THEMES: ThemeMode[] = [
   'sepia',
   'evergreen',
   'dreamscape',
+  'grunge',
 ];
 
 export const THEMES: Record<ThemeMode, ThemeDefinition> = {
@@ -228,6 +229,33 @@ export const THEMES: Record<ThemeMode, ThemeDefinition> = {
       itemHoverBg: 'rgba(0, 0, 0, 0.03)',
       caretColor: '#d946ef',
       selectionBg: 'rgba(217, 70, 239, 0.22)',
+    },
+  },
+  grunge: {
+    id: 'grunge',
+    name: 'Brutalist Grunge',
+    sub: 'Raw Solid Asphalt',
+    category: 'dark',
+    accentName: 'Industrial Amber',
+    accentColor: '#facc15',
+    swatchBg: 'bg-[#121214]',
+    swatchText: 'text-[#f4f4f0]',
+    tokens: {
+      appBg: '#121214',
+      editorBg: '#121214',
+      sidebarBg: '#0d0d0f',
+      headerBg: '#0d0d0f',
+      borderColor: 'rgba(255, 255, 255, 0.12)',
+      textColor: '#f4f4f0',
+      textMuted: '#8b8a85',
+      accentColor: '#facc15',
+      accentContrast: '#0d0d0f',
+      accentHover: '#eab308',
+      accentBg: 'rgba(250, 204, 21, 0.12)',
+      activeItemBg: 'rgba(250, 204, 21, 0.12)',
+      itemHoverBg: 'rgba(255, 255, 255, 0.05)',
+      caretColor: '#facc15',
+      selectionBg: 'rgba(250, 204, 21, 0.25)',
     },
   },
 };

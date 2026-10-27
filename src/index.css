@@ -5,7 +5,8 @@
     color-scheme: light dark;
     --font-serif: 'Newsreader', 'Source Serif 4', Georgia, serif;
     --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+    --font-mono: 'Space Mono', 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+    --font-brutalist: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
   }
 
   body {
@@ -28,6 +29,11 @@
 
 .font-mono {
   font-family: var(--font-mono);
+}
+
+.font-brutalist {
+  font-family: var(--font-brutalist);
+  letter-spacing: -0.015em;
 }
 
 /* Custom subtle scrollbar with soft contrast */

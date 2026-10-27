@@ -65,8 +65,9 @@ export type ThemeMode =
   | 'sakura'
   | 'sepia'
   | 'evergreen'
-  | 'dreamscape';
-export type FontFamily = 'serif' | 'sans' | 'mono';
+  | 'dreamscape'
+  | 'grunge';
+export type FontFamily = 'serif' | 'sans' | 'mono' | 'brutalist';
 
 export interface EditorSettings {
   theme: ThemeMode;

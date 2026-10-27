@@ -18,7 +18,6 @@ import {
   List,
   Link2,
   Tag,
-  Plus,
   X,
   Mic,
   Volume2,
@@ -425,6 +424,10 @@ export const Editor: React.FC<EditorProps> = ({
   const fontClass =
     settings.fontFamily === 'serif'
       ? 'font-serif'
+      : settings.fontFamily === 'mono'
+      ? 'font-mono'
+      : settings.fontFamily === 'brutalist'
+      ? 'font-brutalist'
       : 'font-sans';
 
   const subBarBorder = isLightMode
@@ -439,6 +442,8 @@ export const Editor: React.FC<EditorProps> = ({
     ? 'border-sky-500/15'
     : settings.theme === 'evergreen'
     ? 'border-emerald-500/15'
+    : settings.theme === 'grunge'
+    ? 'border-white/[0.12]'
     : 'border-white/[0.06]';
   const btnHover = isLightMode ? 'hover:bg-black/[0.05] hover:text-[#111]' : 'hover:bg-white/[0.06] hover:text-[#fff]';
   const activeBtn = isLightMode ? 'bg-black/[0.08] text-[#111]' : 'bg-white/[0.08] text-[#f2efe9]';
@@ -454,6 +459,8 @@ export const Editor: React.FC<EditorProps> = ({
     ? 'bg-sky-500/20'
     : settings.theme === 'evergreen'
     ? 'bg-emerald-500/20'
+    : settings.theme === 'grunge'
+    ? 'bg-white/[0.12]'
     : 'bg-white/[0.07]';
 
   return (
@@ -650,6 +657,23 @@ export const Editor: React.FC<EditorProps> = ({
             >
               <History className="h-3.5 w-3.5" />
             </button>
+
+            <button
+              type="button"
+              onClick={() => setIsAddingTag(!isAddingTag)}
+              className={`rounded-md p-1.5 transition ${
+                isAddingTag || (note.tags && note.tags.length > 0)
+                  ? activeBtn
+                  : `${btnHover} text-neutral-400`
+              }`}
+              title={
+                note.tags && note.tags.length > 0
+                  ? `Tags: ${note.tags.map((t) => '#' + t).join(', ')} (click to manage)`
+                  : 'Document Metadata & Tags'
+              }
+            >
+              <Tag className="h-3.5 w-3.5" />
+            </button>
           </div>
         ) : (
           <div className="flex items-center gap-2 text-neutral-400 text-[11px]">
@@ -710,36 +734,55 @@ export const Editor: React.FC<EditorProps> = ({
             placeholder="Untitled Document..."
             value={note.title}
             onChange={handleTitleChange}
+            data-zoho-ignore="true"
+            data-lpignore="true"
+            data-1p-ignore="true"
+            data-bwignore="true"
+            data-form-type="other"
+            data-dashlane-ignore="true"
+            data-protonpass-ignore="true"
+            name="marrow-manuscript-title"
+            id="marrow-manuscript-title"
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="words"
+            spellCheck={false}
             className={`w-full bg-transparent font-medium tracking-tight placeholder-neutral-500/50 focus:outline-none transition-all ${
-              settings.fontFamily === 'serif' ? 'font-serif text-3xl md:text-4xl' : 'font-sans text-2xl md:text-3xl'
+              settings.fontFamily === 'serif'
+                ? 'font-serif text-3xl md:text-4xl'
+                : settings.fontFamily === 'brutalist'
+                ? 'font-brutalist text-3xl md:text-4xl tracking-tight'
+                : settings.fontFamily === 'mono'
+                ? 'font-mono text-2xl md:text-3xl'
+                : 'font-sans text-2xl md:text-3xl'
             }`}
           />
 
-          {/* Interactive Document Tags Strip */}
-          <div className="flex items-center gap-1.5 flex-wrap -mt-2 pb-2 select-none">
-            {note.tags.map((tag) => (
-              <span
-                key={tag}
-                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] border transition ${
-                  isLightMode
-                    ? 'bg-black/[0.03] border-black/[0.07] text-[#555]'
-                    : 'bg-white/[0.04] border-white/[0.07] text-[#aaa]'
-                }`}
-              >
-                <Tag className="h-2.5 w-2.5 opacity-40" />
-                <span>#{tag}</span>
-                <button
-                  type="button"
-                  onClick={() => handleRemoveTag(tag)}
-                  className="opacity-40 hover:opacity-100 p-0.5 ml-0.5 rounded transition"
-                  title={`Remove #${tag}`}
+          {/* Optional Document Metadata & Tags (Only displayed when toggled via Tag icon) */}
+          {isAddingTag && (
+            <div className="flex items-center gap-1.5 flex-wrap -mt-2 pb-2 select-none animate-in fade-in duration-150">
+              {note.tags.map((tag) => (
+                <span
+                  key={tag}
+                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] border transition ${
+                    isLightMode
+                      ? 'bg-black/[0.03] border-black/[0.07] text-[#555]'
+                      : 'bg-white/[0.04] border-white/[0.07] text-[#aaa]'
+                  }`}
                 >
-                  <X className="h-2.5 w-2.5" />
-                </button>
-              </span>
-            ))}
+                  <Tag className="h-2.5 w-2.5 opacity-40" />
+                  <span>#{tag}</span>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveTag(tag)}
+                    className="opacity-40 hover:opacity-100 p-0.5 ml-0.5 rounded transition"
+                    title={`Remove #${tag}`}
+                  >
+                    <X className="h-2.5 w-2.5" />
+                  </button>
+                </span>
+              ))}
 
-            {isAddingTag ? (
               <input
                 type="text"
                 value={newTagInput}
@@ -749,7 +792,10 @@ export const Editor: React.FC<EditorProps> = ({
                   if (e.key === 'Enter') handleAddTagSubmit();
                   if (e.key === 'Escape') setIsAddingTag(false);
                 }}
-                placeholder="tag name..."
+                placeholder="add tag... (Enter)"
+                data-zoho-ignore="true"
+                data-lpignore="true"
+                data-1p-ignore="true"
                 autoFocus
                 className={`rounded px-2 py-0.5 text-[11px] outline-none border ${
                   isLightMode
@@ -757,20 +803,16 @@ export const Editor: React.FC<EditorProps> = ({
                     : 'bg-black/40 border-white/20 text-[#dedad4]'
                 }`}
               />
-            ) : (
+
               <button
                 type="button"
-                onClick={() => setIsAddingTag(true)}
-                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] opacity-40 hover:opacity-80 transition border border-dashed ${
-                  isLightMode ? 'border-black/20' : 'border-white/20'
-                }`}
-                title="Add tag to note"
+                onClick={() => setIsAddingTag(false)}
+                className="text-[10px] opacity-40 hover:opacity-80 px-1 py-0.5 ml-1 transition"
               >
-                <Plus className="h-2.5 w-2.5" />
-                <span>Tag</span>
+                Done
               </button>
-            )}
-          </div>
+            </div>
+          )}
 
           {rawMarkdownMode ? (
             <div className="space-y-2 pt-2">

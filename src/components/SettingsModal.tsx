@@ -125,6 +125,18 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   sub: 'Contemporary',
                   font: 'var(--font-sans)',
                 },
+                {
+                  id: 'brutalist',
+                  name: 'Space Grotesk',
+                  sub: 'Brutalist Raw',
+                  font: 'var(--font-brutalist)',
+                },
+                {
+                  id: 'mono',
+                  name: 'Space Mono',
+                  sub: 'Typewriter Zine',
+                  font: 'var(--font-mono)',
+                },
               ].map((f) => (
                 <button
                   key={f.id}

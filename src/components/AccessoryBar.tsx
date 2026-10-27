@@ -47,6 +47,8 @@ export const AccessoryBar: React.FC<AccessoryBarProps> = ({
     ? 'border-sky-500/15 bg-[#111722]/95 text-[#94a3b8]'
     : settings.theme === 'evergreen'
     ? 'border-emerald-500/15 bg-[#0f1a14]/95 text-[#86a793]'
+    : settings.theme === 'grunge'
+    ? 'border-white/[0.12] bg-[#0d0d0f] text-[#a8a7a0]'
     : 'border-white/[0.06] bg-[#16171a]/90 text-[#9a968f]';
 
   const btnHover = isLightMode

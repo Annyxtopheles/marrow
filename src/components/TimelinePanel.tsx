@@ -302,6 +302,8 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
     ? 'border-sky-500/15'
     : theme === 'evergreen'
     ? 'border-emerald-500/15'
+    : theme === 'grunge'
+    ? 'border-white/[0.12]'
     : isLightMode
     ? 'border-[#e4e0d7]'
     : 'border-white/[0.08]';
@@ -316,11 +318,15 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
     ? 'bg-[#111722]'
     : theme === 'evergreen'
     ? 'bg-[#0f1a14]'
+    : theme === 'grunge'
+    ? 'bg-[#0d0d0f]'
     : isLightMode
     ? 'bg-[#f4f1ea]'
     : 'bg-[#131416]';
   const cardBg = theme === 'dreamscape'
     ? 'bg-white/40 border-black/[0.06] backdrop-blur-sm'
+    : theme === 'grunge'
+    ? 'bg-white/[0.04] border-white/[0.12]'
     : isLightMode
     ? 'bg-black/[0.02] border-black/[0.08]'
     : 'bg-white/[0.03] border-white/[0.08]';
