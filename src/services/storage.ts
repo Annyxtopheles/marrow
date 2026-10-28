@@ -145,6 +145,22 @@ const SEED_NOTES: Note[] = [
     ],
     content: `<p>Notes on writing cadence, interval tracking, and sprint milestones.</p><p><strong>Marrow Fail-safe:</strong> Not a single stroke lost. The history scrubber allows continuous time-travel across draft sessions.</p><p><strong>Knowledge Graph:</strong> Interlinks connecting [[Elena Vane]] and [[The Iron Concord]] form the backbone of the plot.</p>`,
   },
+  {
+    id: 'note-poem',
+    title: 'Untitled poem',
+    folderId: 'f-journal',
+    tags: ['poetry', 'verse', 'archaic'],
+    createdAt: Date.now() - 3600000,
+    updatedAt: Date.now() - 3600000,
+    lastOpenedAt: Date.now() - 3600000,
+    wordCount: 17,
+    characterCount: 96,
+    pinned: false,
+    favorite: false,
+    inUniverseDate: 'Night Watch, Cycle 402',
+    timelineLog: [],
+    content: `<p class="drop-cap" data-dropcap="true">The monoliths crawl beneath me. Who art thou? I tremble to ask what thou wantest from me.</p>`,
+  },
 ];
 
 export const StorageService = {
