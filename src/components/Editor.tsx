@@ -2,12 +2,35 @@ import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react'
 import { createPortal } from 'react-dom';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
+import Paragraph from '@tiptap/extension-paragraph';
 import Placeholder from '@tiptap/extension-placeholder';
 import type { Note, EditorSettings } from '../types';
 import { AccessoryBar } from './AccessoryBar';
 import { HistorySliderModal } from './HistorySliderModal';
 import { analyzeProseCadence } from '../services/cadence';
 import { THEMES } from '../services/themes';
+
+const CustomParagraph = Paragraph.extend({
+  addAttributes() {
+    return {
+      dropCap: {
+        default: false,
+        parseHTML: (element) =>
+          element.classList.contains('drop-cap') ||
+          element.getAttribute('data-dropcap') === 'true',
+        renderHTML: (attributes) => {
+          if (!attributes.dropCap) {
+            return {};
+          }
+          return {
+            class: 'drop-cap',
+            'data-dropcap': 'true',
+          };
+        },
+      },
+    };
+  },
+});
 import {
   Code,
   Eye,
@@ -280,10 +303,12 @@ export const Editor: React.FC<EditorProps> = ({
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
+        paragraph: false,
         heading: {
           levels: [1, 2, 3],
         },
       }),
+      CustomParagraph,
       Placeholder.configure({
         placeholder: 'Begin your prose... Every stroke is protected.',
       }),
@@ -412,6 +437,28 @@ export const Editor: React.FC<EditorProps> = ({
       .focus()
       .insertContentAt({ from, to }, `[[${selectedText}]]`)
       .run();
+  };
+
+  const isCurrentParagraphDropCap =
+    editor?.isActive('paragraph', { dropCap: true }) ?? false;
+
+  const toggleParagraphDropCap = () => {
+    if (!editor) return;
+    const isDropCap = editor.isActive('paragraph', { dropCap: true });
+    if (!editor.isActive('paragraph')) {
+      editor
+        .chain()
+        .focus()
+        .setParagraph()
+        .updateAttributes('paragraph', { dropCap: true })
+        .run();
+    } else {
+      editor
+        .chain()
+        .focus()
+        .updateAttributes('paragraph', { dropCap: !isDropCap })
+        .run();
+    }
   };
 
   // PureWriter Typewriter scrolling: center active line on selection change
@@ -792,19 +839,14 @@ export const Editor: React.FC<EditorProps> = ({
             </button>
             <button
               type="button"
-              onClick={() =>
-                onUpdateSettings?.({
-                  ...settings,
-                  dropCap: !settings.dropCap,
-                })
-              }
+              onClick={toggleParagraphDropCap}
               className={`rounded-md p-1.5 transition ${
-                settings.dropCap ? activeBtn : btnHover
+                isCurrentParagraphDropCap ? activeBtn : btnHover
               }`}
               title={
-                settings.dropCap
-                  ? 'Chapter Drop Caps Enabled (click to disable)'
-                  : 'Enable Chapter Drop Caps (illuminated opening letter)'
+                isCurrentParagraphDropCap
+                  ? 'Remove Drop Cap from Paragraph'
+                  : 'Drop Cap (Illuminated Initial Letter)'
               }
             >
               <CaseUpper className="h-3.5 w-3.5" />
@@ -1285,6 +1327,23 @@ export const Editor: React.FC<EditorProps> = ({
               title="Wrap as [[Wikilink]]"
             >
               <Link2 className="h-3.5 w-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                toggleParagraphDropCap();
+                setSelectionToolbar(null);
+              }}
+              className={`p-1.5 rounded transition ${
+                isCurrentParagraphDropCap
+                  ? isLightMode
+                    ? 'bg-black/10 font-semibold'
+                    : 'bg-white/15 font-semibold'
+                  : 'hover:bg-black/5 dark:hover:bg-white/10 opacity-80 hover:opacity-100'
+              }`}
+              title={isCurrentParagraphDropCap ? 'Remove Drop Cap' : 'Drop Cap (Illuminated Initial)'}
+            >
+              <CaseUpper className="h-3.5 w-3.5" />
             </button>
 
             {onAskLumen && (

@@ -108,34 +108,21 @@
   hanging-punctuation: first allow-end;
 }
 
-/* Editorial Chapter Drop Caps */
+/* Editorial Chapter & Paragraph Drop Caps */
+.ProseMirror p.drop-cap::first-letter,
+.ProseMirror p[data-dropcap="true"]::first-letter,
 .drop-cap-enabled .ProseMirror > p:first-of-type::first-letter,
 .drop-cap-enabled .ProseMirror > hr + p::first-letter {
-  font-family: var(--font-serif);
-  font-weight: 600;
   float: left;
-  font-size: 3.35em;
-  line-height: 0.82;
-  padding-top: 0.08em;
-  padding-right: 0.12em;
+  font-family: var(--font-serif);
+  font-weight: 700;
+  font-size: 3.25em;
+  line-height: 0.8;
+  padding-top: 0.05em;
+  padding-right: 0.1em;
   padding-bottom: 0.02em;
   margin-right: 0.08em;
   color: var(--theme-accent, currentColor);
-}
-
-@supports (initial-letter: 3) or (-webkit-initial-letter: 3) {
-  .drop-cap-enabled .ProseMirror > p:first-of-type::first-letter,
-  .drop-cap-enabled .ProseMirror > hr + p::first-letter {
-    -webkit-initial-letter: 3;
-    initial-letter: 3;
-    float: none;
-    font-size: inherit;
-    line-height: inherit;
-    padding: 0;
-    margin-right: 0.14em;
-    font-weight: 600;
-    color: var(--theme-accent, currentColor);
-  }
 }
 
 .ProseMirror h1 {

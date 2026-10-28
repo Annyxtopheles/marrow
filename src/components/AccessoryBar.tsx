@@ -1,7 +1,5 @@
 import React, { useState } from 'react';
 import {
-  Maximize2,
-  Minimize2,
   ShieldCheck,
   Target,
 } from 'lucide-react';
@@ -15,11 +13,11 @@ interface AccessoryBarProps {
   onUpdateNote: (updated: Note) => void;
   onUpdateSettings: (settings: EditorSettings) => void;
   onResetDailyWords: () => void;
-  focusMode: boolean;
-  onToggleFocus: () => void;
   saveStatus: 'saved' | 'saving';
   isTyping?: boolean;
   isLightMode: boolean;
+  focusMode?: boolean;
+  onToggleFocus?: () => void;
 }
 
 export const AccessoryBar: React.FC<AccessoryBarProps> = ({
@@ -29,8 +27,6 @@ export const AccessoryBar: React.FC<AccessoryBarProps> = ({
   onUpdateNote,
   onUpdateSettings,
   onResetDailyWords,
-  focusMode,
-  onToggleFocus,
   saveStatus,
   isTyping = false,
   isLightMode,
@@ -52,10 +48,6 @@ export const AccessoryBar: React.FC<AccessoryBarProps> = ({
     : settings.theme === 'grunge'
     ? 'border-white/[0.12] bg-[#0d0d0f] text-[#a8a7a0]'
     : 'border-white/[0.06] bg-[#16171a]/90 text-[#9a968f]';
-
-  const btnHover = isLightMode
-    ? 'hover:bg-black/[0.05] hover:text-[#222]'
-    : 'hover:bg-white/[0.06] hover:text-[#eee]';
 
   const words = note.wordCount || 0;
   const chars = note.characterCount || 0;
@@ -85,20 +77,8 @@ export const AccessoryBar: React.FC<AccessoryBarProps> = ({
           : 'opacity-100 translate-y-0'
       }`}
     >
-      {/* Left side: Zen Focus Mode Toggle */}
-      <div className="flex items-center gap-1.5">
-        <button
-          type="button"
-          onClick={onToggleFocus}
-          className={`rounded-md p-1.5 transition ${btnHover}`}
-          title={focusMode ? 'Exit Zen Mode' : 'Zen Focus Mode'}
-        >
-          {focusMode ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
-        </button>
-      </div>
-
-      {/* Live Document Statistics, Goal Status & Protection Status */}
-      <div className="flex items-center gap-2.5 pl-3 shrink-0 text-[11px] text-inherit">
+      {/* Live Document Statistics, Goal Status */}
+      <div className="flex items-center gap-2.5 text-[11px] text-inherit">
         <span className="flex items-center gap-1.5 font-medium">
           <span>{words.toLocaleString()} words</span>
         </span>
