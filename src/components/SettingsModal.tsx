@@ -1,7 +1,14 @@
 import React, { useState } from 'react';
-import type { EditorSettings, FontFamily } from '../types';
-import { X, Sliders, Download, Sparkles } from 'lucide-react';
-import { THEMES, VALID_THEMES } from '../services/themes';
+import type { EditorSettings, FontFamily, ReadingWidth, BaseAtmosphere } from '../types';
+import { X, Sliders, Download, Sparkles, Check, Pipette } from 'lucide-react';
+import {
+  THEMES,
+  VALID_THEMES,
+  VALID_BASE_ATMOSPHERES,
+  ATMOSPHERES,
+  ACCENT_PALETTE,
+  getEffectiveTheme,
+} from '../services/themes';
 
 interface SettingsModalProps {
   settings: EditorSettings;
@@ -19,9 +26,41 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   isLightMode,
 }) => {
   const [showApiKey, setShowApiKey] = useState(false);
-  const currentTheme = THEMES[settings.theme] || THEMES.charcoal;
+  const currentTheme = getEffectiveTheme(settings);
+  const activeBase = (settings.baseAtmosphere || settings.theme || 'charcoal') as BaseAtmosphere;
+  const activeAccent = settings.accentColor || currentTheme.tokens.accentColor;
+  const activeWidth = settings.readingWidth || 'comfortable';
+  const [customHex, setCustomHex] = useState(activeAccent);
+
   const update = <K extends keyof EditorSettings>(key: K, value: EditorSettings[K]) => {
     onUpdateSettings({ ...settings, [key]: value });
+  };
+
+  const applyRecipe = (themeId: typeof settings.theme) => {
+    const preset = THEMES[themeId];
+    onUpdateSettings({
+      ...settings,
+      theme: themeId,
+      baseAtmosphere: themeId,
+      accentColor: preset.accentColor,
+    });
+    setCustomHex(preset.accentColor);
+  };
+
+  const applyBaseAtmosphere = (base: BaseAtmosphere) => {
+    onUpdateSettings({
+      ...settings,
+      baseAtmosphere: base,
+      theme: (base === 'oled' ? 'charcoal' : base),
+    });
+  };
+
+  const applyAccentColor = (color: string) => {
+    onUpdateSettings({
+      ...settings,
+      accentColor: color,
+    });
+    setCustomHex(color);
   };
 
   const border = isLightMode ? 'border-[#e4e0d7]' : 'border-white/[0.08]';
@@ -66,131 +105,304 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
         {/* Settings Body */}
         <div className="p-6 space-y-6 overflow-y-auto max-h-[75vh] text-xs">
-          {/* Low-Contrast Color Schemes */}
-          <div className="space-y-2.5">
-            <label className="text-[11px] uppercase tracking-wider opacity-60 block">
-              Editorial Atmosphere & Theme
-            </label>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-              {VALID_THEMES.map((themeId) => {
-                const th = THEMES[themeId];
-                const isSelected = settings.theme === th.id;
-                return (
-                  <button
-                    key={th.id}
-                    type="button"
-                    onClick={() => update('theme', th.id)}
-                    className={`p-2.5 rounded-lg border text-left transition relative flex flex-col justify-between gap-2 overflow-hidden ${
-                      isSelected ? selectedOutline : unselectedOutline
-                    }`}
-                    style={{
-                      backgroundColor: th.tokens.appBg,
-                      color: th.tokens.textColor,
-                    }}
-                  >
-                    <div className="flex items-center justify-between w-full">
-                      <span className="text-xs font-medium tracking-tight truncate">{th.name}</span>
-                      <span
-                        className="h-2.5 w-2.5 rounded-full shrink-0 shadow-xs"
-                        style={{ backgroundColor: th.accentColor }}
-                        title={`Accent: ${th.accentName}`}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between w-full text-[10px] opacity-60">
-                      <span>{th.sub}</span>
-                      <span className="capitalize text-[9px]">{th.category}</span>
-                    </div>
-                  </button>
-                );
-              })}
+          {/* Section 1: Visual Studio (Mix & Match) */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <label className="text-[11px] uppercase tracking-wider opacity-60 block font-semibold">
+                Visual Studio: Mix &amp; Match
+              </label>
+              <span className="text-[10px] opacity-60">Custom Atmosphere</span>
             </div>
-          </div>
 
-          {/* Typeface Selection */}
-          <div className="space-y-2.5">
-            <label className="text-[11px] uppercase tracking-wider opacity-60 block">
-              Editorial Typeface
-            </label>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-              {[
-                {
-                  id: 'serif',
-                  name: 'Newsreader',
-                  sub: 'Editorial Serif',
-                  font: 'var(--font-serif)',
-                },
-                {
-                  id: 'sans',
-                  name: 'Jakarta Sans',
-                  sub: 'Contemporary',
-                  font: 'var(--font-sans)',
-                },
-                {
-                  id: 'mono',
-                  name: 'Typewriter',
-                  sub: 'Serene Cadence',
-                  font: 'var(--font-mono)',
-                },
-                {
-                  id: 'brutalist',
-                  name: 'Space Grotesk',
-                  sub: 'Brutalist Raw',
-                  font: 'var(--font-brutalist)',
-                },
-              ].map((f) => (
-                <button
-                  key={f.id}
-                  type="button"
-                  onClick={() => update('fontFamily', f.id as FontFamily)}
-                  className={`p-2.5 rounded-lg border text-center transition ${cardBg} ${
-                    settings.fontFamily === f.id ? selectedOutline : unselectedOutline
-                  }`}
-                  style={{ fontFamily: f.font }}
+            {/* Live Atmosphere Preview Card */}
+            <div
+              className="p-3.5 rounded-lg border transition shadow-inner flex items-center justify-between gap-3 overflow-hidden"
+              style={{
+                backgroundColor: currentTheme.tokens.appBg,
+                borderColor: currentTheme.tokens.borderColor,
+                color: currentTheme.tokens.textColor,
+              }}
+            >
+              <div className="flex items-start gap-2.5">
+                <span
+                  className="font-serif font-bold text-2xl leading-none select-none"
+                  style={{ color: activeAccent }}
                 >
-                  <div className="text-xs">{f.name}</div>
-                  <div className="text-[10px] opacity-60 mt-0.5">{f.sub}</div>
-                </button>
-              ))}
+                  T
+                </span>
+                <div className="text-[11px] leading-tight">
+                  <div className="font-medium tracking-tight">
+                    {currentTheme.name}
+                  </div>
+                  <div className="opacity-60 text-[10px] mt-0.5">
+                    he monoliths crawl beneath me.
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <span
+                  className="px-2 py-0.5 rounded text-[10px] font-semibold shadow-xs"
+                  style={{
+                    backgroundColor: activeAccent,
+                    color: currentTheme.tokens.accentContrast,
+                  }}
+                >
+                  Active Ink
+                </span>
+              </div>
+            </div>
+
+            {/* 1. Base Canvas Atmosphere */}
+            <div className="space-y-1.5">
+              <span className="text-[10px] font-medium opacity-70 block">
+                1. Canvas Atmosphere (Background Base)
+              </span>
+              <div className="grid grid-cols-3 gap-1.5">
+                {VALID_BASE_ATMOSPHERES.map((atmId) => {
+                  const atm = ATMOSPHERES[atmId];
+                  const isSelected = activeBase === atmId;
+                  return (
+                    <button
+                      key={atmId}
+                      type="button"
+                      onClick={() => applyBaseAtmosphere(atmId)}
+                      className={`p-2 rounded-md border text-left transition flex items-center justify-between gap-1.5 ${
+                        isSelected ? selectedOutline : unselectedOutline
+                      }`}
+                      style={{
+                        backgroundColor: atm.appBg,
+                        color: atm.textColor,
+                      }}
+                      title={`${atm.name} — ${atm.sub}`}
+                    >
+                      <span className="text-[11px] font-medium truncate">{atm.name}</span>
+                      {isSelected && (
+                        <Check className="h-3 w-3 shrink-0" style={{ color: activeAccent }} />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* 2. Accent Ink Palette */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-medium opacity-70 block">
+                  2. Accent Ink (Illuminated Drop Caps, Badges &amp; Focus)
+                </span>
+                <div className="flex items-center gap-1 text-[10px] opacity-60 font-mono">
+                  <span>HEX:</span>
+                  <span className="uppercase">{activeAccent}</span>
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-2 p-2.5 rounded-lg border transition bg-black/[0.02] dark:bg-white/[0.02]">
+                {ACCENT_PALETTE.map((acc) => {
+                  const isSelected = activeAccent.toLowerCase() === acc.color.toLowerCase();
+                  return (
+                    <button
+                      key={acc.id}
+                      type="button"
+                      onClick={() => applyAccentColor(acc.color)}
+                      className={`h-6 w-6 rounded-full transition relative flex items-center justify-center shadow-xs hover:scale-110 active:scale-95 ${
+                        isSelected ? 'ring-2 ring-offset-2 ring-stone-400' : ''
+                      }`}
+                      style={{ backgroundColor: acc.color }}
+                      title={`${acc.name} (${acc.color})`}
+                    >
+                      {isSelected && (
+                        <span className="h-1.5 w-1.5 rounded-full bg-black/60 dark:bg-white/90" />
+                      )}
+                    </button>
+                  );
+                })}
+
+                {/* Custom Color Picker input */}
+                <label
+                  className="flex items-center gap-1.5 ml-auto px-2 py-1 rounded border text-[10px] cursor-pointer transition hover:opacity-100 opacity-75"
+                  title="Pick custom hex accent"
+                >
+                  <Pipette className="h-3 w-3" />
+                  <span>Custom</span>
+                  <input
+                    type="color"
+                    value={customHex.startsWith('#') ? customHex : '#f59e0b'}
+                    onChange={(e) => applyAccentColor(e.target.value)}
+                    className="sr-only"
+                  />
+                </label>
+              </div>
+            </div>
+
+            {/* Curated 1-Click Recipes */}
+            <div className="space-y-1.5 pt-1">
+              <span className="text-[10px] font-medium opacity-70 block">
+                Curated 1-Click Recipes (Instant Atmosphere + Matching Ink)
+              </span>
+              <div className="flex flex-wrap gap-1.5">
+                {VALID_THEMES.map((themeId) => {
+                  const th = THEMES[themeId];
+                  const isSelected =
+                    settings.theme === th.id &&
+                    (!settings.baseAtmosphere || settings.baseAtmosphere === th.id) &&
+                    (!settings.accentColor || settings.accentColor.toLowerCase() === th.accentColor.toLowerCase());
+
+                  return (
+                    <button
+                      key={th.id}
+                      type="button"
+                      onClick={() => applyRecipe(th.id)}
+                      className={`px-2.5 py-1 rounded-md border text-[10px] font-medium transition flex items-center gap-1.5 ${
+                        isSelected ? selectedOutline : unselectedOutline
+                      }`}
+                      style={{
+                        backgroundColor: th.tokens.appBg,
+                        color: th.tokens.textColor,
+                      }}
+                      title={`Load ${th.name} preset`}
+                    >
+                      <span
+                        className="h-2 w-2 rounded-full shrink-0"
+                        style={{ backgroundColor: th.accentColor }}
+                      />
+                      <span>{th.name.replace('Marrow ', '')}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
-          {/* Typography Sliders */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <div className="flex justify-between opacity-70">
-                <span>Font Size</span>
-                <span>{settings.fontSize}px</span>
+          {/* Section 2: Layout & Typography */}
+          <div className={`space-y-4 pt-4 border-t ${border}`}>
+            <label className="text-[11px] uppercase tracking-wider opacity-60 block font-semibold">
+              Editorial Canvas &amp; Type
+            </label>
+
+            {/* Reading Column Width */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-medium opacity-70 block">
+                  Reading Column Width
+                </span>
+                <span className="text-[10px] opacity-60 capitalize">
+                  {activeWidth === 'narrow'
+                    ? '56ch (~580px) · Poetry / Focus'
+                    : activeWidth === 'wide'
+                    ? '88ch (~880px) · Manuscript'
+                    : activeWidth === 'full'
+                    ? 'Expansive · Edge to Edge'
+                    : '72ch (~720px) · Classical Prose'}
+                </span>
               </div>
-              <input
-                type="range"
-                min={16}
-                max={26}
-                value={settings.fontSize}
-                onChange={(e) => update('fontSize', Number(e.target.value))}
-                className="w-full accent-stone-400 cursor-pointer h-1.5 rounded-lg appearance-none bg-stone-500/20"
-              />
+              <div className="grid grid-cols-4 gap-1.5">
+                {[
+                  { id: 'narrow', name: 'Narrow', sub: '56ch' },
+                  { id: 'comfortable', name: 'Standard', sub: '72ch' },
+                  { id: 'wide', name: 'Wide', sub: '88ch' },
+                  { id: 'full', name: 'Full', sub: 'Expansive' },
+                ].map((w) => (
+                  <button
+                    key={w.id}
+                    type="button"
+                    onClick={() => update('readingWidth', w.id as ReadingWidth)}
+                    className={`py-1.5 px-2 rounded-md border text-center transition ${cardBg} ${
+                      activeWidth === w.id ? selectedOutline : unselectedOutline
+                    }`}
+                  >
+                    <div className="text-[11px] font-medium">{w.name}</div>
+                    <div className="text-[9px] opacity-60">{w.sub}</div>
+                  </button>
+                ))}
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <div className="flex justify-between opacity-70">
-                <span>Line Height</span>
-                <span>{settings.lineHeight.toFixed(2)}x</span>
+            {/* Typeface Selection */}
+            <div className="space-y-1.5">
+              <span className="text-[10px] font-medium opacity-70 block">
+                Editorial Typeface
+              </span>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                {[
+                  {
+                    id: 'serif',
+                    name: 'Newsreader',
+                    sub: 'Editorial Serif',
+                    font: 'var(--font-serif)',
+                  },
+                  {
+                    id: 'sans',
+                    name: 'Jakarta Sans',
+                    sub: 'Contemporary',
+                    font: 'var(--font-sans)',
+                  },
+                  {
+                    id: 'mono',
+                    name: 'Typewriter',
+                    sub: 'Serene Cadence',
+                    font: 'var(--font-mono)',
+                  },
+                  {
+                    id: 'brutalist',
+                    name: 'Space Grotesk',
+                    sub: 'Brutalist Raw',
+                    font: 'var(--font-brutalist)',
+                  },
+                ].map((f) => (
+                  <button
+                    key={f.id}
+                    type="button"
+                    onClick={() => update('fontFamily', f.id as FontFamily)}
+                    className={`p-2.5 rounded-lg border text-center transition ${cardBg} ${
+                      settings.fontFamily === f.id ? selectedOutline : unselectedOutline
+                    }`}
+                    style={{ fontFamily: f.font }}
+                  >
+                    <div className="text-xs">{f.name}</div>
+                    <div className="text-[10px] opacity-60 mt-0.5">{f.sub}</div>
+                  </button>
+                ))}
               </div>
-              <input
-                type="range"
-                min={1.5}
-                max={2.3}
-                step={0.05}
-                value={settings.lineHeight}
-                onChange={(e) => update('lineHeight', Number(e.target.value))}
-                className="w-full accent-stone-400 cursor-pointer h-1.5 rounded-lg appearance-none bg-stone-500/20"
-              />
+            </div>
+
+            {/* Typography Sliders */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <div className="flex justify-between opacity-70">
+                  <span>Font Size</span>
+                  <span>{settings.fontSize}px</span>
+                </div>
+                <input
+                  type="range"
+                  min={16}
+                  max={26}
+                  value={settings.fontSize}
+                  onChange={(e) => update('fontSize', Number(e.target.value))}
+                  className="w-full accent-stone-400 cursor-pointer h-1.5 rounded-lg appearance-none bg-stone-500/20"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex justify-between opacity-70">
+                  <span>Line Height</span>
+                  <span>{settings.lineHeight.toFixed(2)}x</span>
+                </div>
+                <input
+                  type="range"
+                  min={1.5}
+                  max={2.3}
+                  step={0.05}
+                  value={settings.lineHeight}
+                  onChange={(e) => update('lineHeight', Number(e.target.value))}
+                  className="w-full accent-stone-400 cursor-pointer h-1.5 rounded-lg appearance-none bg-stone-500/20"
+                />
+              </div>
             </div>
           </div>
 
-          {/* Ergonomic Toggles */}
+          {/* Section 3: Ergonomic Toggles */}
           <div className={`space-y-3 pt-2 border-t ${border}`}>
-            <label className="text-[11px] uppercase tracking-wider opacity-60 block">
+            <label className="text-[11px] uppercase tracking-wider opacity-60 block font-semibold">
               Writing Ergonomics
             </label>
 
@@ -244,7 +456,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <div>
                   <div className="font-medium">Chapter Drop Caps</div>
                   <div className="text-[11px] opacity-60">
-                    Styles the opening letter of chapters and scene breaks with an illuminated drop cap.
+                    Styles opening letters of chapters and scene breaks with illuminated initials.
                   </div>
                 </div>
                 <input
@@ -257,11 +469,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
           </div>
 
-          {/* AI Editorial Assistant (Gemini) */}
+          {/* Section 4: AI Editorial Assistant (Gemini) */}
           <div className={`space-y-3 pt-2 border-t ${border}`}>
             <div className="flex items-center justify-between">
-              <label className="text-[11px] uppercase tracking-wider opacity-60 flex items-center gap-1.5 font-medium">
-                <Sparkles className="h-3 w-3" style={{ color: currentTheme.tokens.accentColor }} />
+              <label className="text-[11px] uppercase tracking-wider opacity-60 flex items-center gap-1.5 font-semibold">
+                <Sparkles className="h-3 w-3" style={{ color: activeAccent }} />
                 <span>Lumen Editorial Partner (Google Gemini)</span>
               </label>
               <span className="text-[10px] opacity-60">BYOK / Local-first</span>
@@ -340,7 +552,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
           </div>
 
-          {/* Export */}
+          {/* Section 5: Export */}
           <div className={`pt-2 border-t ${border}`}>
             <button
               type="button"
@@ -360,7 +572,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             onClick={onClose}
             className="px-5 py-1.5 rounded-lg font-semibold text-xs transition shadow-sm hover:opacity-90 active:scale-95"
             style={{
-              backgroundColor: currentTheme.tokens.accentColor,
+              backgroundColor: activeAccent,
               color: currentTheme.tokens.accentContrast,
             }}
           >

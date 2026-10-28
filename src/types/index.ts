@@ -68,6 +68,17 @@ export type ThemeMode =
   | 'dreamscape'
   | 'grunge';
 export type FontFamily = 'serif' | 'sans' | 'mono' | 'brutalist';
+export type ReadingWidth = 'narrow' | 'comfortable' | 'wide' | 'full';
+export type BaseAtmosphere =
+  | 'charcoal'
+  | 'oled'
+  | 'nordic'
+  | 'evergreen'
+  | 'grunge'
+  | 'canvas'
+  | 'sepia'
+  | 'sakura'
+  | 'dreamscape';
 
 export interface EditorSettings {
   theme: ThemeMode;
@@ -84,6 +95,9 @@ export interface EditorSettings {
   dualModePreview: boolean;
   activeTypingFade?: boolean;
   dropCap?: boolean;
+  readingWidth?: ReadingWidth; // default 'comfortable'
+  accentColor?: string; // Optional custom/picked accent hex override
+  baseAtmosphere?: BaseAtmosphere; // Optional base canvas atmosphere override
   dailyWordGoal?: number; // default 1000
   activeGoalView?: 'chapter' | 'daily'; // default 'chapter'
   geminiApiKey?: string;

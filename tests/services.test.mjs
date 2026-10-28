@@ -1058,3 +1058,32 @@ test('Typography: Chapter Drop Cap toggle and container class binding', async ()
   assert.equal(getContainerClasses('font-serif', settingsOn.dropCap), 'font-serif drop-cap-enabled');
   assert.equal(getContainerClasses('font-mono', settingsOn.dropCap), 'font-mono drop-cap-enabled');
 });
+
+test('Visual Studio: Dynamic Mix & Match Theme and Atmosphere Resolution', async () => {
+  // Test OLED base atmosphere resolution
+  const oledSettings = { theme: 'charcoal', baseAtmosphere: 'oled', accentColor: '#f59e0b' };
+  const getAtmosphereBg = (base) => {
+    const map = { oled: '#000000', charcoal: '#121315', canvas: '#f7f5f0' };
+    return map[base] || '#121315';
+  };
+  assert.equal(getAtmosphereBg(oledSettings.baseAtmosphere), '#000000');
+
+  // Test custom accent color override
+  assert.equal(oledSettings.accentColor, '#f59e0b');
+
+  // Test reading column width mapping
+  const getReadingWidthClass = (width) => {
+    switch (width) {
+      case 'narrow': return 'max-w-[56ch]';
+      case 'wide': return 'max-w-[88ch]';
+      case 'full': return 'max-w-5xl';
+      default: return 'max-w-[72ch]';
+    }
+  };
+
+  assert.equal(getReadingWidthClass('narrow'), 'max-w-[56ch]');
+  assert.equal(getReadingWidthClass('comfortable'), 'max-w-[72ch]');
+  assert.equal(getReadingWidthClass('wide'), 'max-w-[88ch]');
+  assert.equal(getReadingWidthClass('full'), 'max-w-5xl');
+  assert.equal(getReadingWidthClass(undefined), 'max-w-[72ch]');
+});

@@ -1,4 +1,4 @@
-import type { ThemeMode } from '../types';
+import type { ThemeMode, BaseAtmosphere } from '../types';
 
 export interface ThemeTokens {
   appBg: string;
@@ -29,6 +29,200 @@ export interface ThemeDefinition {
   swatchText: string;
   tokens: ThemeTokens;
 }
+
+export interface AtmosphereOption {
+  id: BaseAtmosphere;
+  name: string;
+  sub: string;
+  category: 'dark' | 'light';
+  appBg: string;
+  editorBg: string;
+  sidebarBg: string;
+  headerBg: string;
+  borderColor: string;
+  textColor: string;
+  textMuted: string;
+}
+
+export interface AccentOption {
+  id: string;
+  name: string;
+  color: string;
+}
+
+export const VALID_BASE_ATMOSPHERES: BaseAtmosphere[] = [
+  'charcoal',
+  'oled',
+  'nordic',
+  'evergreen',
+  'grunge',
+  'canvas',
+  'sepia',
+  'sakura',
+  'dreamscape',
+];
+
+export const ATMOSPHERES: Record<BaseAtmosphere, AtmosphereOption> = {
+  charcoal: {
+    id: 'charcoal',
+    name: 'Marrow Charcoal',
+    sub: 'Deep Matte Graphite',
+    category: 'dark',
+    appBg: '#121315',
+    editorBg: '#121315',
+    sidebarBg: '#16171a',
+    headerBg: '#16171a',
+    borderColor: 'rgba(255, 255, 255, 0.07)',
+    textColor: '#dedad4',
+    textMuted: '#8a867f',
+  },
+  oled: {
+    id: 'oled',
+    name: 'Pitch OLED',
+    sub: 'True Absolute Black',
+    category: 'dark',
+    appBg: '#000000',
+    editorBg: '#000000',
+    sidebarBg: '#080808',
+    headerBg: '#080808',
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    textColor: '#eae6df',
+    textMuted: '#807c75',
+  },
+  nordic: {
+    id: 'nordic',
+    name: 'Nordic Slate',
+    sub: 'Midnight Subarctic Navy',
+    category: 'dark',
+    appBg: '#0f141c',
+    editorBg: '#0f141c',
+    sidebarBg: '#141b26',
+    headerBg: '#141b26',
+    borderColor: 'rgba(56, 189, 248, 0.12)',
+    textColor: '#e2e8f0',
+    textMuted: '#94a3b8',
+  },
+  evergreen: {
+    id: 'evergreen',
+    name: 'Pine Evergreen',
+    sub: 'Dense Mountain Forest',
+    category: 'dark',
+    appBg: '#0d1612',
+    editorBg: '#0d1612',
+    sidebarBg: '#121f19',
+    headerBg: '#121f19',
+    borderColor: 'rgba(16, 185, 129, 0.12)',
+    textColor: '#e1ede6',
+    textMuted: '#84a993',
+  },
+  grunge: {
+    id: 'grunge',
+    name: 'Brutalist Grunge',
+    sub: 'Raw Asphalt Charcoal',
+    category: 'dark',
+    appBg: '#121214',
+    editorBg: '#121214',
+    sidebarBg: '#0d0d0f',
+    headerBg: '#0d0d0f',
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    textColor: '#f4f4f0',
+    textMuted: '#8b8a85',
+  },
+  canvas: {
+    id: 'canvas',
+    name: 'Canvas Linen',
+    sub: 'Natural Warm Linen',
+    category: 'light',
+    appBg: '#f7f5f0',
+    editorBg: '#fffefb',
+    sidebarBg: '#f7f5f0',
+    headerBg: '#f7f5f0',
+    borderColor: '#e4e0d7',
+    textColor: '#2c2a27',
+    textMuted: '#706c64',
+  },
+  sepia: {
+    id: 'sepia',
+    name: 'Antique Sepia',
+    sub: 'Nostalgic Book Parchment',
+    category: 'light',
+    appBg: '#f5eedd',
+    editorBg: '#faf5ea',
+    sidebarBg: '#f0e6d2',
+    headerBg: '#f0e6d2',
+    borderColor: '#e2d3be',
+    textColor: '#3d3228',
+    textMuted: '#7c6d5e',
+  },
+  sakura: {
+    id: 'sakura',
+    name: 'Sakura Blush',
+    sub: 'Porcelain White & Petal',
+    category: 'light',
+    appBg: '#fafafc',
+    editorBg: '#ffffff',
+    sidebarBg: '#f4f4f7',
+    headerBg: '#f4f4f7',
+    borderColor: '#e5e5ea',
+    textColor: '#27272a',
+    textMuted: '#71717a',
+  },
+  dreamscape: {
+    id: 'dreamscape',
+    name: 'Dreamscape Vapor',
+    sub: 'Soft Violet Horizon',
+    category: 'light',
+    appBg: '#faf7fd',
+    editorBg: '#ffffff',
+    sidebarBg: '#f5f0f9',
+    headerBg: '#f5f0f9',
+    borderColor: '#e8ddf0',
+    textColor: '#1e1b4b',
+    textMuted: '#645f78',
+  },
+};
+
+export const ACCENT_PALETTE: AccentOption[] = [
+  { id: 'amber', name: 'Sunset Amber', color: '#f59e0b' },
+  { id: 'gold', name: 'Industrial Gold', color: '#facc15' },
+  { id: 'cyan', name: 'Electric Cyan', color: '#38bdf8' },
+  { id: 'emerald', name: 'Emerald Pine', color: '#10b981' },
+  { id: 'mint', name: 'Mint Frost', color: '#2dd4bf' },
+  { id: 'rose', name: 'Rose Velvet', color: '#fb7185' },
+  { id: 'violet', name: 'Royal Violet', color: '#d946ef' },
+  { id: 'terracotta', name: 'Terracotta Rust', color: '#ea580c' },
+  { id: 'crimson', name: 'Crimson Scarlet', color: '#ef4444' },
+  { id: 'indigo', name: 'Twilight Indigo', color: '#818cf8' },
+  { id: 'ivory', name: 'Bone Ivory', color: '#f4f1ea' },
+  { id: 'silver', name: 'Monolith Silver', color: '#cbd5e1' },
+];
+
+export const hexToRgba = (hex: string, alpha: number): string => {
+  let c = hex.replace('#', '');
+  if (c.length === 3) {
+    c = c.split('').map((x) => x + x).join('');
+  }
+  const num = parseInt(c, 16);
+  if (isNaN(num)) return `rgba(245, 158, 11, ${alpha})`;
+  const r = (num >> 16) & 255;
+  const g = (num >> 8) & 255;
+  const b = num & 255;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
+
+export const getContrastColor = (hex: string): string => {
+  let c = hex.replace('#', '');
+  if (c.length === 3) {
+    c = c.split('').map((x) => x + x).join('');
+  }
+  const num = parseInt(c, 16);
+  if (isNaN(num)) return '#151618';
+  const r = (num >> 16) & 255;
+  const g = (num >> 8) & 255;
+  const b = num & 255;
+  const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return lum > 0.55 ? '#151618' : '#ffffff';
+};
 
 export const VALID_THEMES: ThemeMode[] = [
   'charcoal',
@@ -260,20 +454,83 @@ export const THEMES: Record<ThemeMode, ThemeDefinition> = {
   },
 };
 
-export const isThemeLight = (theme: ThemeMode): boolean => {
-  return THEMES[theme]?.category === 'light';
+export const getEffectiveTheme = (settings: {
+  theme?: ThemeMode;
+  accentColor?: string;
+  baseAtmosphere?: BaseAtmosphere;
+}): ThemeDefinition => {
+  const baseKey = settings.baseAtmosphere || settings.theme || 'charcoal';
+  const atm = ATMOSPHERES[baseKey] || ATMOSPHERES.charcoal;
+  const defaultThemeDef = THEMES[settings.theme || 'charcoal'] || THEMES.charcoal;
+
+  const accentColor = settings.accentColor || defaultThemeDef.accentColor;
+  const accentContrast = getContrastColor(accentColor);
+  const accentHover = accentColor;
+  const accentBg = hexToRgba(accentColor, 0.12);
+  const selectionBg = hexToRgba(accentColor, 0.22);
+  const caretColor = accentColor;
+
+  return {
+    id: (settings.theme || 'charcoal') as ThemeMode,
+    name: atm.name,
+    sub: atm.sub,
+    category: atm.category,
+    accentName: 'Custom Ink',
+    accentColor,
+    swatchBg: `bg-[${atm.appBg}]`,
+    swatchText: `text-[${atm.textColor}]`,
+    tokens: {
+      appBg: atm.appBg,
+      editorBg: atm.editorBg,
+      sidebarBg: atm.sidebarBg,
+      headerBg: atm.headerBg,
+      borderColor: atm.borderColor,
+      textColor: atm.textColor,
+      textMuted: atm.textMuted,
+      accentColor,
+      accentContrast,
+      accentHover,
+      accentBg,
+      activeItemBg: hexToRgba(accentColor, 0.14),
+      itemHoverBg: atm.category === 'light' ? 'rgba(0, 0, 0, 0.04)' : 'rgba(255, 255, 255, 0.05)',
+      caretColor,
+      selectionBg,
+    },
+  };
 };
 
-export const applyThemeToDocument = (theme: ThemeMode): void => {
+export const isThemeLight = (
+  themeOrSettings: ThemeMode | { theme?: ThemeMode; baseAtmosphere?: BaseAtmosphere }
+): boolean => {
+  if (typeof themeOrSettings === 'string') {
+    return THEMES[themeOrSettings]?.category === 'light';
+  }
+  const baseKey = themeOrSettings.baseAtmosphere || themeOrSettings.theme || 'charcoal';
+  return ATMOSPHERES[baseKey]?.category === 'light';
+};
+
+export const applyThemeToDocument = (
+  themeOrSettings: ThemeMode | { theme?: ThemeMode; accentColor?: string; baseAtmosphere?: BaseAtmosphere }
+): void => {
   if (typeof document === 'undefined') return;
-  const def = THEMES[theme] || THEMES.charcoal;
-  document.documentElement.setAttribute('data-theme', theme);
+  const settingsObj =
+    typeof themeOrSettings === 'string'
+      ? { theme: themeOrSettings }
+      : themeOrSettings;
+
+  const def = getEffectiveTheme(settingsObj);
+  const activeThemeId = settingsObj.baseAtmosphere || settingsObj.theme || 'charcoal';
+
+  document.documentElement.setAttribute('data-theme', activeThemeId);
   document.documentElement.style.setProperty('--theme-accent', def.tokens.accentColor);
   document.documentElement.style.setProperty('--theme-accent-contrast', def.tokens.accentContrast);
   document.documentElement.style.setProperty('--theme-accent-hover', def.tokens.accentHover);
+  document.documentElement.style.setProperty('--theme-accent-bg', def.tokens.accentBg);
   document.documentElement.style.setProperty('--theme-caret', def.tokens.caretColor);
   document.documentElement.style.setProperty('--theme-selection', def.tokens.selectionBg);
   document.documentElement.style.setProperty('--theme-border', def.tokens.borderColor);
   document.documentElement.style.setProperty('--theme-bg', def.tokens.appBg);
   document.documentElement.style.setProperty('--theme-text', def.tokens.textColor);
+  document.documentElement.style.setProperty('--theme-sidebar-bg', def.tokens.sidebarBg);
+  document.documentElement.style.setProperty('--theme-editor-bg', def.tokens.editorBg);
 };

@@ -1,7 +1,13 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import type { Note, Folder, EditorSettings, HistoryRecord, VaultAction, ToastNotification } from './types';
 import { StorageService } from './services/storage';
-import { THEMES, VALID_THEMES, isThemeLight, applyThemeToDocument } from './services/themes';
+import {
+  THEMES,
+  VALID_THEMES,
+  isThemeLight,
+  applyThemeToDocument,
+  getEffectiveTheme,
+} from './services/themes';
 import { Sidebar } from './components/Sidebar';
 import { Editor } from './components/Editor';
 import { TimelinePanel } from './components/TimelinePanel';
@@ -69,8 +75,12 @@ export function App() {
   };
 
   useEffect(() => {
-    applyThemeToDocument(settings.theme);
-  }, [settings.theme]);
+    applyThemeToDocument({
+      theme: settings.theme,
+      accentColor: settings.accentColor,
+      baseAtmosphere: settings.baseAtmosphere,
+    });
+  }, [settings.theme, settings.accentColor, settings.baseAtmosphere]);
 
   // Vault Undo/Redo & Toast System
   const [undoStack, setUndoStack] = useState<VaultAction[]>([]);
@@ -936,54 +946,59 @@ export function App() {
     URL.revokeObjectURL(url);
   };
 
-  const currentTheme = THEMES[settings.theme] || THEMES.charcoal;
-  const isLightMode = isThemeLight(settings.theme);
+  const currentTheme = getEffectiveTheme(settings);
+  const isLightMode = isThemeLight(settings);
+  const baseAtmosphere = settings.baseAtmosphere || settings.theme;
 
   const themeClasses = isLightMode
-    ? settings.theme === 'sakura'
+    ? baseAtmosphere === 'sakura'
       ? 'bg-[#ffffff] text-[#18181b]'
-      : settings.theme === 'sepia'
+      : baseAtmosphere === 'sepia'
       ? 'bg-[#fbf7ee] text-[#362b21]'
-      : settings.theme === 'dreamscape'
+      : baseAtmosphere === 'dreamscape'
       ? 'dreamy-canvas text-[#1e1b4b]'
       : 'bg-[#f7f5f0] text-[#2c2a27]'
-    : settings.theme === 'nordic'
+    : baseAtmosphere === 'oled'
+    ? 'bg-[#000000] text-[#eae6df]'
+    : baseAtmosphere === 'nordic'
     ? 'bg-[#0c1017] text-[#e2e8f0]'
-    : settings.theme === 'evergreen'
+    : baseAtmosphere === 'evergreen'
     ? 'bg-[#09110d] text-[#dff0e6]'
-    : settings.theme === 'grunge'
+    : baseAtmosphere === 'grunge'
     ? 'bg-[#121214] text-[#f4f4f0]'
     : 'bg-[#121315] text-[#dedad4]';
 
   const headerBorder = isLightMode
-    ? settings.theme === 'sakura'
+    ? baseAtmosphere === 'sakura'
       ? 'border-[#e5e7eb]'
-      : settings.theme === 'sepia'
+      : baseAtmosphere === 'sepia'
       ? 'border-[#e7ddce]'
-      : settings.theme === 'dreamscape'
+      : baseAtmosphere === 'dreamscape'
       ? 'border-black/[0.06]'
       : 'border-[#e4e0d7]'
-    : settings.theme === 'nordic'
+    : baseAtmosphere === 'nordic'
     ? 'border-sky-500/15'
-    : settings.theme === 'evergreen'
+    : baseAtmosphere === 'evergreen'
     ? 'border-emerald-500/15'
-    : settings.theme === 'grunge'
+    : baseAtmosphere === 'grunge'
     ? 'border-white/[0.12]'
     : 'border-white/[0.07]';
 
   const headerBg = isLightMode
-    ? settings.theme === 'sakura'
+    ? baseAtmosphere === 'sakura'
       ? 'bg-[#fafafc]/95'
-      : settings.theme === 'sepia'
+      : baseAtmosphere === 'sepia'
       ? 'bg-[#f5eedd]/95'
-      : settings.theme === 'dreamscape'
+      : baseAtmosphere === 'dreamscape'
       ? 'bg-white/55 backdrop-blur-xl'
       : 'bg-[#f7f5f0]/90'
-    : settings.theme === 'nordic'
+    : baseAtmosphere === 'oled'
+    ? 'bg-[#080808]/95'
+    : baseAtmosphere === 'nordic'
     ? 'bg-[#111722]/95'
-    : settings.theme === 'evergreen'
+    : baseAtmosphere === 'evergreen'
     ? 'bg-[#0f1a14]/95'
-    : settings.theme === 'grunge'
+    : baseAtmosphere === 'grunge'
     ? 'bg-[#0d0d0f]'
     : 'bg-[#151618]/90';
 

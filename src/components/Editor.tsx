@@ -8,7 +8,7 @@ import type { Note, EditorSettings } from '../types';
 import { AccessoryBar } from './AccessoryBar';
 import { HistorySliderModal } from './HistorySliderModal';
 import { analyzeProseCadence } from '../services/cadence';
-import { THEMES } from '../services/themes';
+import { getEffectiveTheme } from '../services/themes';
 
 const CustomParagraph = Paragraph.extend({
   addAttributes() {
@@ -537,7 +537,15 @@ export const Editor: React.FC<EditorProps> = ({
     };
   }, [editor, rawMarkdownMode]);
 
-  const currentTheme = THEMES[settings.theme] || THEMES.charcoal;
+  const currentTheme = getEffectiveTheme(settings);
+  const readingWidthClass =
+    settings.readingWidth === 'narrow'
+      ? 'max-w-[56ch]'
+      : settings.readingWidth === 'wide'
+      ? 'max-w-[88ch]'
+      : settings.readingWidth === 'full'
+      ? 'max-w-5xl'
+      : 'max-w-[72ch]';
   const cadenceMetrics = useMemo(
     () => (showCadenceLens ? analyzeProseCadence(note.content) : null),
     [showCadenceLens, note.content]
@@ -992,7 +1000,7 @@ export const Editor: React.FC<EditorProps> = ({
               : 'opacity-100 translate-y-0 animate-in fade-in duration-150'
           }`}
         >
-          <div className="max-w-[72ch] mx-auto flex flex-col gap-2.5">
+          <div className={`${readingWidthClass} mx-auto flex flex-col gap-2.5`}>
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 <Activity
@@ -1107,7 +1115,7 @@ export const Editor: React.FC<EditorProps> = ({
           lineHeight: settings.lineHeight,
         }}
       >
-        <div className="max-w-[72ch] mx-auto space-y-5">
+        <div className={`${readingWidthClass} mx-auto space-y-5`}>
           {/* Note Title (ContentEditable heading - immune to password manager injections like Zoho Vault) */}
           <div className="relative">
             <h1
