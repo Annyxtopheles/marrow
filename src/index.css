@@ -113,15 +113,17 @@
 .ProseMirror p[data-dropcap="true"]::first-letter,
 .drop-cap-enabled .ProseMirror > p:first-of-type::first-letter,
 .drop-cap-enabled .ProseMirror > hr + p::first-letter {
+  -webkit-initial-letter: 2;
+  initial-letter: 2;
   float: left;
   font-family: var(--font-serif);
   font-weight: 700;
-  font-size: 3.25em;
-  line-height: 0.8;
-  padding-top: 0.05em;
-  padding-right: 0.1em;
-  padding-bottom: 0.02em;
+  font-size: 2.65em;
+  line-height: 0.82;
+  margin-top: 0.14em;
   margin-right: 0.08em;
+  padding-right: 0.02em;
+  margin-bottom: -0.04em;
   color: var(--theme-accent, currentColor);
 }
 
