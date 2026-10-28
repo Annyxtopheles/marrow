@@ -1045,3 +1045,16 @@ test('Typography & Distraction-Free Flow: Typewriter font and active typing fade
   assert.equal(hasMovedEnough({ x: 100, y: 100 }, { x: 102, y: 101 }), false);
   assert.equal(hasMovedEnough({ x: 100, y: 100 }, { x: 110, y: 100 }), true);
 });
+
+test('Typography: Chapter Drop Cap toggle and container class binding', async () => {
+  const settingsOff = { dropCap: false };
+  const settingsOn = { dropCap: true };
+
+  const getContainerClasses = (fontClass, dropCap) => {
+    return `${fontClass} ${dropCap ? 'drop-cap-enabled' : ''}`.trim();
+  };
+
+  assert.equal(getContainerClasses('font-serif', settingsOff.dropCap), 'font-serif');
+  assert.equal(getContainerClasses('font-serif', settingsOn.dropCap), 'font-serif drop-cap-enabled');
+  assert.equal(getContainerClasses('font-mono', settingsOn.dropCap), 'font-mono drop-cap-enabled');
+});

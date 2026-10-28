@@ -29,6 +29,7 @@ import {
   History,
   Activity,
   Sparkles,
+  CaseUpper,
 } from 'lucide-react';
 import { DictationService, ReadAloudService, isSpeechRecognitionSupported, isSpeechSynthesisSupported } from '../services/speech';
 
@@ -789,6 +790,25 @@ export const Editor: React.FC<EditorProps> = ({
             >
               <Link2 className="h-3.5 w-3.5" />
             </button>
+            <button
+              type="button"
+              onClick={() =>
+                onUpdateSettings?.({
+                  ...settings,
+                  dropCap: !settings.dropCap,
+                })
+              }
+              className={`rounded-md p-1.5 transition ${
+                settings.dropCap ? activeBtn : btnHover
+              }`}
+              title={
+                settings.dropCap
+                  ? 'Chapter Drop Caps Enabled (click to disable)'
+                  : 'Enable Chapter Drop Caps (illuminated opening letter)'
+              }
+            >
+              <CaseUpper className="h-3.5 w-3.5" />
+            </button>
 
             <div className={`mx-1.5 h-3.5 w-px ${divider}`} />
 
@@ -1157,7 +1177,7 @@ export const Editor: React.FC<EditorProps> = ({
               />
             </div>
           ) : (
-            <div className={fontClass}>
+            <div className={`${fontClass} ${settings.dropCap ? 'drop-cap-enabled' : ''}`}>
               <EditorContent editor={editor} />
             </div>
           )}

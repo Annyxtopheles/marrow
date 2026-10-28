@@ -23,6 +23,7 @@ export const DEFAULT_SETTINGS: EditorSettings = {
   focusMode: false,
   dualModePreview: false,
   activeTypingFade: true,
+  dropCap: false,
   dailyWordGoal: 1000,
   activeGoalView: 'chapter',
   geminiApiKey: import.meta.env.VITE_GEMINI_API_KEY || '',

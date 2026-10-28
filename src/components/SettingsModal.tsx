@@ -239,6 +239,21 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   className="accent-stone-400 h-4 w-4 cursor-pointer"
                 />
               </label>
+
+              <label className={`flex items-center justify-between p-2.5 rounded-lg border ${cardBg} cursor-pointer transition ${itemHover}`}>
+                <div>
+                  <div className="font-medium">Chapter Drop Caps</div>
+                  <div className="text-[11px] opacity-60">
+                    Styles the opening letter of chapters and scene breaks with an illuminated drop cap.
+                  </div>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={settings.dropCap ?? false}
+                  onChange={(e) => update('dropCap', e.target.checked)}
+                  className="accent-stone-400 h-4 w-4 cursor-pointer"
+                />
+              </label>
             </div>
           </div>
 
