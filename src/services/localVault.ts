@@ -280,7 +280,29 @@ export class LocalVaultService {
     }
   }
 
-  // Delete note file from actual disk
+  // Read note file directly from disk
+  public async readNoteFile(
+    title: string,
+    folderId: string | null,
+    folders: Folder[]
+  ): Promise<{ content: string; lastModified: number } | null> {
+    if (!this.dirHandle) return null;
+    try {
+      const dir = await this.resolveFolderHandle(folderId, folders);
+      if (!dir) return null;
+
+      const fileName = `${sanitizeFileName(title)}.md`;
+      const fileHandle = await dir.getFileHandle(fileName);
+      const file = await fileHandle.getFile();
+      const text = await file.text();
+      const html = markdownToHtml(text);
+      return { content: html, lastModified: file.lastModified };
+    } catch {
+      return null;
+    }
+  }
+
+  // Delete note file from actual disk (safely archives to .marrow-trash first)
   public async deleteNoteFile(title: string, folderId: string | null, folders: Folder[]): Promise<boolean> {
     if (!this.dirHandle) return false;
     try {
@@ -288,6 +310,24 @@ export class LocalVaultService {
       if (!dir) return false;
 
       const fileName = `${sanitizeFileName(title)}.md`;
+
+      // Safety net: copy into .marrow-trash before deleting from working directory
+      try {
+        const fileHandle = await dir.getFileHandle(fileName);
+        const file = await fileHandle.getFile();
+        const text = await file.text();
+
+        const trashDir = await this.dirHandle.getDirectoryHandle('.marrow-trash', { create: true });
+        const stamp = Date.now();
+        const trashFileName = `${sanitizeFileName(title)}_${stamp}.md`;
+        const trashFileHandle = await trashDir.getFileHandle(trashFileName, { create: true });
+        const writable = await (trashFileHandle as any).createWritable();
+        await writable.write(text);
+        await writable.close();
+      } catch (backupErr) {
+        console.warn('Could not archive to .marrow-trash before deletion', backupErr);
+      }
+
       await (dir as any).removeEntry(fileName);
       return true;
     } catch (e) {

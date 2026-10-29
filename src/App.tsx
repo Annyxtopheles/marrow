@@ -277,6 +277,51 @@ export function App() {
     }, settings.autoSaveDelayMs);
   };
 
+  // Safe external co-editing check on window focus (Obsidian / VS Code / Notepad interoperability)
+  useEffect(() => {
+    const handleWindowFocus = async () => {
+      if (!LocalVault.getHandle() || !activeNote) return;
+      if (saveStatus !== 'saved') return;
+
+      try {
+        const diskFile = await LocalVault.readNoteFile(
+          activeNote.title,
+          activeNote.folderId,
+          folders
+        );
+
+        if (diskFile && diskFile.lastModified > (activeNote.updatedAt || 0) + 1500) {
+          if (diskFile.content !== activeNote.content) {
+            showToast({
+              id: `external-${Date.now()}`,
+              message: `External change detected on disk for "${activeNote.title}".`,
+              actionLabel: 'Reload',
+              undoHint: true,
+              onAction: () => {
+                const words = diskFile.content
+                  .replace(/<[^>]+>/g, ' ')
+                  .trim()
+                  .split(/\s+/)
+                  .filter(Boolean).length;
+                handleUpdateNote({
+                  ...activeNote,
+                  content: diskFile.content,
+                  wordCount: words,
+                  updatedAt: diskFile.lastModified,
+                });
+              },
+            });
+          }
+        }
+      } catch (err) {
+        console.debug('External focus check skipped:', err);
+      }
+    };
+
+    window.addEventListener('focus', handleWindowFocus);
+    return () => window.removeEventListener('focus', handleWindowFocus);
+  }, [activeNote, folders, saveStatus]);
+
   const handleUndo = useCallback(() => {
     if (undoStack.length === 0) return;
     const [action, ...restUndo] = undoStack;

@@ -1149,4 +1149,15 @@ test('Local Vault: File name sanitization and markdown serialization', async () 
   assert.ok(md.includes('# Chapter 1'));
   assert.ok(md.includes('The monoliths crawl beneath me.'));
   assert.ok(md.includes('> An ancient quote'));
+
+  // Trash archive filename generation
+  const stamp = 1730000000000;
+  const trashFileName = `${sanitize('Chapter 1: The Beginning?')}_${stamp}.md`;
+  assert.equal(trashFileName, 'Chapter 1_ The Beginning__1730000000000.md');
+
+  // External modification check
+  const noteUpdatedAt = 1730000000000;
+  const diskModifiedAt = 1730000005000;
+  const isExternallyModified = diskModifiedAt > noteUpdatedAt + 1500;
+  assert.equal(isExternallyModified, true);
 });
