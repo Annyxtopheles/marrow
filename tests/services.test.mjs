@@ -1087,3 +1087,17 @@ test('Visual Studio: Dynamic Mix & Match Theme and Atmosphere Resolution', async
   assert.equal(getReadingWidthClass('full'), 'max-w-5xl');
   assert.equal(getReadingWidthClass(undefined), 'max-w-[72ch]');
 });
+
+test('Typewriter Audio: Keyboard acoustic action mapping', async () => {
+  const getAudioAction = (key) => {
+    if (key === 'Enter') return 'carriage-return';
+    if (key === ' ' || key === 'Space') return 'space-thump';
+    if (key === 'Backspace' || key === 'Delete') return 'backspace-snap';
+    return 'mechanical-clack';
+  };
+
+  assert.equal(getAudioAction('a'), 'mechanical-clack');
+  assert.equal(getAudioAction('Enter'), 'carriage-return');
+  assert.equal(getAudioAction(' '), 'space-thump');
+  assert.equal(getAudioAction('Backspace'), 'backspace-snap');
+});

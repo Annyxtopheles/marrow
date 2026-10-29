@@ -439,6 +439,21 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
               <label className={`flex items-center justify-between p-2.5 rounded-lg border ${cardBg} cursor-pointer transition ${itemHover}`}>
                 <div>
+                  <div className="font-medium">Typewriter Audio Acoustics</div>
+                  <div className="text-[11px] opacity-60">
+                    Tactile mechanical key clicks, spacebar clacks, and carriage returns.
+                  </div>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={settings.soundEffects ?? false}
+                  onChange={(e) => update('soundEffects', e.target.checked)}
+                  className="accent-stone-400 h-4 w-4 cursor-pointer"
+                />
+              </label>
+
+              <label className={`flex items-center justify-between p-2.5 rounded-lg border ${cardBg} cursor-pointer transition ${itemHover}`}>
+                <div>
                   <div className="font-medium">Active Typing Fade</div>
                   <div className="text-[11px] opacity-60">
                     Gently fades toolbars into zero-clutter flow while drafting.

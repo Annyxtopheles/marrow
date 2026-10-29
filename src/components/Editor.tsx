@@ -9,6 +9,7 @@ import { AccessoryBar } from './AccessoryBar';
 import { HistorySliderModal } from './HistorySliderModal';
 import { analyzeProseCadence } from '../services/cadence';
 import { getEffectiveTheme } from '../services/themes';
+import { TypewriterAudio } from '../services/audio';
 
 const CustomParagraph = Paragraph.extend({
   addAttributes() {
@@ -320,6 +321,12 @@ export const Editor: React.FC<EditorProps> = ({
           settings.breathingCursor ? 'breathing-cursor' : ''
         }`,
       },
+      handleKeyDown: (_view, event) => {
+        if (settings.soundEffects) {
+          TypewriterAudio.playKey(event.key);
+        }
+        return false;
+      },
       handleClick: (view, pos, event) => {
         // Require Ctrl (Windows/Linux) or Cmd (Mac) to follow wikilinks.
         // Normal clicks in the editor are strictly for placing the cursor, selecting, and typing.
@@ -569,6 +576,9 @@ export const Editor: React.FC<EditorProps> = ({
   };
 
   const handleTitleKeyDown = (e: React.KeyboardEvent<HTMLHeadingElement>) => {
+    if (settings.soundEffects) {
+      TypewriterAudio.playKey(e.key);
+    }
     if (e.key === 'Enter') {
       e.preventDefault();
       editor?.commands.focus('start');
@@ -1216,6 +1226,11 @@ export const Editor: React.FC<EditorProps> = ({
               <textarea
                 value={markdownContent}
                 onChange={handleMarkdownChange}
+                onKeyDown={(e) => {
+                  if (settings.soundEffects) {
+                    TypewriterAudio.playKey(e.key);
+                  }
+                }}
                 placeholder="Type markdown directly (# Header, **bold**, *italic*, > quote)..."
                 className={`w-full min-h-[60vh] rounded-lg p-5 text-sm font-sans leading-relaxed resize-y focus:outline-none border transition-colors ${
                   settings.theme === 'dreamscape'
