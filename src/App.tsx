@@ -17,6 +17,7 @@ import { SyncModal } from './components/SyncModal';
 import { CompileModal } from './components/CompileModal';
 import { CommandPaletteModal } from './components/CommandPaletteModal';
 import { WritingSprintModal } from './components/WritingSprintModal';
+import { ReferencePane } from './components/ReferencePane';
 import { LocalVault } from './services/localVault';
 import type { WritingSprint } from './types';
 import {
@@ -71,6 +72,7 @@ export function App() {
     text: string;
     timestamp: number;
   } | null>(null);
+  const [referenceNoteId, setReferenceNoteId] = useState<string | null>(null);
   const themeMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -210,6 +212,19 @@ export function App() {
   const lastSnapshotRef = useRef<number>(0);
 
   const activeNote = notes.find((n) => n.id === activeNoteId) || notes[0] || null;
+  const referenceNote = (referenceNoteId && notes.find((n) => n.id === referenceNoteId && n.id !== activeNote?.id)) || null;
+
+  const handleSetTargetWordCount = (noteId: string, target: number) => {
+    const nextNotes = notes.map((n) =>
+      n.id === noteId ? { ...n, targetWordCount: target } : n
+    );
+    setNotes(nextNotes);
+    StorageService.saveNotes(nextNotes);
+    showToast({
+      id: `toast-${Date.now()}`,
+      message: target > 0 ? `Set target of ${target.toLocaleString()} words` : 'Cleared chapter word target',
+    });
+  };
 
   const handleRestoreVault = (newNotes: Note[], newFolders: Folder[]) => {
     setNotes(newNotes);
@@ -1432,58 +1447,92 @@ export function App() {
             vaultName={vaultName}
             onPickVault={handlePickVault}
             onDisconnectVault={handleDisconnectVault}
+            onOpenReferenceSplit={(id) => setReferenceNoteId(id)}
+            onSetTargetWordCount={handleSetTargetWordCount}
           />
         )}
 
-        {/* Central Editor */}
-        {activeNote ? (
-          <Editor
-            key={activeNote.id}
-            note={activeNote}
-            settings={settings}
-            onUpdateNote={handleUpdateNote}
-            onUpdateSettings={handleUpdateSettings}
-            dailyWordsWritten={dailyProgress.wordsWritten}
-            onResetDailyWords={handleResetDailyWords}
-            onUpdateTags={handleUpdateTags}
-            onNavigateToTitle={handleNavigateToTitle}
-            saveStatus={saveStatus}
-            onToggleTypewriter={() =>
-              handleUpdateSettings({ ...settings, typewriterMode: !settings.typewriterMode })
-            }
-            onToggleFocus={() =>
-              handleUpdateSettings({ ...settings, focusMode: !settings.focusMode })
-            }
-            onAskLumen={(selectedText) => {
-              setSelectedLumenPassage({ text: selectedText, timestamp: Date.now() });
-              setIsTimelineOpen(true);
-            }}
-            isLightMode={isLightMode}
-          />
-        ) : (
-          <div className="flex-1 flex flex-col items-center justify-center text-center p-8 text-neutral-500">
-            <img
-              src={isLightMode ? '/marrow logo icon dark.svg' : '/marrow logo icon.svg'}
-              alt="Marrow"
-              className="h-8 w-8 mb-3 opacity-60"
-            />
-            <h3 className="text-base font-medium text-inherit mb-1">No Document Open</h3>
-            <p className="text-xs max-w-sm mb-4 text-neutral-400">
-              Select an entry from your vault or draft a new piece.
-            </p>
-            <button
-              onClick={() => handleCreateNote(null)}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 font-semibold text-xs rounded-lg transition shadow-sm hover:opacity-90 active:scale-95"
-              style={{
-                backgroundColor: currentTheme.tokens.accentColor,
-                color: currentTheme.tokens.accentContrast,
-              }}
-            >
-              <Plus className="h-3.5 w-3.5" />
-              New Draft
-            </button>
-          </div>
-        )}
+        {/* Central Editor and Side-by-Side Reference Split */}
+        <div className="flex-1 flex overflow-hidden">
+          {activeNote ? (
+            <div className={`h-full overflow-hidden ${referenceNote ? 'w-1/2' : 'w-full'}`}>
+              <Editor
+                key={activeNote.id}
+                note={activeNote}
+                settings={settings}
+                onUpdateNote={handleUpdateNote}
+                onUpdateSettings={handleUpdateSettings}
+                dailyWordsWritten={dailyProgress.wordsWritten}
+                onResetDailyWords={handleResetDailyWords}
+                onUpdateTags={handleUpdateTags}
+                onNavigateToTitle={handleNavigateToTitle}
+                saveStatus={saveStatus}
+                onToggleTypewriter={() =>
+                  handleUpdateSettings({ ...settings, typewriterMode: !settings.typewriterMode })
+                }
+                onToggleFocus={() =>
+                  handleUpdateSettings({ ...settings, focusMode: !settings.focusMode })
+                }
+                onAskLumen={(selectedText) => {
+                  setSelectedLumenPassage({ text: selectedText, timestamp: Date.now() });
+                  setIsTimelineOpen(true);
+                }}
+                isLightMode={isLightMode}
+                onToggleSplit={() => {
+                  if (referenceNoteId) {
+                    setReferenceNoteId(null);
+                  } else {
+                    const otherNote = notes.find((n) => n.id !== activeNote.id) || activeNote;
+                    setReferenceNoteId(otherNote.id);
+                  }
+                }}
+                isSplitOpen={Boolean(referenceNote)}
+              />
+            </div>
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center text-center p-8 text-neutral-500">
+              <img
+                src={isLightMode ? '/marrow logo icon dark.svg' : '/marrow logo icon.svg'}
+                alt="Marrow"
+                className="h-8 w-8 mb-3 opacity-60"
+              />
+              <h3 className="text-base font-medium text-inherit mb-1">No Document Open</h3>
+              <p className="text-xs max-w-sm mb-4 text-neutral-400">
+                Select an entry from your vault or draft a new piece.
+              </p>
+              <button
+                onClick={() => handleCreateNote(null)}
+                className="flex items-center gap-1.5 px-3.5 py-1.5 font-semibold text-xs rounded-lg transition shadow-sm hover:opacity-90 active:scale-95"
+                style={{
+                  backgroundColor: currentTheme.tokens.accentColor,
+                  color: currentTheme.tokens.accentContrast,
+                }}
+              >
+                <Plus className="h-3.5 w-3.5" />
+                New Draft
+              </button>
+            </div>
+          )}
+
+          {referenceNote && (
+            <div className="w-1/2 h-full flex flex-col">
+              <ReferencePane
+                note={referenceNote}
+                allNotes={notes}
+                onClose={() => setReferenceNoteId(null)}
+                onSwapWithMain={() => {
+                  const mainId = activeNoteId;
+                  setActiveNoteId(referenceNote.id);
+                  setReferenceNoteId(mainId);
+                }}
+                onSelectReferenceNote={(n) => setReferenceNoteId(n.id)}
+                onUpdateNote={handleUpdateNote}
+                isLightMode={isLightMode}
+                settings={settings}
+              />
+            </div>
+          )}
+        </div>
 
         {/* Timeline & Cadence Panel */}
         {!settings.focusMode && isTimelineOpen && (

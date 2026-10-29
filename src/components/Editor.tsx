@@ -55,6 +55,7 @@ import {
   Sparkles,
   CaseUpper,
   Printer,
+  Columns2,
 } from 'lucide-react';
 import { DictationService, ReadAloudService, isSpeechRecognitionSupported, isSpeechSynthesisSupported } from '../services/speech';
 
@@ -170,6 +171,8 @@ interface EditorProps {
   onToggleFocus: () => void;
   onAskLumen?: (selectedText: string) => void;
   isLightMode: boolean;
+  onToggleSplit?: () => void;
+  isSplitOpen?: boolean;
 }
 
 export const Editor: React.FC<EditorProps> = ({
@@ -186,6 +189,8 @@ export const Editor: React.FC<EditorProps> = ({
   onToggleFocus,
   onAskLumen,
   isLightMode,
+  onToggleSplit,
+  isSplitOpen,
 }) => {
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [showCadenceLens, setShowCadenceLens] = useState(false);
@@ -978,6 +983,17 @@ export const Editor: React.FC<EditorProps> = ({
           >
             <Printer className="h-3.5 w-3.5" />
           </button>
+
+          {onToggleSplit && (
+            <button
+              type="button"
+              onClick={onToggleSplit}
+              className={`rounded-md p-1.5 transition ${isSplitOpen ? activeBtn : btnHover}`}
+              title={isSplitOpen ? 'Close Reference Split Screen' : 'Open Side-by-Side Reference Split Screen'}
+            >
+              <Columns2 className="h-3.5 w-3.5" />
+            </button>
+          )}
 
           {rawMarkdownMode && (
             <button

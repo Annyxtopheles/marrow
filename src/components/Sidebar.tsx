@@ -18,6 +18,8 @@ import {
   Copy,
   Download,
   Plus,
+  Columns2,
+  Target,
 } from 'lucide-react';
 import { ContextMenu, type ContextMenuItem, type ContextMenuSubItem } from './ContextMenu';
 
@@ -68,6 +70,8 @@ interface SidebarProps {
   vaultName?: string | null;
   onPickVault?: () => void;
   onDisconnectVault?: () => void;
+  onOpenReferenceSplit?: (noteId: string) => void;
+  onSetTargetWordCount?: (noteId: string, target: number) => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -91,6 +95,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   vaultName,
   onPickVault,
   onDisconnectVault,
+  onOpenReferenceSplit,
+  onSetTargetWordCount,
 }) => {
   const currentTheme = THEMES[theme || 'charcoal'] || THEMES.charcoal;
   const [searchQuery, setSearchQuery] = useState('');
@@ -200,6 +206,27 @@ export const Sidebar: React.FC<SidebarProps> = ({
         label: 'Rename',
         icon: <Pencil className="h-3 w-3" />,
         onClick: () => startRenameNote(note),
+      },
+      {
+        label: 'Open in Reference Split',
+        icon: <Columns2 className="h-3 w-3" />,
+        onClick: () => onOpenReferenceSplit && onOpenReferenceSplit(note.id),
+      },
+      {
+        label: 'Set Chapter Target...',
+        icon: <Target className="h-3 w-3" />,
+        onClick: () => {
+          if (onSetTargetWordCount) {
+            const input = window.prompt(
+              `Target word count for "${note.title || 'Untitled'}":`,
+              String(note.targetWordCount || 2000)
+            );
+            if (input !== null) {
+              const val = parseInt(input.trim(), 10);
+              onSetTargetWordCount(note.id, isNaN(val) || val <= 0 ? 0 : val);
+            }
+          }
+        },
       },
       {
         label: note.pinned ? 'Unpin Note' : 'Pin Note',
@@ -686,6 +713,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
                               {note.title || 'Untitled'}
                             </span>
                           )}
+                          {note.targetWordCount && note.targetWordCount > 0 ? (
+                            <span
+                              className={`ml-1 px-1.5 py-0.5 rounded text-[9px] font-mono tracking-tighter shrink-0 border ${
+                                note.wordCount >= note.targetWordCount
+                                  ? 'border-emerald-500/30 text-emerald-500 bg-emerald-500/10 font-semibold'
+                                  : 'border-amber-500/25 text-amber-500/80 bg-amber-500/5'
+                              }`}
+                              title={`Target: ${note.wordCount}/${note.targetWordCount} words (${Math.min(100, Math.round((note.wordCount / note.targetWordCount) * 100))}%)`}
+                            >
+                              {Math.min(100, Math.round((note.wordCount / note.targetWordCount) * 100))}%
+                            </span>
+                          ) : null}
                         </div>
                         <div className="flex items-center gap-1 shrink-0">
                           {/* Pin button */}
@@ -844,6 +883,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       {note.title || 'Untitled'}
                     </span>
                   )}
+                  {note.targetWordCount && note.targetWordCount > 0 ? (
+                    <span
+                      className={`ml-1 px-1.5 py-0.5 rounded text-[9px] font-mono tracking-tighter shrink-0 border ${
+                        note.wordCount >= note.targetWordCount
+                          ? 'border-emerald-500/30 text-emerald-500 bg-emerald-500/10 font-semibold'
+                          : 'border-amber-500/25 text-amber-500/80 bg-amber-500/5'
+                      }`}
+                      title={`Target: ${note.wordCount}/${note.targetWordCount} words (${Math.min(100, Math.round((note.wordCount / note.targetWordCount) * 100))}%)`}
+                    >
+                      {Math.min(100, Math.round((note.wordCount / note.targetWordCount) * 100))}%
+                    </span>
+                  ) : null}
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
                   {/* Pin button */}

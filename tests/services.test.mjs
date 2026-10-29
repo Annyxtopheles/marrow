@@ -1161,3 +1161,28 @@ test('Local Vault: File name sanitization and markdown serialization', async () 
   const isExternallyModified = diskModifiedAt > noteUpdatedAt + 1500;
   assert.equal(isExternallyModified, true);
 });
+
+test('Reference Split Pane & Chapter Target: Swap logic and target percentage', async () => {
+  // Test chapter target computation
+  const note = { id: 'n1', title: 'Chapter 1', wordCount: 1500, targetWordCount: 2000 };
+  const targetPct = Math.min(100, Math.round((note.wordCount / note.targetWordCount) * 100));
+  assert.equal(targetPct, 75);
+
+  const completedNote = { id: 'n2', title: 'Chapter 2', wordCount: 2450, targetWordCount: 2000 };
+  const completedPct = Math.min(100, Math.round((completedNote.wordCount / completedNote.targetWordCount) * 100));
+  assert.equal(completedPct, 100);
+
+  // Test split note swap
+  let activeId = 'n1';
+  let referenceId = 'n2';
+
+  const swap = () => {
+    const prevActive = activeId;
+    activeId = referenceId;
+    referenceId = prevActive;
+  };
+
+  swap();
+  assert.equal(activeId, 'n2');
+  assert.equal(referenceId, 'n1');
+});
