@@ -215,3 +215,83 @@
   mix-blend-mode: multiply;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
 }
+
+/* Publication-Grade Print & PDF Stylesheet */
+@media print {
+  @page {
+    margin: 20mm 18mm 20mm 18mm;
+    size: auto;
+  }
+
+  html,
+  body {
+    background: #ffffff !important;
+    color: #111111 !important;
+    font-size: 11pt !important;
+    line-height: 1.65 !important;
+  }
+
+  /* Hide all application chrome, navigation, toolbars, and floating panels */
+  header,
+  aside,
+  nav,
+  button,
+  .no-print,
+  [role="dialog"],
+  [aria-modal="true"],
+  .animate-in {
+    display: none !important;
+  }
+
+  /* Reset main container layout for clean page printing */
+  main,
+  .editor-container,
+  .ProseMirror {
+    background: transparent !important;
+    color: #111111 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  .ProseMirror {
+    min-height: auto !important;
+  }
+
+  /* Page break rules */
+  h1, h2, h3 {
+    page-break-after: avoid;
+    break-after: avoid;
+    color: #000000 !important;
+  }
+
+  p, blockquote {
+    orphans: 3;
+    widows: 3;
+  }
+
+  blockquote {
+    border-left: 2px solid #333333 !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* Print drop cap */
+  .ProseMirror p.drop-cap::first-letter,
+  .ProseMirror p[data-dropcap="true"]::first-letter,
+  .drop-cap-enabled .ProseMirror > p:first-of-type::first-letter {
+    color: #000000 !important;
+    float: left !important;
+    font-size: 3em !important;
+    line-height: 0.8 !important;
+    margin-right: 8pt !important;
+    margin-top: 0 !important;
+  }
+
+  hr {
+    border-color: #cccccc !important;
+    page-break-after: avoid;
+  }
+}

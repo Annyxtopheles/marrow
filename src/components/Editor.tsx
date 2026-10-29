@@ -54,6 +54,7 @@ import {
   Activity,
   Sparkles,
   CaseUpper,
+  Printer,
 } from 'lucide-react';
 import { DictationService, ReadAloudService, isSpeechRecognitionSupported, isSpeechSynthesisSupported } from '../services/speech';
 
@@ -967,8 +968,17 @@ export const Editor: React.FC<EditorProps> = ({
           </div>
         )}
 
-        {/* Right Side: Download .md (Only in Raw Markdown mode) & Mode Toggle */}
+        {/* Right Side: Print, Download .md & Mode Toggle */}
         <div className="flex items-center gap-1.5 shrink-0">
+          <button
+            type="button"
+            onClick={() => window.print()}
+            className={`rounded-md p-1.5 transition ${btnHover}`}
+            title="Print or Export to Clean PDF (Ctrl+P)"
+          >
+            <Printer className="h-3.5 w-3.5" />
+          </button>
+
           {rawMarkdownMode && (
             <button
               type="button"
