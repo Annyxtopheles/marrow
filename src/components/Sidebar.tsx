@@ -65,6 +65,9 @@ interface SidebarProps {
   onOpenCompile?: (folderId?: string | null) => void;
   isLightMode: boolean;
   theme?: ThemeMode;
+  vaultName?: string | null;
+  onPickVault?: () => void;
+  onDisconnectVault?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -85,6 +88,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onOpenCompile,
   isLightMode,
   theme,
+  vaultName,
+  onPickVault,
+  onDisconnectVault,
 }) => {
   const currentTheme = THEMES[theme || 'charcoal'] || THEMES.charcoal;
   const [searchQuery, setSearchQuery] = useState('');
@@ -369,6 +375,38 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <FolderPlus className="h-3.5 w-3.5" />
           </button>
         </div>
+      </div>
+
+      {/* Local Disk Vault Status */}
+      <div className={`px-2.5 py-2 border-b ${borderColor} flex items-center justify-between text-[11px]`}>
+        {vaultName ? (
+          <div className="flex items-center justify-between w-full">
+            <span className="flex items-center gap-1.5 truncate text-emerald-400 font-medium" title={`Connected to local directory: ${vaultName}`}>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+              <span className="truncate">{vaultName}</span>
+            </span>
+            {onDisconnectVault && (
+              <button
+                type="button"
+                onClick={onDisconnectVault}
+                className={`ml-2 px-1.5 py-0.5 rounded text-[10px] ${itemHover} ${mutedText}`}
+                title="Disconnect local disk folder"
+              >
+                Disconnect
+              </button>
+            )}
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={onPickVault}
+            className={`w-full flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-md border border-dashed ${borderColor} ${itemHover} ${headerText} transition-colors`}
+            title="Open real folder from File Explorer (auto-saves real .md files)"
+          >
+            <FolderInput className="w-3.5 h-3.5 opacity-70 shrink-0" />
+            <span className="font-medium truncate">Link Folder on Disk</span>
+          </button>
+        )}
       </div>
 
       {/* Search Bar */}

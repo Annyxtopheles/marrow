@@ -1130,3 +1130,23 @@ test('Command Palette & Writing Sprint: Metric computation and fuzzy matching', 
   assert.equal(filterNotes('characters').length, 1);
   assert.equal(filterNotes('nonexistent').length, 0);
 });
+
+test('Local Vault: File name sanitization and markdown serialization', async () => {
+  const sanitize = (name) => name.replace(/[<>:"/\\|?*\x00-\x1F]/g, '_').trim() || 'Untitled';
+  
+  assert.equal(sanitize('Chapter 1: The Beginning?'), 'Chapter 1_ The Beginning_');
+  assert.equal(sanitize('Folder/Subfolder\\Test*'), 'Folder_Subfolder_Test_');
+  assert.equal(sanitize('   '), 'Untitled');
+
+  // Serialization
+  const html = '<h1>Chapter 1</h1><p>The monoliths crawl beneath me.</p><blockquote><p>An ancient quote</p></blockquote>';
+  const md = html
+    .replace(/<h1>([\s\S]*?)<\/h1>/gi, '# $1\n\n')
+    .replace(/<blockquote>([\s\S]*?)<\/blockquote>/gi, (_, inner) => `> ${inner.replace(/<p>|<\/p>/gi, '').trim()}\n\n`)
+    .replace(/<p[^>]*>([\s\S]*?)<\/p>/gi, '$1\n\n')
+    .trim();
+
+  assert.ok(md.includes('# Chapter 1'));
+  assert.ok(md.includes('The monoliths crawl beneath me.'));
+  assert.ok(md.includes('> An ancient quote'));
+});

@@ -17,6 +17,7 @@ import { SyncModal } from './components/SyncModal';
 import { CompileModal } from './components/CompileModal';
 import { CommandPaletteModal } from './components/CommandPaletteModal';
 import { WritingSprintModal } from './components/WritingSprintModal';
+import { LocalVault } from './services/localVault';
 import type { WritingSprint } from './types';
 import {
   PanelLeftClose,
@@ -135,6 +136,76 @@ export function App() {
     setToast(null);
   };
 
+  const [vaultName, setVaultName] = useState<string | null>(null);
+
+  // Auto-reconnect to persisted local directory vault if previously linked
+  useEffect(() => {
+    (async () => {
+      try {
+        const storedHandle = await LocalVault.getStoredHandle();
+        if (storedHandle) {
+          LocalVault.setHandle(storedHandle);
+          setVaultName(storedHandle.name);
+          const hasPerm = await LocalVault.verifyPermission(storedHandle).catch(() => false);
+          if (hasPerm) {
+            const { notes: diskNotes, folders: diskFolders } = await LocalVault.loadVaultContent();
+            if (diskNotes.length > 0 || diskFolders.length > 0) {
+              setNotes(diskNotes);
+              setFolders(diskFolders);
+              StorageService.saveNotes(diskNotes);
+              StorageService.saveFolders(diskFolders);
+              if (diskNotes.length > 0) {
+                setActiveNoteId(diskNotes[0].id);
+              }
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to auto-load local vault handle:', err);
+      }
+    })();
+  }, []);
+
+  const handlePickVault = async () => {
+    try {
+      const handle = await LocalVault.pickDirectory();
+      if (handle) {
+        setVaultName(handle.name);
+        const { notes: diskNotes, folders: diskFolders } = await LocalVault.loadVaultContent();
+        if (diskNotes.length > 0 || diskFolders.length > 0) {
+          setNotes(diskNotes);
+          setFolders(diskFolders);
+          StorageService.saveNotes(diskNotes);
+          StorageService.saveFolders(diskFolders);
+          if (diskNotes.length > 0) {
+            setActiveNoteId(diskNotes[0].id);
+          }
+        }
+        showToast({
+          id: `toast-${Date.now()}`,
+          message: `Linked to disk folder: "${handle.name}"`,
+        });
+      }
+    } catch (err: any) {
+      if (err?.name !== 'AbortError') {
+        console.error('Failed to link directory', err);
+        showToast({
+          id: `toast-${Date.now()}`,
+          message: err?.message || 'Could not link directory on disk',
+        });
+      }
+    }
+  };
+
+  const handleDisconnectVault = async () => {
+    await LocalVault.clearStoredHandle();
+    setVaultName(null);
+    showToast({
+      id: `toast-${Date.now()}`,
+      message: 'Disconnected from local disk folder',
+    });
+  };
+
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastSnapshotRef = useRef<number>(0);
 
@@ -183,6 +254,12 @@ export function App() {
         setSaveStatus('saved');
         return latestNotes;
       });
+
+      if (LocalVault.getHandle()) {
+        LocalVault.writeNoteFile(updatedNote, folders).catch((e) =>
+          console.warn('Disk save error:', e)
+        );
+      }
 
       const now = Date.now();
       if (now - lastSnapshotRef.current > 30000) {
@@ -639,6 +716,12 @@ export function App() {
     StorageService.saveNotes(nextNotes);
     setActiveNoteId(newNote.id);
 
+    if (LocalVault.getHandle()) {
+      LocalVault.writeNoteFile(newNote, folders).catch((e) =>
+        console.warn('Disk note create error:', e)
+      );
+    }
+
     const action: VaultAction = {
       type: 'CREATE_NOTE',
       noteId: newNote.id,
@@ -664,6 +747,12 @@ export function App() {
     setFolders(nextFolders);
     StorageService.saveFolders(nextFolders);
 
+    if (LocalVault.getHandle()) {
+      LocalVault.createFolderDir(name, parentId, folders).catch((e) =>
+        console.warn('Disk folder create error:', e)
+      );
+    }
+
     const action: VaultAction = {
       type: 'CREATE_FOLDER',
       folder: newFolder,
@@ -679,6 +768,12 @@ export function App() {
     const nextFolders = folders.filter((f) => f.id !== folderId);
     setFolders(nextFolders);
     StorageService.saveFolders(nextFolders);
+
+    if (LocalVault.getHandle()) {
+      LocalVault.deleteFolderDir(folderToDelete.name, folderToDelete.parentId, folders).catch((e) =>
+        console.warn('Disk folder delete error:', e)
+      );
+    }
 
     const affectedNotes: { noteId: string; previousFolderId: string | null }[] = [];
     const nextNotes = notes.map((n) => {
@@ -719,6 +814,12 @@ export function App() {
     setNotes(nextNotes);
     StorageService.saveNotes(nextNotes);
     StorageService.moveToTrash(noteToDelete);
+
+    if (LocalVault.getHandle()) {
+      LocalVault.deleteNoteFile(noteToDelete.title, noteToDelete.folderId, folders).catch((e) =>
+        console.warn('Disk note delete error:', e)
+      );
+    }
 
     if (activeNoteId === noteId) {
       const fallbackId =
@@ -786,6 +887,12 @@ export function App() {
     );
     setNotes(nextNotes);
     StorageService.saveNotes(nextNotes);
+
+    if (LocalVault.getHandle()) {
+      LocalVault.renameNoteFile(prevTitle, trimmed, target.folderId, target.content, folders).catch((e) =>
+        console.warn('Disk note rename error:', e)
+      );
+    }
 
     const action: VaultAction = {
       type: 'RENAME_NOTE',
@@ -899,6 +1006,12 @@ export function App() {
     setNotes(nextNotes);
     StorageService.saveNotes(nextNotes);
     setActiveNoteId(newNote.id);
+
+    if (LocalVault.getHandle()) {
+      LocalVault.writeNoteFile(newNote, folders).catch((e) =>
+        console.warn('Disk note create error:', e)
+      );
+    }
 
     const action: VaultAction = {
       type: 'DUPLICATE_NOTE',
@@ -1271,6 +1384,9 @@ export function App() {
             }}
             isLightMode={isLightMode}
             theme={settings.theme}
+            vaultName={vaultName}
+            onPickVault={handlePickVault}
+            onDisconnectVault={handleDisconnectVault}
           />
         )}
 
