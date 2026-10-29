@@ -15,7 +15,25 @@ import { BacklinksPanel } from './components/BacklinksPanel';
 import { SettingsModal } from './components/SettingsModal';
 import { SyncModal } from './components/SyncModal';
 import { CompileModal } from './components/CompileModal';
-import { PanelLeftClose, PanelLeft, Clock, Link2, Plus, Cloud, RotateCcw, X, Palette, BookOpen, Maximize2, Minimize2 } from 'lucide-react';
+import { CommandPaletteModal } from './components/CommandPaletteModal';
+import { WritingSprintModal } from './components/WritingSprintModal';
+import type { WritingSprint } from './types';
+import {
+  PanelLeftClose,
+  PanelLeft,
+  Clock,
+  Link2,
+  Plus,
+  Cloud,
+  RotateCcw,
+  X,
+  Palette,
+  BookOpen,
+  Maximize2,
+  Minimize2,
+  Search,
+  Flame,
+} from 'lucide-react';
 
 export function App() {
   const [notes, setNotes] = useState<Note[]>(() => StorageService.getNotes());
@@ -39,6 +57,15 @@ export function App() {
   const [isCompileOpen, setIsCompileOpen] = useState(false);
   const [compileFolderId, setCompileFolderId] = useState<string | null>(null);
   const [isThemeMenuOpen, setIsThemeMenuOpen] = useState(false);
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const [isSprintOpen, setIsSprintOpen] = useState(false);
+  const [sprint, setSprint] = useState<WritingSprint>({
+    active: false,
+    startTime: 0,
+    durationMinutes: 25,
+    startWordCount: 0,
+    targetWords: 300,
+  });
   const [selectedLumenPassage, setSelectedLumenPassage] = useState<{
     text: string;
     timestamp: number;
@@ -87,6 +114,7 @@ export function App() {
   const [redoStack, setRedoStack] = useState<VaultAction[]>([]);
   const undoRef = useRef<() => void>(() => {});
   const redoRef = useRef<() => void>(() => {});
+  const createNoteRef = useRef<() => void>(() => {});
   const [toast, setToast] = useState<ToastNotification | null>(null);
   const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -524,6 +552,27 @@ export function App() {
       if (!isMod) return;
 
       const key = e.key.toLowerCase();
+
+      // Ctrl+K / Cmd+K: Command Palette & Fast Switcher
+      if (key === 'k') {
+        e.preventDefault();
+        setIsCommandPaletteOpen((prev) => !prev);
+        return;
+      }
+
+      // Ctrl+N / Cmd+N: Create New Note
+      if (key === 'n' && !e.shiftKey) {
+        const activeEl = document.activeElement;
+        const isInput =
+          activeEl instanceof HTMLInputElement ||
+          activeEl instanceof HTMLTextAreaElement;
+        if (!isInput) {
+          e.preventDefault();
+          createNoteRef.current();
+          return;
+        }
+      }
+
       const isZ = key === 'z';
       const isY = key === 'y';
 
@@ -599,6 +648,10 @@ export function App() {
     setUndoStack((prev) => [action, ...prev.slice(0, 49)]);
     setRedoStack([]);
   };
+
+  useEffect(() => {
+    createNoteRef.current = handleCreateNote;
+  });
 
   const handleCreateFolder = (name: string, parentId: string | null = null) => {
     const newFolder: Folder = {
@@ -1090,6 +1143,29 @@ export function App() {
               <span>Compile</span>
             </button>
 
+            <button
+              type="button"
+              onClick={() => setIsSprintOpen(true)}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] transition ${
+                sprint.active ? activeBtn : `${buttonHover} text-neutral-400`
+              }`}
+              title="Writing Sprint Focus Timer"
+            >
+              <Flame className={`h-3 w-3 ${sprint.active ? 'text-amber-500 animate-pulse' : ''}`} />
+              <span>Sprint</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setIsCommandPaletteOpen(true)}
+              className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] transition ${buttonHover} text-neutral-400`}
+              title="Quick Switcher & Commands (Ctrl+K)"
+            >
+              <Search className="h-3 w-3" />
+              <span>Commands</span>
+              <span className="text-[9px] opacity-45 font-mono ml-0.5">⌘K</span>
+            </button>
+
             {/* Quick Theme Switcher */}
             <div ref={themeMenuRef} className="relative">
               <button
@@ -1312,6 +1388,40 @@ export function App() {
           theme={settings.theme}
         />
       )}
+
+      {/* Command Palette Modal (Ctrl+K) */}
+      <CommandPaletteModal
+        isOpen={isCommandPaletteOpen}
+        onClose={() => setIsCommandPaletteOpen(false)}
+        notes={notes}
+        folders={folders}
+        activeNoteId={activeNoteId}
+        onSelectNote={(id) => {
+          setActiveNoteId(id);
+          setIsCommandPaletteOpen(false);
+        }}
+        onCreateNote={() => handleCreateNote()}
+        settings={settings}
+        onUpdateSettings={handleUpdateSettings}
+        onToggleFocus={() => handleUpdateSettings({ ...settings, focusMode: !settings.focusMode })}
+        onOpenSettings={() => setIsSettingsOpen(true)}
+        onOpenCompiler={() => setIsCompileOpen(true)}
+        onOpenSprint={() => setIsSprintOpen(true)}
+        isLightMode={isLightMode}
+      />
+
+      {/* Writing Sprint & Flow Timer */}
+      <WritingSprintModal
+        isOpen={isSprintOpen}
+        onClose={() => setIsSprintOpen(false)}
+        activeNote={activeNote}
+        onUpdateNote={handleUpdateNote}
+        sprint={sprint}
+        onUpdateSprint={setSprint}
+        isLightMode={isLightMode}
+        accentColor={currentTheme.tokens.accentColor}
+        accentContrast={currentTheme.tokens.accentContrast}
+      />
 
       {/* Vault Action / Undo Notification Toast */}
       {toast && (

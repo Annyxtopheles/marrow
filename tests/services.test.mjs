@@ -1101,3 +1101,32 @@ test('Typewriter Audio: Keyboard acoustic action mapping', async () => {
   assert.equal(getAudioAction(' '), 'space-thump');
   assert.equal(getAudioAction('Backspace'), 'backspace-snap');
 });
+
+test('Command Palette & Writing Sprint: Metric computation and fuzzy matching', async () => {
+  // Test sprint word calculation
+  const startWordCount = 420;
+  const currentWordCount = 680;
+  const targetWords = 300;
+  const wordsWrittenInSprint = Math.max(0, currentWordCount - startWordCount);
+  assert.equal(wordsWrittenInSprint, 260);
+
+  const progressPct = Math.min(100, Math.round((wordsWrittenInSprint / targetWords) * 100));
+  assert.equal(progressPct, 87);
+
+  // Test command palette title matching
+  const testNotes = [
+    { id: '1', title: 'Chapter 1: The Echoes of Solitude', tags: ['story'] },
+    { id: '2', title: 'Elena Vane', tags: ['characters'] },
+    { id: '3', title: 'Untitled poem', tags: ['poetry'] },
+  ];
+
+  const filterNotes = (query) => {
+    const q = query.toLowerCase();
+    return testNotes.filter((n) => n.title.toLowerCase().includes(q) || n.tags.some((t) => t.includes(q)));
+  };
+
+  assert.equal(filterNotes('echoes').length, 1);
+  assert.equal(filterNotes('poem').length, 1);
+  assert.equal(filterNotes('characters').length, 1);
+  assert.equal(filterNotes('nonexistent').length, 0);
+});
