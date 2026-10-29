@@ -2,8 +2,6 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import type { Note, Folder, EditorSettings, HistoryRecord, VaultAction, ToastNotification } from './types';
 import { StorageService } from './services/storage';
 import {
-  THEMES,
-  VALID_THEMES,
   isThemeLight,
   applyThemeToDocument,
   getEffectiveTheme,
@@ -55,6 +53,7 @@ export function App() {
   const [isTimelineOpen, setIsTimelineOpen] = useState(true);
   const [isBacklinksOpen, setIsBacklinksOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [settingsTab, setSettingsTab] = useState<'appearance' | 'editor'>('appearance');
   const [isSyncOpen, setIsSyncOpen] = useState(false);
   const [isCompileOpen, setIsCompileOpen] = useState(false);
   const [compileFolderId, setCompileFolderId] = useState<string | null>(null);
@@ -1339,67 +1338,18 @@ export function App() {
               <span className="text-[9px] opacity-45 font-mono ml-0.5">⌘K</span>
             </button>
 
-            {/* Quick Theme Switcher */}
-            <div ref={themeMenuRef} className="relative">
-              <button
-                type="button"
-                onClick={() => setIsThemeMenuOpen(!isThemeMenuOpen)}
-                className={`p-1.5 rounded-md transition ${
-                  isThemeMenuOpen ? activeBtn : `${buttonHover} text-neutral-400`
-                }`}
-                title={`Atmosphere Theme: ${currentTheme.name}`}
-              >
-                <Palette className="h-3.5 w-3.5" />
-              </button>
-
-              {isThemeMenuOpen && (
-                <div
-                  className={`absolute right-0 mt-1.5 w-56 rounded-lg border shadow-2xl p-1.5 z-50 text-xs backdrop-blur-xl ${
-                    isLightMode
-                      ? 'bg-[#ffffff]/98 border-black/10 text-[#1e1b4b] shadow-black/15'
-                      : 'bg-[#18191c]/98 border-white/10 text-[#dedad4] shadow-black/40'
-                  }`}
-                >
-                  <div className="px-2 py-1 text-[10px] uppercase tracking-wider opacity-50 font-medium">
-                    Editorial Theme
-                  </div>
-                  <div className="space-y-0.5">
-                    {VALID_THEMES.map((themeId) => {
-                      const th = THEMES[themeId];
-                      const isSel = settings.theme === th.id;
-                      return (
-                        <button
-                          key={th.id}
-                          type="button"
-                          onClick={() => {
-                            handleUpdateSettings({ ...settings, theme: th.id });
-                            setIsThemeMenuOpen(false);
-                          }}
-                          className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-md text-left transition ${
-                            isSel
-                              ? isLightMode
-                                ? 'bg-black/[0.08] font-semibold text-black'
-                                : 'bg-white/[0.1] font-semibold text-white'
-                              : isLightMode
-                              ? 'hover:bg-black/[0.04]'
-                              : 'hover:bg-white/[0.05]'
-                          }`}
-                        >
-                          <div className="flex items-center gap-2 truncate">
-                            <span
-                              className="h-2 w-2 rounded-full shrink-0"
-                              style={{ backgroundColor: th.accentColor }}
-                            />
-                            <span className="truncate">{th.name}</span>
-                          </div>
-                          <span className="text-[10px] opacity-50 capitalize shrink-0">{th.sub}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-            </div>
+            {/* Theme & Visual Studio Button (Opens Comprehensive Appearance Settings) */}
+            <button
+              type="button"
+              onClick={() => {
+                setSettingsTab('appearance');
+                setIsSettingsOpen(true);
+              }}
+              className={`p-1.5 rounded-md transition ${buttonHover} text-neutral-400`}
+              title="Theme & Visual Studio"
+            >
+              <Palette className="h-3.5 w-3.5" />
+            </button>
 
             {/* Fullscreen Toggle */}
             <button
@@ -1437,7 +1387,10 @@ export function App() {
             onRenameNote={handleRenameNote}
             onMoveNote={handleMoveNote}
             onDuplicateNote={handleDuplicateNote}
-            onOpenSettings={() => setIsSettingsOpen(true)}
+            onOpenSettings={() => {
+              setSettingsTab('editor');
+              setIsSettingsOpen(true);
+            }}
             onOpenCompile={(folderId) => {
               setCompileFolderId(folderId || null);
               setIsCompileOpen(true);
@@ -1546,7 +1499,10 @@ export function App() {
             theme={settings.theme}
             settings={settings}
             onUpdateSettings={handleUpdateSettings}
-            onOpenSettings={() => setIsSettingsOpen(true)}
+            onOpenSettings={() => {
+              setSettingsTab('editor');
+              setIsSettingsOpen(true);
+            }}
             selectedPassage={selectedLumenPassage}
             onClearSelectedPassage={() => setSelectedLumenPassage(null)}
           />
@@ -1573,6 +1529,7 @@ export function App() {
           onClose={() => setIsSettingsOpen(false)}
           onExportVault={handleExportVault}
           isLightMode={isLightMode}
+          initialTab={settingsTab}
         />
       )}
 

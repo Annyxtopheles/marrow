@@ -193,7 +193,6 @@ export const ACCENT_PALETTE: AccentOption[] = [
   { id: 'terracotta', name: 'Terracotta Rust', color: '#ea580c' },
   { id: 'crimson', name: 'Crimson Scarlet', color: '#ef4444' },
   { id: 'indigo', name: 'Twilight Indigo', color: '#818cf8' },
-  { id: 'ivory', name: 'Bone Ivory', color: '#f4f1ea' },
   { id: 'silver', name: 'Monolith Silver', color: '#cbd5e1' },
 ];
 
