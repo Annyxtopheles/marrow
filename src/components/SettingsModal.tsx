@@ -66,19 +66,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     setCustomHex(color);
   };
 
-  const border = isLightMode ? 'border-[#e4e0d7]' : 'border-white/[0.08]';
+  const border = isLightMode ? 'border-black/[0.06]' : 'border-white/[0.06]';
   const modalBg = isLightMode ? 'bg-[#f7f5f0] text-[#2c2a27]' : 'bg-[#18191c] text-[#dedad4]';
   const cardBg = isLightMode
-    ? 'bg-black/[0.02] border-black/[0.06]'
-    : 'bg-white/[0.02] border-white/[0.06]';
+    ? 'bg-black/[0.03] hover:bg-black/[0.05]'
+    : 'bg-white/[0.03] hover:bg-white/[0.05]';
   const itemHover = isLightMode ? 'hover:bg-black/[0.04]' : 'hover:bg-white/[0.04]';
-
-  const selectedOutline = isLightMode
-    ? 'ring-1 ring-stone-600/35 border-stone-600/35 font-medium shadow-xs'
-    : 'ring-1 ring-stone-300/35 border-stone-300/35 font-medium shadow-xs';
-  const unselectedOutline = isLightMode
-    ? 'border-black/[0.08] opacity-65 hover:opacity-100'
-    : 'border-white/[0.08] opacity-65 hover:opacity-100';
 
   const isCustomAccentSelected = !ACCENT_PALETTE.some(
     (a) => a.color.toLowerCase() === activeAccent.toLowerCase()
@@ -91,18 +84,18 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className={`flex flex-col w-full max-w-lg rounded-xl border ${border} ${modalBg} shadow-2xl overflow-hidden`}
+        className={`flex flex-col w-full max-w-lg rounded-2xl border ${border} ${modalBg} shadow-2xl overflow-hidden`}
       >
-        {/* Header with Clean Tabs */}
+        {/* Header with Clean Tabs (zero harsh strokes) */}
         <div className={`flex items-center justify-between border-b ${border} px-5 py-3.5`}>
-          <div className="flex items-center gap-1 p-0.5 rounded-lg border bg-black/[0.03] dark:bg-white/[0.03]">
+          <div className="flex items-center gap-1 p-0.5 rounded-lg bg-black/[0.04] dark:bg-white/[0.04]">
             <button
               type="button"
               onClick={() => setActiveTab('appearance')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition ${
                 activeTab === 'appearance'
-                  ? `${isLightMode ? 'bg-white text-black shadow-xs' : 'bg-neutral-800 text-white shadow-xs'}`
-                  : 'opacity-60 hover:opacity-100'
+                  ? `${isLightMode ? 'bg-white text-black shadow-xs' : 'bg-white/[0.12] text-white shadow-xs'}`
+                  : 'opacity-50 hover:opacity-100'
               }`}
             >
               <Palette className="h-3.5 w-3.5" />
@@ -113,8 +106,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               onClick={() => setActiveTab('editor')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition ${
                 activeTab === 'editor'
-                  ? `${isLightMode ? 'bg-white text-black shadow-xs' : 'bg-neutral-800 text-white shadow-xs'}`
-                  : 'opacity-60 hover:opacity-100'
+                  ? `${isLightMode ? 'bg-white text-black shadow-xs' : 'bg-white/[0.12] text-white shadow-xs'}`
+                  : 'opacity-50 hover:opacity-100'
               }`}
             >
               <Sliders className="h-3.5 w-3.5" />
@@ -124,7 +117,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
           <button
             onClick={onClose}
-            className={`rounded-md p-1.5 transition ${itemHover} opacity-70 hover:opacity-100`}
+            className={`rounded-md p-1.5 transition ${itemHover} opacity-60 hover:opacity-100`}
             title="Close"
           >
             <X className="h-4 w-4" />
@@ -137,7 +130,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             <div className="space-y-4">
               {/* Atmospheres */}
               <div className="space-y-1.5">
-                <span className="text-[10px] font-semibold uppercase tracking-wider opacity-60 block">
+                <span className="text-[10px] font-semibold uppercase tracking-wider opacity-50 block">
                   Atmosphere
                 </span>
                 <div className="grid grid-cols-3 gap-1.5">
@@ -149,12 +142,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         key={atmId}
                         type="button"
                         onClick={() => applyBaseAtmosphere(atmId)}
-                        className={`p-2 rounded-md border text-left transition flex items-center justify-between gap-1.5 ${
-                          isSelected ? selectedOutline : unselectedOutline
+                        className={`p-2 rounded-lg text-left transition flex items-center justify-between gap-1.5 ${
+                          isSelected ? 'shadow-sm opacity-100' : 'opacity-70 hover:opacity-100'
                         }`}
                         style={{
                           backgroundColor: atm.appBg,
                           color: atm.textColor,
+                          boxShadow: isSelected ? `inset 0 0 0 1px ${activeAccent}60` : undefined,
                         }}
                         title={atm.name}
                       >
@@ -168,12 +162,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 </div>
               </div>
 
-              {/* Accent (All in 1 line, no text) */}
+              {/* Accent (Clean frameless line, no enclosing box or outlines) */}
               <div className="space-y-1.5">
-                <span className="text-[10px] font-semibold uppercase tracking-wider opacity-60 block">
+                <span className="text-[10px] font-semibold uppercase tracking-wider opacity-50 block">
                   Accent
                 </span>
-                <div className="flex items-center justify-between gap-1 p-2 rounded-lg border bg-black/[0.02] dark:bg-white/[0.02] overflow-x-auto">
+                <div className="flex items-center justify-between gap-1.5 py-1 px-0.5 overflow-x-auto">
                   {ACCENT_PALETTE.map((acc) => {
                     const isSelected = activeAccent.toLowerCase() === acc.color.toLowerCase();
                     return (
@@ -182,27 +176,28 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         type="button"
                         onClick={() => applyAccentColor(acc.color)}
                         className={`h-6 w-6 rounded-full transition shrink-0 relative flex items-center justify-center shadow-xs hover:scale-110 active:scale-95 ${
-                          isSelected ? 'ring-2 ring-offset-2 ring-stone-400' : ''
+                          isSelected ? 'scale-105' : 'opacity-85 hover:opacity-100'
                         }`}
                         style={{ backgroundColor: acc.color }}
                         title={acc.name}
                       >
                         {isSelected && (
-                          <span className="h-1.5 w-1.5 rounded-full bg-black/60 dark:bg-white/90" />
+                          <span className="h-1.5 w-1.5 rounded-full bg-white shadow-xs" />
                         )}
                       </button>
                     );
                   })}
 
-                  {/* Custom Eyedropper Button (icon only, matches circle size) */}
+                  {/* Custom Eyedropper Button (minimal circular, no stroke) */}
                   <label
-                    className={`h-6 w-6 rounded-full border shrink-0 flex items-center justify-center cursor-pointer transition hover:scale-110 active:scale-95 ${
+                    className={`h-6 w-6 rounded-full shrink-0 flex items-center justify-center cursor-pointer transition hover:scale-110 active:scale-95 ${
                       isCustomAccentSelected
-                        ? 'ring-2 ring-offset-2 ring-stone-400'
-                        : 'opacity-70 hover:opacity-100'
+                        ? 'scale-105 shadow-xs'
+                        : 'bg-black/[0.04] dark:bg-white/[0.06] hover:bg-black/[0.08] dark:hover:bg-white/[0.12] text-neutral-400 hover:text-white'
                     }`}
                     style={{
                       backgroundColor: isCustomAccentSelected ? activeAccent : undefined,
+                      color: isCustomAccentSelected ? currentTheme.tokens.accentContrast : undefined,
                     }}
                     title="Custom Hex Color (Eyedropper)"
                   >
@@ -217,9 +212,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 </div>
               </div>
 
-              {/* Presets (Full fill grid) */}
+              {/* Presets (Full fill grid, frameless, no stroke) */}
               <div className="space-y-1.5">
-                <span className="text-[10px] font-semibold uppercase tracking-wider opacity-60 block">
+                <span className="text-[10px] font-semibold uppercase tracking-wider opacity-50 block">
                   Presets
                 </span>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
@@ -236,12 +231,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         key={th.id}
                         type="button"
                         onClick={() => applyRecipe(th.id)}
-                        className={`w-full py-1.5 px-2 rounded-md border text-[11px] font-medium transition flex items-center justify-center gap-1.5 ${
-                          isSelected ? selectedOutline : unselectedOutline
+                        className={`w-full py-1.5 px-2 rounded-lg text-[11px] font-medium transition flex items-center justify-center gap-1.5 ${
+                          isSelected ? 'shadow-sm opacity-100' : 'opacity-70 hover:opacity-100'
                         }`}
                         style={{
                           backgroundColor: th.tokens.appBg,
                           color: th.tokens.textColor,
+                          boxShadow: isSelected ? `inset 0 0 0 1px ${th.accentColor}60` : undefined,
                         }}
                         title={th.name}
                       >
@@ -260,7 +256,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             <div className="space-y-4">
               {/* Reading Column Width (Narrow, Standard, Full) */}
               <div className="space-y-1.5">
-                <span className="text-[10px] font-semibold uppercase tracking-wider opacity-60 block">
+                <span className="text-[10px] font-semibold uppercase tracking-wider opacity-50 block">
                   Column Width
                 </span>
                 <div className="grid grid-cols-3 gap-1.5">
@@ -273,8 +269,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       key={w.id}
                       type="button"
                       onClick={() => update('readingWidth', w.id as ReadingWidth)}
-                      className={`py-1.5 px-2 rounded-md border text-center transition ${cardBg} ${
-                        activeWidth === w.id ? selectedOutline : unselectedOutline
+                      className={`py-1.5 px-2 rounded-lg text-center transition ${
+                        activeWidth === w.id
+                          ? `${isLightMode ? 'bg-black/[0.08] text-black' : 'bg-white/[0.12] text-white'} font-medium shadow-xs`
+                          : 'opacity-65 hover:opacity-100 bg-black/[0.02] dark:bg-white/[0.02]'
                       }`}
                     >
                       <div className="text-[11px] font-medium">{w.name}</div>
@@ -286,7 +284,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
               {/* Typeface Selection */}
               <div className="space-y-1.5">
-                <span className="text-[10px] font-semibold uppercase tracking-wider opacity-60 block">
+                <span className="text-[10px] font-semibold uppercase tracking-wider opacity-50 block">
                   Font
                 </span>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
@@ -320,8 +318,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       key={f.id}
                       type="button"
                       onClick={() => update('fontFamily', f.id as FontFamily)}
-                      className={`py-1.5 px-2 rounded-md border text-center transition ${cardBg} ${
-                        settings.fontFamily === f.id ? selectedOutline : unselectedOutline
+                      className={`py-1.5 px-2 rounded-lg text-center transition ${
+                        settings.fontFamily === f.id
+                          ? `${isLightMode ? 'bg-black/[0.08] text-black' : 'bg-white/[0.12] text-white'} font-medium shadow-xs`
+                          : 'opacity-65 hover:opacity-100 bg-black/[0.02] dark:bg-white/[0.02]'
                       }`}
                     >
                       <div className="text-[11px] font-medium" style={{ fontFamily: f.font }}>
@@ -369,12 +369,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
               {/* Writing Ergonomics */}
               <div className={`space-y-2 pt-3 border-t ${border}`}>
-                <span className="text-[10px] font-semibold uppercase tracking-wider opacity-60 block">
+                <span className="text-[10px] font-semibold uppercase tracking-wider opacity-50 block">
                   Ergonomics
                 </span>
 
                 <div className="space-y-1.5">
-                  <label className={`flex items-center justify-between p-2 rounded-lg border ${cardBg} cursor-pointer transition ${itemHover}`}>
+                  <label className={`flex items-center justify-between p-2 rounded-lg ${cardBg} cursor-pointer transition`}>
                     <div>
                       <div className="font-medium text-[11px]">Soft Breathing Cursor</div>
                       <div className="text-[10px] opacity-60">Gentle pulsing cursor animation.</div>
@@ -387,7 +387,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     />
                   </label>
 
-                  <label className={`flex items-center justify-between p-2 rounded-lg border ${cardBg} cursor-pointer transition ${itemHover}`}>
+                  <label className={`flex items-center justify-between p-2 rounded-lg ${cardBg} cursor-pointer transition`}>
                     <div>
                       <div className="font-medium text-[11px]">Typewriter Mode</div>
                       <div className="text-[10px] opacity-60">Centers current line vertically.</div>
@@ -400,7 +400,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     />
                   </label>
 
-                  <label className={`flex items-center justify-between p-2 rounded-lg border ${cardBg} cursor-pointer transition ${itemHover}`}>
+                  <label className={`flex items-center justify-between p-2 rounded-lg ${cardBg} cursor-pointer transition`}>
                     <div>
                       <div className="font-medium text-[11px]">Typewriter Audio Acoustics</div>
                       <div className="text-[10px] opacity-60">Mechanical key clicks, spacebar thump, and bell.</div>
@@ -413,7 +413,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     />
                   </label>
 
-                  <label className={`flex items-center justify-between p-2 rounded-lg border ${cardBg} cursor-pointer transition ${itemHover}`}>
+                  <label className={`flex items-center justify-between p-2 rounded-lg ${cardBg} cursor-pointer transition`}>
                     <div>
                       <div className="font-medium text-[11px]">Active Typing Fade</div>
                       <div className="text-[10px] opacity-60">Fades chrome and toolbars while typing.</div>
@@ -426,7 +426,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     />
                   </label>
 
-                  <label className={`flex items-center justify-between p-2 rounded-lg border ${cardBg} cursor-pointer transition ${itemHover}`}>
+                  <label className={`flex items-center justify-between p-2 rounded-lg ${cardBg} cursor-pointer transition`}>
                     <div>
                       <div className="font-medium text-[11px]">Chapter Drop Caps</div>
                       <div className="text-[10px] opacity-60">Illuminated capital letters on opening lines.</div>
@@ -444,7 +444,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               {/* AI & Vault Export */}
               <div className={`space-y-2 pt-3 border-t ${border}`}>
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-semibold uppercase tracking-wider opacity-60 flex items-center gap-1">
+                  <span className="text-[10px] font-semibold uppercase tracking-wider opacity-50 flex items-center gap-1">
                     <Sparkles className="h-3 w-3" style={{ color: activeAccent }} />
                     <span>Lumen Partner (Gemini)</span>
                   </span>
@@ -457,10 +457,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       value={settings.geminiApiKey || ''}
                       onChange={(e) => update('geminiApiKey', e.target.value.trim())}
                       placeholder="Paste Gemini API key..."
-                      className={`w-full rounded-md px-2.5 py-1 text-xs font-mono border focus:outline-none pr-14 ${
+                      className={`w-full rounded-lg px-2.5 py-1.5 text-xs font-mono focus:outline-none pr-14 ${
                         isLightMode
-                          ? 'bg-black/[0.03] border-black/[0.1] text-neutral-800'
-                          : 'bg-white/[0.04] border-white/[0.1] text-neutral-200'
+                          ? 'bg-black/[0.04] text-neutral-800'
+                          : 'bg-white/[0.05] text-neutral-200'
                       }`}
                     />
                     <button
@@ -477,7 +477,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   <button
                     type="button"
                     onClick={onExportVault}
-                    className={`w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg border transition ${cardBg} ${itemHover}`}
+                    className={`w-full flex items-center justify-center gap-1.5 py-2 rounded-lg transition ${cardBg}`}
                   >
                     <Download className="h-3.5 w-3.5 opacity-70" />
                     <span>Export Complete Vault (JSON)</span>
