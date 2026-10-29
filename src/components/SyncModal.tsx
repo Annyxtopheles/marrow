@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import type { Note, Folder, EditorSettings, ThemeMode } from '../types';
 import { GoogleDriveService } from '../services/googleDrive';
-import { THEMES } from '../services/themes';
+import { getEffectiveTheme } from '../services/themes';
 import { X, Cloud, CloudUpload, CloudDownload, HardDrive, CheckCircle2, AlertCircle } from 'lucide-react';
 
 interface SyncModalProps {
@@ -21,9 +21,9 @@ export const SyncModal: React.FC<SyncModalProps> = ({
   onRestoreVault,
   onClose,
   isLightMode,
-  theme,
+  theme: _theme,
 }) => {
-  const currentTheme = THEMES[theme || settings.theme || 'charcoal'] || THEMES.charcoal;
+  const currentTheme = getEffectiveTheme(settings);
   const [token, setToken] = useState<string>(() => GoogleDriveService.getStoredToken() || '');
   const [lastSync, setLastSync] = useState<number | null>(() => GoogleDriveService.getLastSyncTime());
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);

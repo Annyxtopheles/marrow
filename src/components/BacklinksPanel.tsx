@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useRef } from 'react';
 import type { Note, ThemeMode } from '../types';
 import { StorageService } from '../services/storage';
-import { THEMES } from '../services/themes';
+import { THEMES, type ThemeDefinition } from '../services/themes';
 import { Link2, ArrowUpRight, FileText, Plus, Minus, RotateCcw } from 'lucide-react';
 
 interface BacklinksPanelProps {
@@ -10,6 +10,7 @@ interface BacklinksPanelProps {
   onSelectNote: (note: Note) => void;
   isLightMode: boolean;
   theme?: ThemeMode;
+  currentTheme?: ThemeDefinition;
 }
 
 interface SimNode {
@@ -39,6 +40,7 @@ export const BacklinksPanel: React.FC<BacklinksPanelProps> = ({
   onSelectNote,
   isLightMode,
   theme,
+  currentTheme: propTheme,
 }) => {
   const [activeTab, setActiveTab] = useState<'links' | 'graph'>('links');
   const [graphScope, setGraphScope] = useState<'local' | 'vault'>('vault');
@@ -60,7 +62,7 @@ export const BacklinksPanel: React.FC<BacklinksPanelProps> = ({
     moved: boolean;
   } | null>(null);
 
-  const currentTheme = THEMES[theme || 'charcoal'] || THEMES.charcoal;
+  const currentTheme = propTheme || THEMES[theme || 'charcoal'] || THEMES.charcoal;
 
   const backlinks = useMemo(
     () => (activeNote ? StorageService.findBacklinks(activeNote.title, allNotes) : []),

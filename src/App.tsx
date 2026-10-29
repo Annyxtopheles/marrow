@@ -1444,6 +1444,7 @@ export function App() {
             }}
             isLightMode={isLightMode}
             theme={settings.theme}
+            currentTheme={currentTheme}
             vaultName={vaultName}
             onPickVault={handlePickVault}
             onDisconnectVault={handleDisconnectVault}
@@ -1559,6 +1560,7 @@ export function App() {
             onSelectNote={(n) => setActiveNoteId(n.id)}
             isLightMode={isLightMode}
             theme={settings.theme}
+            currentTheme={currentTheme}
           />
         )}
       </div>
@@ -1596,6 +1598,7 @@ export function App() {
           onClose={() => setIsCompileOpen(false)}
           isLightMode={isLightMode}
           theme={settings.theme}
+          currentTheme={currentTheme}
         />
       )}
 

@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import type { Note, Folder, ThemeMode } from '../types';
-import { THEMES } from '../services/themes';
+import { THEMES, type ThemeDefinition } from '../services/themes';
 import {
   X,
   BookOpen,
@@ -16,6 +16,7 @@ interface CompileModalProps {
   onClose: () => void;
   isLightMode: boolean;
   theme?: ThemeMode;
+  currentTheme?: ThemeDefinition;
 }
 
 const htmlToCleanText = (html: string): string => {
@@ -23,7 +24,7 @@ const htmlToCleanText = (html: string): string => {
     .replace(/<h1>(.*?)<\/h1>/gi, '\n# $1\n\n')
     .replace(/<h2>(.*?)<\/h2>/gi, '\n## $1\n\n')
     .replace(/<h3>(.*?)<\/h3>/gi, '\n### $1\n\n')
-    .replace(/<blockquote>(.*?)<\/blockquote>/gi, '\n> $1\n\n')
+    .replace(/<blockquote>([\s\S]*?)<\/blockquote>/gi, '\n> $1\n\n')
     .replace(/<p>(.*?)<\/p>/gi, '$1\n\n')
     .replace(/<em>(.*?)<\/em>/gi, '*$1*')
     .replace(/<strong>(.*?)<\/strong>/gi, '**$1**')
@@ -40,8 +41,9 @@ export const CompileModal: React.FC<CompileModalProps> = ({
   onClose,
   isLightMode,
   theme,
+  currentTheme: propTheme,
 }) => {
-  const currentTheme = THEMES[theme || 'charcoal'] || THEMES.charcoal;
+  const currentTheme = propTheme || THEMES[theme || 'charcoal'] || THEMES.charcoal;
 
   const [selectedScope, setSelectedScope] = useState<string>(initialFolderId || 'all');
   const [manuscriptTitle, setManuscriptTitle] = useState('My Novel Manuscript');

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import type { Note, Folder, ThemeMode } from '../types';
-import { THEMES } from '../services/themes';
+import { THEMES, type ThemeDefinition } from '../services/themes';
 import {
   Folder as FolderIcon,
   FolderPlus,
@@ -67,6 +67,7 @@ interface SidebarProps {
   onOpenCompile?: (folderId?: string | null) => void;
   isLightMode: boolean;
   theme?: ThemeMode;
+  currentTheme?: ThemeDefinition;
   vaultName?: string | null;
   onPickVault?: () => void;
   onDisconnectVault?: () => void;
@@ -92,13 +93,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onOpenCompile,
   isLightMode,
   theme,
+  currentTheme: propTheme,
   vaultName,
   onPickVault,
   onDisconnectVault,
   onOpenReferenceSplit,
   onSetTargetWordCount,
 }) => {
-  const currentTheme = THEMES[theme || 'charcoal'] || THEMES.charcoal;
+  const currentTheme = propTheme || THEMES[theme || 'charcoal'] || THEMES.charcoal;
   const [searchQuery, setSearchQuery] = useState('');
   const [collapsedFolders, setCollapsedFolders] = useState<Record<string, boolean>>({});
   const [showFolderModal, setShowFolderModal] = useState(false);

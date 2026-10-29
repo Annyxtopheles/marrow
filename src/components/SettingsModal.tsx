@@ -105,57 +105,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
         {/* Settings Body */}
         <div className="p-6 space-y-6 overflow-y-auto max-h-[75vh] text-xs">
-          {/* Section 1: Visual Studio (Mix & Match) */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <label className="text-[11px] uppercase tracking-wider opacity-60 block font-semibold">
-                Visual Studio: Mix &amp; Match
-              </label>
-              <span className="text-[10px] opacity-60">Custom Atmosphere</span>
-            </div>
-
-            {/* Live Atmosphere Preview Card */}
-            <div
-              className="p-3.5 rounded-lg border transition shadow-inner flex items-center justify-between gap-3 overflow-hidden"
-              style={{
-                backgroundColor: currentTheme.tokens.appBg,
-                borderColor: currentTheme.tokens.borderColor,
-                color: currentTheme.tokens.textColor,
-              }}
-            >
-              <div className="flex items-start gap-2.5">
-                <span
-                  className="font-serif font-bold text-2xl leading-none select-none"
-                  style={{ color: activeAccent }}
-                >
-                  T
-                </span>
-                <div className="text-[11px] leading-tight">
-                  <div className="font-medium tracking-tight">
-                    {currentTheme.name}
-                  </div>
-                  <div className="opacity-60 text-[10px] mt-0.5">
-                    he monoliths crawl beneath me.
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center gap-1.5 shrink-0">
-                <span
-                  className="px-2 py-0.5 rounded text-[10px] font-semibold shadow-xs"
-                  style={{
-                    backgroundColor: activeAccent,
-                    color: currentTheme.tokens.accentContrast,
-                  }}
-                >
-                  Active Ink
-                </span>
-              </div>
-            </div>
-
-            {/* 1. Base Canvas Atmosphere */}
+          {/* Appearance: Swatches, Accents, Presets */}
+          <div className="space-y-3.5">
+            {/* Atmospheres */}
             <div className="space-y-1.5">
-              <span className="text-[10px] font-medium opacity-70 block">
-                1. Canvas Atmosphere (Background Base)
+              <span className="text-[10px] font-semibold uppercase tracking-wider opacity-60 block">
+                Atmosphere
               </span>
               <div className="grid grid-cols-3 gap-1.5">
                 {VALID_BASE_ATMOSPHERES.map((atmId) => {
@@ -173,7 +128,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         backgroundColor: atm.appBg,
                         color: atm.textColor,
                       }}
-                      title={`${atm.name} — ${atm.sub}`}
+                      title={atm.name}
                     >
                       <span className="text-[11px] font-medium truncate">{atm.name}</span>
                       {isSelected && (
@@ -185,18 +140,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               </div>
             </div>
 
-            {/* 2. Accent Ink Palette */}
+            {/* Accent Ink */}
             <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-medium opacity-70 block">
-                  2. Accent Ink (Illuminated Drop Caps, Badges &amp; Focus)
-                </span>
-                <div className="flex items-center gap-1 text-[10px] opacity-60 font-mono">
-                  <span>HEX:</span>
-                  <span className="uppercase">{activeAccent}</span>
-                </div>
-              </div>
-              <div className="flex flex-wrap items-center gap-2 p-2.5 rounded-lg border transition bg-black/[0.02] dark:bg-white/[0.02]">
+              <span className="text-[10px] font-semibold uppercase tracking-wider opacity-60 block">
+                Accent
+              </span>
+              <div className="flex flex-wrap items-center gap-2 p-2 rounded-lg border bg-black/[0.02] dark:bg-white/[0.02]">
                 {ACCENT_PALETTE.map((acc) => {
                   const isSelected = activeAccent.toLowerCase() === acc.color.toLowerCase();
                   return (
@@ -208,7 +157,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         isSelected ? 'ring-2 ring-offset-2 ring-stone-400' : ''
                       }`}
                       style={{ backgroundColor: acc.color }}
-                      title={`${acc.name} (${acc.color})`}
+                      title={acc.name}
                     >
                       {isSelected && (
                         <span className="h-1.5 w-1.5 rounded-full bg-black/60 dark:bg-white/90" />
@@ -234,10 +183,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               </div>
             </div>
 
-            {/* Curated 1-Click Recipes */}
-            <div className="space-y-1.5 pt-1">
-              <span className="text-[10px] font-medium opacity-70 block">
-                Curated 1-Click Recipes (Instant Atmosphere + Matching Ink)
+            {/* Presets */}
+            <div className="space-y-1.5">
+              <span className="text-[10px] font-semibold uppercase tracking-wider opacity-60 block">
+                Presets
               </span>
               <div className="flex flex-wrap gap-1.5">
                 {VALID_THEMES.map((themeId) => {
@@ -259,7 +208,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         backgroundColor: th.tokens.appBg,
                         color: th.tokens.textColor,
                       }}
-                      title={`Load ${th.name} preset`}
+                      title={th.name}
                     >
                       <span
                         className="h-2 w-2 rounded-full shrink-0"
@@ -274,27 +223,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </div>
 
           {/* Section 2: Layout & Typography */}
-          <div className={`space-y-4 pt-4 border-t ${border}`}>
+          <div className={`space-y-3.5 pt-3.5 border-t ${border}`}>
             <label className="text-[11px] uppercase tracking-wider opacity-60 block font-semibold">
-              Editorial Canvas &amp; Type
+              Typography &amp; Layout
             </label>
 
             {/* Reading Column Width */}
             <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-medium opacity-70 block">
-                  Reading Column Width
-                </span>
-                <span className="text-[10px] opacity-60 capitalize">
-                  {activeWidth === 'narrow'
-                    ? '56ch (~580px) · Poetry / Focus'
-                    : activeWidth === 'wide'
-                    ? '88ch (~880px) · Manuscript'
-                    : activeWidth === 'full'
-                    ? 'Expansive · Edge to Edge'
-                    : '72ch (~720px) · Classical Prose'}
-                </span>
-              </div>
+              <span className="text-[10px] font-semibold uppercase tracking-wider opacity-60 block">
+                Column Width
+              </span>
               <div className="grid grid-cols-4 gap-1.5">
                 {[
                   { id: 'narrow', name: 'Narrow', sub: '56ch' },
@@ -319,8 +257,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
             {/* Typeface Selection */}
             <div className="space-y-1.5">
-              <span className="text-[10px] font-medium opacity-70 block">
-                Editorial Typeface
+              <span className="text-[10px] font-semibold uppercase tracking-wider opacity-60 block">
+                Font
               </span>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                 {[

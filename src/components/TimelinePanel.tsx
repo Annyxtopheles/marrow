@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import type { Note, TimelineEntry, ThemeMode, SceneBeat, EditorSettings, AIMessage } from '../types';
 import { StorageService } from '../services/storage';
-import { THEMES } from '../services/themes';
+import { THEMES, getEffectiveTheme } from '../services/themes';
 import { AIService, extractLinkedNotes, parseBeatsFromResponse, type AIPersona } from '../services/ai';
 import { EditorialMarkdown } from './EditorialMarkdown';
 import {
@@ -49,7 +49,9 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
   selectedPassage,
   onClearSelectedPassage,
 }) => {
-  const currentTheme = THEMES[theme || 'charcoal'] || THEMES.charcoal;
+  const currentTheme = settings
+    ? getEffectiveTheme(settings)
+    : THEMES[theme || 'charcoal'] || THEMES.charcoal;
   const [activeTab, setActiveTab] = useState<'intervals' | 'story' | 'beats' | 'logs' | 'lumen'>('intervals');
 
   const [prevPassageTimestamp, setPrevPassageTimestamp] = useState<number | null>(null);
